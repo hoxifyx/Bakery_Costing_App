@@ -1,0 +1,369 @@
+import { useState, useMemo } from 'react';
+import { useStore } from '../../store/store';
+import type { Recipe, RecipeLine } from '../../engine/types';
+import { compute } from '../../engine/engine';
+import { NumberInput, SearchBar, ConfirmDialog } from '../components/Shared';
+import { ExplainPanel } from '../components/ExplainPanel';
+import { WarningsList } from '../components/WarningsList';
+
+function generateId(existing: Recipe[]): string {
+  const ids = new Set(existing.map(r => r.id));
+  for (let i = 1; i < 9999; i++) {
+    const id = `recipe_${i}`;
+    if (!ids.has(id)) return id;
+  }
+  return 'recipe_' + Date.now();
+}
+
+function emptyLine(): RecipeLine {
+  return { ingredient_id: null, quantity: 0, unit: 'g' };
+}
+
+const KIND_LABELS: Record<string, string> = {
+  cake: '🎂 Cake',
+  frosting_filling: '🧁 Frosting / Filling',
+  batch_product: '🍩 Batch product',
+  other: '📦 Other',
+};
+
+export function RecipesPage() {
+  const { state, dispatch } = useStore();
+  const { data } = state;
+  const cur = data.settings.currency_code;
+
+  const [search, setSearch] = useState('');
+  const [kindFilter, setKindFilter] = useState<string>('all');
+  const [editing, setEditing] = useState<Recipe | null>(null);
+  const [isNew, setIsNew] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<Recipe | null>(null);
+  const [explainTarget, setExplainTarget] = useState<Recipe | null>(null);
+  const [scales, setScales] = useState<Record<string, number>>({});
+
+  const baseResult = useMemo(() => compute(data), [data]);
+  const result = useMemo(() => compute(data, null, scales), [data, scales]);
+
+  const filtered = useMemo(() => data.recipes.filter(r => {
+    const matchSearch = r.name.toLowerCase().includes(search.toLowerCase()) || r.id.includes(search.toLowerCase());
+    const matchKind = kindFilter === 'all' || r.kind === kindFilter;
+    return matchSearch && matchKind;
+  }).sort((a, b) => a.name.localeCompare(b.name)), [data.recipes, search, kindFilter]);
+
+  const openNew = () => {
+    setIsNew(true);
+    setEditing({
+      id: generateId(data.recipes),
+      name: '',
+      kind: 'cake',
+      lines: [emptyLine()],
+      weight_adjustment_g: 0,
+    });
+  };
+
+  const openEdit = (r: Recipe) => { setIsNew(false); setEditing(JSON.parse(JSON.stringify(r))); };
+
+  const duplicate = (r: Recipe) => {
+    setIsNew(true);
+    setEditing({ ...JSON.parse(JSON.stringify(r)), id: generateId(data.recipes), name: r.name + ' (copy)' });
+  };
+
+  const save = () => {
+    if (!editing || !editing.name.trim()) return;
+    if (isNew) dispatch({ type: 'ADD_RECIPE', item: editing });
+    else dispatch({ type: 'UPDATE_RECIPE', item: editing });
+    setEditing(null);
+  };
+
+  const getUsedIn = (id: string) => {
+    const used: string[] = [];
+    for (const f of data.flavours) {
+      if (f.cost_model.type === 'recipe') {
+        if (f.cost_model.cake_recipe_id === id || f.cost_model.frosting_recipe_id === id) used.push(`Flavour: ${f.name}`);
+      }
+    }
+    for (const fi of data.fillings) {
+      if (fi.source.type === 'recipe' && fi.source.recipe_id === id) used.push(`Filling: ${fi.name}`);
+    }
+    for (const bp of data.batch_products) {
+      if (bp.recipe_id === id) used.push(`Batch product: ${bp.name}`);
+      if (bp.components.some(c => c.recipe_id === id)) used.push(`Batch product component: ${bp.name}`);
+    }
+    for (const ap of data.assembled_products) {
+      if (ap.components.some(c => (c.type === 'cake_recipe_grams' || c.type === 'recipe_per_gram') && c.recipe_id === id)) {
+        used.push(`Assembled product: ${ap.name}`);
+      }
+    }
+    return used;
+  };
+
+  const confirmDelete = (r: Recipe) => {
+    const used = getUsedIn(r.id);
+    if (used.length > 0) { alert(`Cannot delete "${r.name}" — used in:\n${used.join('\n')}`); return; }
+    setDeleteTarget(r);
+  };
+
+  // Editing helpers
+  const updateLine = (idx: number, update: Partial<RecipeLine>) => {
+    setEditing(r => {
+      if (!r) return r;
+      const lines = r.lines.map((l, i) => i === idx ? { ...l, ...update } : l);
+      return { ...r, lines };
+    });
+  };
+
+  const addLine = () => setEditing(r => r ? { ...r, lines: [...r.lines, emptyLine()] } : r);
+
+  const removeLine = (idx: number) => setEditing(r => {
+    if (!r) return r;
+    return { ...r, lines: r.lines.filter((_, i) => i !== idx) };
+  });
+
+  const validUnitsForIng = (ingId: string | null): RecipeLine['unit'][] => {
+    if (!ingId) return ['g'];
+    const ing = data.ingredients.find(i => i.id === ingId);
+    if (!ing) return ['g'];
+    if (ing.unit_type === 'piece') return ['piece'];
+    const units: RecipeLine['unit'][] = ['g'];
+    if (ing.grams_per_tsp) units.push('tsp');
+    return units;
+  };
+
+  return (
+    <div>
+      <div className="page-header">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="page-title">📋 Recipes</h1>
+            <p className="page-subtitle">{data.recipes.length} recipes across {Object.keys(KIND_LABELS).length} types</p>
+          </div>
+          <button className="btn btn-primary btn-sm" onClick={openNew}>+ Add recipe</button>
+        </div>
+      </div>
+
+      <div className="page-body">
+        <div className="flex gap-12 items-center mb-12 flex-wrap">
+          <SearchBar value={search} onChange={setSearch} placeholder="Search recipes…" />
+          <div className="flex gap-4">
+            {['all', ...Object.keys(KIND_LABELS)].map(k => (
+              <button
+                key={k}
+                className={`btn btn-sm ${kindFilter === k ? 'btn-primary' : 'btn-ghost'}`}
+                onClick={() => setKindFilter(k)}
+              >
+                {k === 'all' ? 'All' : KIND_LABELS[k]}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {filtered.length === 0 ? (
+          <div className="empty-state">
+            <div className="empty-state-icon">📋</div>
+            <div className="empty-state-title">No recipes yet</div>
+            <button className="btn btn-primary mt-12" onClick={openNew}>+ Add recipe</button>
+          </div>
+        ) : (
+          <div className="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Kind</th>
+                  <th>Lines</th>
+                  <th>Scale</th>
+                  <th>Raw cost</th>
+                  <th>CWO</th>
+                  <th>Weight</th>
+                  <th>Per gram</th>
+                  <th>Cake /kg</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map(r => {
+                  const res = result.recipes[r.id];
+                  const baseRes = baseResult.recipes[r.id];
+                  const scale = scales[r.id] ?? 1;
+                  return (
+                    <tr key={r.id}>
+                      <td>
+                        <div style={{ fontWeight: 600 }}>{r.name}</div>
+                        <div className="text-muted" style={{ fontSize: 11 }}>{r.id}</div>
+                      </td>
+                      <td><span className="badge badge-muted">{KIND_LABELS[r.kind]}</span></td>
+                      <td className="text-secondary">{r.lines.length}</td>
+                      <td>
+                        <div style={{ width: 60 }}>
+                          <NumberInput value={scale} onChange={v => setScales(s => ({ ...s, [r.id]: v }))} min={0} step={0.1} />
+                        </div>
+                      </td>
+                      <td className="td-mono">
+                        {scale !== 1 && <div className="text-muted" style={{ textDecoration: 'line-through', fontSize: 11 }}>{cur} {baseRes?.raw.toFixed(2)}</div>}
+                        {cur} {res?.raw.toFixed(2) ?? '—'}
+                      </td>
+                      <td className="td-mono text-green">
+                        {scale !== 1 && <div className="text-muted" style={{ textDecoration: 'line-through', fontSize: 11 }}>{cur} {baseRes?.cwo.toFixed(2)}</div>}
+                        {cur} {res?.cwo.toFixed(2) ?? '—'}
+                      </td>
+                      <td className="td-mono">
+                        {scale !== 1 && <div className="text-muted" style={{ textDecoration: 'line-through', fontSize: 11 }}>{baseRes?.weight.toFixed(0)}g</div>}
+                        {res?.weight.toFixed(0) ?? '—'}g
+                      </td>
+                      <td className="td-mono">
+                        {scale !== 1 && <div className="text-muted" style={{ textDecoration: 'line-through', fontSize: 11 }}>{cur} {baseRes?.per_gram_cwo.toFixed(4)}</div>}
+                        {cur} {res?.per_gram_cwo.toFixed(4) ?? '—'}
+                      </td>
+                      <td className="td-mono text-green">
+                        {scale !== 1 && <div className="text-muted" style={{ textDecoration: 'line-through', fontSize: 11 }}>{cur} {baseRes?.cake_cost_per_kg.toFixed(2)}</div>}
+                        {cur} {res?.cake_cost_per_kg.toFixed(2) ?? '—'}
+                      </td>
+                      <td>
+                        <div className="td-actions">
+                          <button className="btn btn-ghost btn-sm" onClick={() => setExplainTarget(r)}>🔍</button>
+                          <button className="btn btn-ghost btn-sm btn-icon" onClick={() => openEdit(r)}>✏️</button>
+                          <button className="btn btn-ghost btn-sm btn-icon" onClick={() => duplicate(r)}>📋</button>
+                          <button className="btn btn-danger btn-sm btn-icon" onClick={() => confirmDelete(r)}>🗑</button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {/* Recipe editor modal */}
+      {editing && (
+        <div className="modal-backdrop" onClick={() => setEditing(null)}>
+          <div className="modal modal-lg" onClick={e => e.stopPropagation()} style={{ maxWidth: 860 }}>
+            <div className="modal-header">
+              <h2 className="modal-title">{isNew ? 'New recipe' : `Edit: ${editing.name}`}</h2>
+              <button className="btn btn-ghost btn-sm" onClick={() => setEditing(null)}>✕</button>
+            </div>
+            <div className="modal-body" style={{ display: 'grid', gridTemplateColumns: '1fr 260px', gap: 20 }}>
+              {/* Left: recipe form */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                <div className="form-row form-row-2">
+                  <div className="form-group">
+                    <label>Name *</label>
+                    <input className="input" value={editing.name} onChange={e => setEditing(r => r && ({ ...r, name: e.target.value }))} />
+                  </div>
+                  <div className="form-group">
+                    <label>Kind</label>
+                    <select className="select" value={editing.kind} onChange={e => setEditing(r => r && ({ ...r, kind: e.target.value as Recipe['kind'] }))}>
+                      {Object.entries(KIND_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                    </select>
+                  </div>
+                </div>
+
+                {/* Lines */}
+                <div>
+                  <div className="card-header" style={{ marginBottom: 8 }}>
+                    <span className="card-title">Ingredients</span>
+                    <button className="btn btn-secondary btn-sm" onClick={addLine}>+ Add line</button>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    {editing.lines.map((line, li) => {
+                      const validUnits = validUnitsForIng(line.ingredient_id);
+                      const curUnit = validUnits.includes(line.unit) ? line.unit : validUnits[0];
+                      return (
+                        <div key={li} style={{ display: 'grid', gridTemplateColumns: '1fr 80px 80px auto auto', gap: 6, alignItems: 'center' }}>
+                          <select
+                            className="select"
+                            value={line.ingredient_id ?? ''}
+                            onChange={e => {
+                              const ingId = e.target.value || null;
+                              const newUnits = validUnitsForIng(ingId);
+                              updateLine(li, { ingredient_id: ingId, unit: newUnits[0] });
+                            }}
+                          >
+                            <option value="">(free / water)</option>
+                            {[...data.ingredients].sort((a, b) => a.name.localeCompare(b.name)).map(ing => <option key={ing.id} value={ing.id}>{ing.name}</option>)}
+                          </select>
+                          <NumberInput value={line.quantity} onChange={v => updateLine(li, { quantity: v })} placeholder="qty" />
+                          <select
+                            className="select"
+                            value={curUnit}
+                            onChange={e => updateLine(li, { unit: e.target.value as RecipeLine['unit'] })}
+                          >
+                            {validUnits.map(u => <option key={u} value={u}>{u}</option>)}
+                          </select>
+                          <button
+                            className={`btn btn-sm ${line.exclude_from_weight ? 'btn-danger' : 'btn-ghost'}`}
+                            onClick={() => updateLine(li, { exclude_from_weight: !line.exclude_from_weight })}
+                            title="Exclude from batch weight"
+                            style={{ fontSize: 11, padding: '4px 6px' }}
+                          >⚖</button>
+                          <button className="btn btn-danger btn-sm btn-icon" onClick={() => removeLine(li)}>✕</button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="form-group">
+                  <label>Weight adjustment (g)</label>
+                  <NumberInput value={editing.weight_adjustment_g} onChange={v => setEditing(r => r && ({ ...r, weight_adjustment_g: v }))} allowNeg />
+                  <span className="input-hint">Extra grams to add to batch weight (e.g. water, typed constants)</span>
+                </div>
+
+                <div className="form-group">
+                  <label>Notes</label>
+                  <input className="input" value={editing.notes ?? ''} onChange={e => setEditing(r => r && ({ ...r, notes: e.target.value }))} />
+                </div>
+              </div>
+
+              {/* Right: live results */}
+              <div>
+                <div className="card" style={{ position: 'sticky', top: 0 }}>
+                  <div className="card-title mb-12">Live results</div>
+                  {(() => {
+                    // Compute preview with current editing recipe
+                    const previewData = { ...data, recipes: [...data.recipes.filter(r => r.id !== editing.id), editing] };
+                    const res = compute(previewData).recipes[editing.id];
+                    if (!res) return <div className="text-muted text-sm">Add lines to see results</div>;
+                    return (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, fontSize: 13 }}>
+                        <div className="result-row"><span className="text-secondary">Raw cost</span><span className="td-mono">{cur} {res.raw.toFixed(2)}</span></div>
+                        <div className="result-row"><span className="text-secondary">CWO (+{(data.settings.overhead_pct * 100).toFixed(0)}%)</span><span className="td-mono text-green">{cur} {res.cwo.toFixed(2)}</span></div>
+                        <div className="result-row"><span className="text-secondary">Batch weight</span><span className="td-mono">{res.weight.toFixed(0)}g</span></div>
+                        <div className="result-row"><span className="text-secondary">Per gram</span><span className="td-mono">{cur} {res.per_gram_cwo.toFixed(5)}</span></div>
+                        {editing.kind === 'cake' && <div className="result-row"><span className="text-secondary">Cake cost/kg</span><span className="td-mono text-green">{cur} {res.cake_cost_per_kg.toFixed(2)}</span></div>}
+                        {editing.kind === 'frosting_filling' && <div className="result-row"><span className="text-secondary">Frosting/kg cake</span><span className="td-mono text-green">{cur} {res.frosting_cost_per_kg_cake.toFixed(2)}</span></div>}
+                        {res.warnings.length > 0 && <WarningsList warnings={res.warnings} limit={3} />}
+                      </div>
+                    );
+                  })()}
+                </div>
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button className="btn btn-ghost" onClick={() => setEditing(null)}>Cancel</button>
+              <button className="btn btn-primary" onClick={save} disabled={!editing.name.trim()}>Save recipe</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {explainTarget && result.recipes[explainTarget.id] && (
+        <ExplainPanel
+          title={explainTarget.name}
+          audit={result.recipes[explainTarget.id].audit}
+          currency={cur}
+          onClose={() => setExplainTarget(null)}
+        />
+      )}
+
+      {deleteTarget && (
+        <ConfirmDialog
+          message={`Delete recipe "${deleteTarget.name}"?`}
+          onConfirm={() => { dispatch({ type: 'DELETE_RECIPE', id: deleteTarget!.id }); setDeleteTarget(null); }}
+          onCancel={() => setDeleteTarget(null)}
+          confirmLabel="Delete"
+          danger
+        />
+      )}
+    </div>
+  );
+}

@@ -1,0 +1,615 @@
+{
+  "fixture": {
+    "settings": {
+      "currency_code": "BDT",
+      "labour_rate_per_hour": 400,
+      "overhead_pct": 0.25,
+      "target_margin": 0.3,
+      "packaging_allowance_pct": 0.2,
+      "topper_price": 350,
+      "cake_batches_per_kg": 1,
+      "frosting_batches_per_kg": 1.25,
+      "filling_grams_per_kg": 150,
+      "fondant_ingredient_id": "fondant",
+      "edible_print_item_id": "print",
+      "cake_box_item_id": "cake_box",
+      "mdf_board_item_id": "mdf",
+      "standard_board_item_id": "std_board",
+      "wallpaper_item_id": "wallpaper"
+    },
+    "ingredients": [
+      {
+        "id": "flour",
+        "name": "Flour",
+        "unit_type": "g",
+        "pack_quantity": 1000,
+        "pack_price": 100
+      },
+      {
+        "id": "sugar",
+        "name": "Sugar",
+        "unit_type": "g",
+        "pack_quantity": 1000,
+        "pack_price": 120
+      },
+      {
+        "id": "butter",
+        "name": "Butter",
+        "unit_type": "g",
+        "pack_quantity": 200,
+        "pack_price": 300
+      },
+      {
+        "id": "egg",
+        "name": "Egg",
+        "unit_type": "piece",
+        "pack_quantity": 12,
+        "pack_price": 120,
+        "piece_weight_g": 50
+      },
+      {
+        "id": "salt",
+        "name": "Salt",
+        "unit_type": "g",
+        "pack_quantity": 1000,
+        "pack_price": 30,
+        "grams_per_tsp": 6
+      },
+      {
+        "id": "cocoa",
+        "name": "Cocoa",
+        "unit_type": "g",
+        "pack_quantity": 500,
+        "pack_price": 750
+      },
+      {
+        "id": "vanilla",
+        "name": "Vanilla",
+        "unit_type": "g",
+        "pack_quantity": 100,
+        "pack_price": 250,
+        "grams_per_tsp": 5
+      },
+      {
+        "id": "jam",
+        "name": "Jam",
+        "unit_type": "g",
+        "pack_quantity": 250,
+        "pack_price": 400
+      },
+      {
+        "id": "fondant",
+        "name": "Fondant",
+        "unit_type": "g",
+        "pack_quantity": 1000,
+        "pack_price": 900
+      },
+      {
+        "id": "choc",
+        "name": "Chocolate",
+        "unit_type": "g",
+        "pack_quantity": 1000,
+        "pack_price": 750
+      }
+    ],
+    "recipes": [
+      {
+        "id": "cake_plain",
+        "name": "Plain cake",
+        "kind": "cake",
+        "weight_adjustment_g": 0,
+        "lines": [
+          {
+            "ingredient_id": "egg",
+            "quantity": 2,
+            "unit": "piece"
+          },
+          {
+            "ingredient_id": "flour",
+            "quantity": 100,
+            "unit": "g"
+          },
+          {
+            "ingredient_id": "sugar",
+            "quantity": 50,
+            "unit": "g"
+          },
+          {
+            "ingredient_id": "salt",
+            "quantity": 1,
+            "unit": "tsp"
+          }
+        ]
+      },
+      {
+        "id": "cake_choc",
+        "name": "Chocolate cake",
+        "kind": "cake",
+        "weight_adjustment_g": 0,
+        "lines": [
+          {
+            "ingredient_id": "egg",
+            "quantity": 2,
+            "unit": "piece"
+          },
+          {
+            "ingredient_id": "flour",
+            "quantity": 80,
+            "unit": "g"
+          },
+          {
+            "ingredient_id": "cocoa",
+            "quantity": 20,
+            "unit": "g"
+          },
+          {
+            "ingredient_id": "sugar",
+            "quantity": 50,
+            "unit": "g"
+          },
+          {
+            "ingredient_id": "salt",
+            "quantity": 1,
+            "unit": "tsp"
+          }
+        ]
+      },
+      {
+        "id": "buttercream",
+        "name": "Buttercream",
+        "kind": "frosting_filling",
+        "weight_adjustment_g": 0,
+        "lines": [
+          {
+            "ingredient_id": "butter",
+            "quantity": 100,
+            "unit": "g"
+          },
+          {
+            "ingredient_id": "sugar",
+            "quantity": 100,
+            "unit": "g"
+          },
+          {
+            "ingredient_id": "egg",
+            "quantity": 2,
+            "unit": "piece"
+          },
+          {
+            "ingredient_id": "vanilla",
+            "quantity": 5,
+            "unit": "g",
+            "exclude_from_weight": true
+          },
+          {
+            "ingredient_id": "salt",
+            "quantity": 1,
+            "unit": "tsp",
+            "exclude_from_weight": true
+          }
+        ]
+      },
+      {
+        "id": "curd",
+        "name": "Curd (yolks)",
+        "kind": "frosting_filling",
+        "weight_adjustment_g": 30,
+        "lines": [
+          {
+            "ingredient_id": "egg",
+            "quantity": 3,
+            "unit": "piece",
+            "piece_weight_g_override": 20
+          },
+          {
+            "ingredient_id": "sugar",
+            "quantity": 100,
+            "unit": "g"
+          },
+          {
+            "ingredient_id": "butter",
+            "quantity": 50,
+            "unit": "g"
+          }
+        ]
+      },
+      {
+        "id": "dough",
+        "name": "Dough",
+        "kind": "batch_product",
+        "weight_adjustment_g": 0,
+        "lines": [
+          {
+            "ingredient_id": "flour",
+            "quantity": 500,
+            "unit": "g"
+          },
+          {
+            "ingredient_id": "sugar",
+            "quantity": 50,
+            "unit": "g"
+          },
+          {
+            "ingredient_id": "egg",
+            "quantity": 2,
+            "unit": "piece"
+          },
+          {
+            "ingredient_id": "butter",
+            "quantity": 50,
+            "unit": "g"
+          }
+        ]
+      },
+      {
+        "id": "shell",
+        "name": "Shell mix",
+        "kind": "batch_product",
+        "weight_adjustment_g": 0,
+        "lines": [
+          {
+            "ingredient_id": "flour",
+            "quantity": 100,
+            "unit": "g"
+          },
+          {
+            "ingredient_id": "sugar",
+            "quantity": 100,
+            "unit": "g"
+          },
+          {
+            "ingredient_id": "egg",
+            "quantity": 2,
+            "unit": "piece"
+          },
+          {
+            "ingredient_id": "salt",
+            "quantity": 0.5,
+            "unit": "tsp"
+          }
+        ]
+      }
+    ],
+    "flavours": [
+      {
+        "id": "plain",
+        "name": "Plain",
+        "cost_model": {
+          "type": "recipe",
+          "cake_recipe_id": "cake_plain",
+          "frosting_recipe_id": "buttercream"
+        },
+        "addon_cost_per_kg": 0
+      },
+      {
+        "id": "choc",
+        "name": "Chocolate",
+        "cost_model": {
+          "type": "recipe",
+          "cake_recipe_id": "cake_choc",
+          "frosting_recipe_id": "buttercream"
+        },
+        "addon_cost_per_kg": 0
+      },
+      {
+        "id": "marble",
+        "name": "Marble",
+        "cost_model": {
+          "type": "average",
+          "of": [
+            "plain",
+            "choc"
+          ]
+        },
+        "addon_cost_per_kg": 20
+      },
+      {
+        "id": "mocha",
+        "name": "Mocha",
+        "cost_model": {
+          "type": "recipe",
+          "cake_recipe_id": "cake_plain",
+          "frosting_recipe_id": "buttercream"
+        },
+        "addon_cost_per_kg": 40
+      }
+    ],
+    "fillings": [
+      {
+        "id": "f_jam",
+        "name": "Jam",
+        "source": {
+          "type": "ingredient",
+          "ingredient_id": "jam"
+        }
+      },
+      {
+        "id": "f_bc",
+        "name": "Buttercream",
+        "source": {
+          "type": "recipe",
+          "recipe_id": "buttercream"
+        }
+      },
+      {
+        "id": "f_curd",
+        "name": "Curd",
+        "source": {
+          "type": "recipe",
+          "recipe_id": "curd"
+        }
+      }
+    ],
+    "batch_products": [
+      {
+        "id": "donut",
+        "recipe_id": "dough",
+        "pieces_mode": "by_weight",
+        "piece_weight_g": 50,
+        "labour_hours_per_batch": 1,
+        "components": [],
+        "box_id": "box12",
+        "pieces_per_box": 12,
+        "show_each_including_box": true
+      },
+      {
+        "id": "macaron",
+        "recipe_id": "shell",
+        "pieces_mode": "fixed",
+        "fixed_pieces": 10,
+        "labour_hours_per_batch": 0.5,
+        "components": [
+          {
+            "recipe_id": "buttercream",
+            "grams": 15
+          }
+        ],
+        "box_id": "box10",
+        "pieces_per_box": 10,
+        "show_each_including_box": false
+      }
+    ],
+    "assembled_products": [
+      {
+        "id": "cupcake",
+        "components": [
+          {
+            "type": "cake_recipe_grams",
+            "recipe_id": "cake_plain",
+            "grams": 60
+          },
+          {
+            "type": "recipe_per_gram",
+            "recipe_id": "buttercream",
+            "grams": 35
+          }
+        ],
+        "labour_hours_per_batch": 1,
+        "pieces_per_batch": 12,
+        "box_id": "box12",
+        "pieces_per_box": 12
+      },
+      {
+        "id": "cakepop",
+        "components": [
+          {
+            "type": "cake_recipe_grams",
+            "recipe_id": "cake_choc",
+            "grams": 18
+          },
+          {
+            "type": "recipe_per_gram",
+            "recipe_id": "curd",
+            "grams": 3
+          },
+          {
+            "type": "ingredient_grams",
+            "ingredient_id": "choc",
+            "grams": 10
+          }
+        ],
+        "labour_hours_per_batch": 1,
+        "pieces_per_batch": 12,
+        "box_id": "box12",
+        "pieces_per_box": 12
+      }
+    ],
+    "packaging_items": [
+      {
+        "id": "cake_box",
+        "name": "Cake box",
+        "price": 70
+      },
+      {
+        "id": "std_board",
+        "name": "Standard board",
+        "price": 15
+      },
+      {
+        "id": "mdf",
+        "name": "MDF drum board",
+        "price": 250
+      },
+      {
+        "id": "wallpaper",
+        "name": "Wallpaper",
+        "price": 0
+      },
+      {
+        "id": "print",
+        "name": "Edible print",
+        "price": 450
+      },
+      {
+        "id": "box12",
+        "name": "12-hole box",
+        "price": 50
+      },
+      {
+        "id": "box10",
+        "name": "10-piece box",
+        "price": 30
+      }
+    ]
+  },
+  "quote_input": {
+    "tiers": [
+      {
+        "size_kg": 2,
+        "flavour_id": "plain",
+        "filling_id": "f_jam"
+      },
+      {
+        "size_kg": 1,
+        "flavour_id": "marble",
+        "filling_id": "f_bc"
+      },
+      {
+        "size_kg": 0
+      },
+      {
+        "size_kg": 0
+      },
+      {
+        "size_kg": 0
+      },
+      {
+        "size_kg": 0
+      }
+    ],
+    "decoration": {
+      "fondant_kg": 0.5,
+      "prints": 1,
+      "flowers": 100,
+      "toppers": 1,
+      "time_hours": 2,
+      "others": 50,
+      "delivery": 200
+    }
+  },
+  "expected_T1": {
+    "recipes": {
+      "cake_plain": {
+        "raw": 36.18,
+        "cwo": 45.225,
+        "weight": 256
+      },
+      "cake_choc": {
+        "raw": 64.18,
+        "cwo": 80.225,
+        "weight": 256
+      },
+      "buttercream": {
+        "raw": 194.68,
+        "cwo": 243.35,
+        "weight": 300
+      },
+      "curd": {
+        "raw": 117,
+        "cwo": 146.25,
+        "weight": 240
+      },
+      "dough": {
+        "raw": 151,
+        "cwo": 188.75,
+        "weight": 700
+      },
+      "shell": {
+        "raw": 42.09,
+        "cwo": 52.6125,
+        "weight": 303
+      }
+    },
+    "flavour_price_per_kg": {
+      "plain": 349.4125,
+      "choc": 384.4125,
+      "marble": 391.9125,
+      "mocha": 399.4125
+    },
+    "filling_cost_per_kg_of_cake": {
+      "f_jam": 300,
+      "f_bc": 121.675,
+      "f_curd": 91.40625
+    },
+    "products": {
+      "donut": {
+        "pieces": 14,
+        "unit_cost": 49.196429,
+        "each_incl_box": 76.232993,
+        "each_excl_box": 70.280612,
+        "box_price": 914.795918,
+        "each_shown": 76.232993
+      },
+      "macaron": {
+        "pieces": 10,
+        "unit_cost": 42.42875,
+        "each_incl_box": 64.898214,
+        "each_excl_box": 60.6125,
+        "box_price": 648.982143,
+        "each_shown": 60.6125
+      },
+      "cupcake": {
+        "unit_cost": 31.104333,
+        "price_each": 109.910952
+      },
+      "cakepop": {
+        "unit_cost": 12.647175,
+        "price_each": 83.543583
+      }
+    },
+    "quote": {
+      "tier_cost": 1812.4125,
+      "tiers_used": 2,
+      "overhead": 550,
+      "packaging": 420,
+      "total_cost": 5182.4125,
+      "profit": 2135.319643,
+      "price": 7317.732143,
+      "margin_check": 0.3
+    }
+  },
+  "expected_T2": {
+    "flavour_price_per_kg": {
+      "plain": 363.389,
+      "choc": 399.789,
+      "marble": 407.589,
+      "mocha": 415.389
+    },
+    "quote": {
+      "tier_cost": 1884.909,
+      "tiers_used": 2,
+      "overhead": 690,
+      "packaging": 420,
+      "total_cost": 5494.909,
+      "profit": 2851.104846,
+      "price": 8346.013846,
+      "margin_check": 0.35
+    },
+    "products": {
+      "donut": {
+        "pieces": 14,
+        "unit_cost": 55.807143,
+        "each_incl_box": 92.267399,
+        "each_excl_box": 85.857143,
+        "box_price": 1107.208791,
+        "each_shown": 92.267399
+      },
+      "macaron": {
+        "pieces": 10,
+        "unit_cost": 47.3759,
+        "each_incl_box": 77.501385,
+        "each_excl_box": 72.886,
+        "box_price": 775.013846,
+        "each_shown": 72.886
+      },
+      "cupcake": {
+        "unit_cost": 32.348507,
+        "price_each": 131.17719
+      },
+      "cakepop": {
+        "unit_cost": 13.153062,
+        "price_each": 101.645736
+      }
+    }
+  }
+}
