@@ -2,6 +2,18 @@
 
 All notable changes to the Bakery Costing App (OvenCost Pro) will be documented in this file.
 
+## [1.1.2] - 2026-10-08
+
+*   **Version drift fix:** Bumped `package.json` version from 1.1.0 to 1.1.2 to match the git tag history.
+
+## [1.1.1] - 2026-10-08
+
+*   **Post-audit cleanup:**
+    *   Fixed `rounding_rule` → `price_rounding_step` in `MIGRATIONS.md` and `Bakery_Costing_App_Build_Prompt.md` §10.
+    *   Regenerated `blank_import_template.json` at schema 1.2 (adds `customers`, `orders`, `price_rounding_step`).
+    *   Tightened T27 to test what its title claims (real fixture IDs, asserts `tiers_used`).
+    *   Unified `generateId` on `engine/utils.ts` across 5 UI pages.
+
 ## [1.1.0] - 2026-10-07
 
 *   **Phase 21 — Google Drive Manual Backup & Restore:**
