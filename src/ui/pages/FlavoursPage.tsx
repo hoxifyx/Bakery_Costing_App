@@ -4,15 +4,7 @@ import type { Flavour, Filling } from '../../engine/types';
 import { compute } from '../../engine/engine';
 import { NumberInput, ConfirmDialog } from '../components/Shared';
 import { ExplainPanel } from '../components/ExplainPanel';
-
-function genId<T extends { id: string }>(list: T[], prefix: string): string {
-  const ids = new Set(list.map(x => x.id));
-  for (let i = 1; i < 9999; i++) {
-    const id = `${prefix}_${i}`;
-    if (!ids.has(id)) return id;
-  }
-  return `${prefix}_${Date.now()}`;
-}
+import { generateId } from '../../engine/utils';
 
 export function FlavoursPage() {
   const { state, dispatch } = useStore();
@@ -38,7 +30,7 @@ export function FlavoursPage() {
   const openNewFlavour = () => {
     setIsNew(true);
     setEditingFlavour({
-      id: genId(data.flavours, 'flavour'),
+      id: generateId('flavour'),
       name: '',
       cost_model: { type: 'recipe', cake_recipe_id: cakeRecipes[0]?.id ?? '', frosting_recipe_id: frostingRecipes[0]?.id ?? '' },
       addon_cost_per_kg: 0,
@@ -70,7 +62,7 @@ export function FlavoursPage() {
   const openNewFilling = () => {
     setIsNew(true);
     setEditingFilling({
-      id: genId(data.fillings, 'filling'),
+      id: generateId('filling'),
       name: '',
       source: { type: 'recipe', recipe_id: frostingRecipes[0]?.id ?? '' },
     });

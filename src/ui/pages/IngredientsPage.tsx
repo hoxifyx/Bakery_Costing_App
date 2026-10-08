@@ -3,15 +3,7 @@ import { useStore } from '../../store/store';
 import type { Ingredient, PriceHistoryEntry } from '../../engine/types';
 import { NumberInput, SearchBar, ConfirmDialog } from '../components/Shared';
 import { exportIngredientsCSV, importIngredientsCSV } from '../../io/io';
-
-function generateId(existing: Ingredient[]): string {
-  const ids = new Set(existing.map(i => i.id));
-  for (let i = 1; i < 9999; i++) {
-    const id = `ing_${i}`;
-    if (!ids.has(id)) return id;
-  }
-  return 'ing_' + Date.now();
-}
+import { generateId } from '../../engine/utils';
 
 const EMPTY_ING: Omit<Ingredient, 'id'> = {
   name: '',
@@ -62,7 +54,7 @@ export function IngredientsPage() {
 
   const openNew = () => {
     setIsNew(true);
-    setEditing({ id: generateId(data.ingredients), ...EMPTY_ING });
+    setEditing({ id: generateId('ing'), ...EMPTY_ING });
   };
 
   const openEdit = (ing: Ingredient) => {
@@ -71,7 +63,7 @@ export function IngredientsPage() {
   };
 
   const duplicate = (ing: Ingredient) => {
-    const newId = generateId(data.ingredients);
+    const newId = generateId('ing');
     setIsNew(true);
     setEditing({ ...ing, id: newId, name: ing.name + ' (copy)' });
   };

@@ -1088,7 +1088,7 @@ The following extensions were implemented as part of the Phased Upgrade Plan.
 Final schema version: `1.2`.
 
 - **Phase 1**: Core Architecture & Dependency Setup (Validation only).
-- **Phase 2**: Price Rounding (`settings.rounding_rule`).
+- **Phase 2**: Price Rounding (`settings.price_rounding_step`).
 - **Phase 3**: Configurable Size Guide (`size_guide` added to AppData).
 - **Phase 4**: Order & Customer Management (`customers`, `orders` added to AppData).
 - **Phase 5**: Historical Pricing Data (`price_history` added to Ingredient).

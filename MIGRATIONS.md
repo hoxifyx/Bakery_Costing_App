@@ -11,8 +11,8 @@ Major version mismatches are rejected. Minor version mismatches are accepted, an
 *   **Added:** `customers` array to `AppData`.
 *   **Added:** `orders` array to `AppData`.
 *   **Added:** `price_history` array to `Ingredient`.
-*   **Added:** `rounding_rule` to `Settings` (Phase 2).
-*   **Migration:** When importing a `1.1` file, the import validator will automatically initialize the new `customers`, `orders`, and `price_history` fields to empty arrays, and `rounding_rule` to `none`.
+*   **Added:** `price_rounding_step` to `Settings` (Phase 2).
+*   **Migration:** When importing a `1.1` file, the import validator will automatically initialize the new `customers`, `orders`, and `price_history` fields to empty arrays, and `price_rounding_step` to `none`.
 
 ### `1.1`
 *   Initial production schema version.

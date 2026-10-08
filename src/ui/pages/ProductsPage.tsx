@@ -5,15 +5,7 @@ import { compute } from '../../engine/engine';
 import { NumberInput, ConfirmDialog, Toggle } from '../components/Shared';
 import { ExplainPanel } from '../components/ExplainPanel';
 import { WarningsList } from '../components/WarningsList';
-
-function genId<T extends { id: string }>(list: T[], prefix: string): string {
-  const ids = new Set(list.map(x => x.id));
-  for (let i = 1; i < 9999; i++) {
-    const id = `${prefix}_${i}`;
-    if (!ids.has(id)) return id;
-  }
-  return `${prefix}_${Date.now()}`;
-}
+import { generateId } from '../../engine/utils';
 
 function fmt(n: number, cur: string) { return `${cur} ${n.toFixed(2)}`; }
 
@@ -42,7 +34,7 @@ export function ProductsPage() {
   const openNewBatch = () => {
     setIsNew(true);
     setEditingBatch({
-      id: genId(data.batch_products, 'batch'),
+      id: generateId('batch'),
       name: '',
       recipe_id: batchRecipes[0]?.id ?? '',
       pieces_mode: 'by_weight',
@@ -66,7 +58,7 @@ export function ProductsPage() {
   const openNewAssembled = () => {
     setIsNew(true);
     setEditingAssembled({
-      id: genId(data.assembled_products, 'assembled'),
+      id: generateId('assembled'),
       name: '',
       components: [],
       labour_hours_per_batch: 0,

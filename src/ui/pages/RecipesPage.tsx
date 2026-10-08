@@ -5,15 +5,7 @@ import { compute } from '../../engine/engine';
 import { NumberInput, SearchBar, ConfirmDialog } from '../components/Shared';
 import { ExplainPanel } from '../components/ExplainPanel';
 import { WarningsList } from '../components/WarningsList';
-
-function generateId(existing: Recipe[]): string {
-  const ids = new Set(existing.map(r => r.id));
-  for (let i = 1; i < 9999; i++) {
-    const id = `recipe_${i}`;
-    if (!ids.has(id)) return id;
-  }
-  return 'recipe_' + Date.now();
-}
+import { generateId } from '../../engine/utils';
 
 function emptyLine(): RecipeLine {
   return { ingredient_id: null, quantity: 0, unit: 'g' };
@@ -51,7 +43,7 @@ export function RecipesPage() {
   const openNew = () => {
     setIsNew(true);
     setEditing({
-      id: generateId(data.recipes),
+      id: generateId('recipe'),
       name: '',
       kind: 'cake',
       lines: [emptyLine()],
@@ -63,7 +55,7 @@ export function RecipesPage() {
 
   const duplicate = (r: Recipe) => {
     setIsNew(true);
-    setEditing({ ...JSON.parse(JSON.stringify(r)), id: generateId(data.recipes), name: r.name + ' (copy)' });
+    setEditing({ ...JSON.parse(JSON.stringify(r)), id: generateId('recipe'), name: r.name + ' (copy)' });
   };
 
   const save = () => {

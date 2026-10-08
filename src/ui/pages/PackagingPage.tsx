@@ -3,15 +3,7 @@ import { useStore } from '../../store/store';
 import type { PackagingItem } from '../../engine/types';
 import { NumberInput, SearchBar, ConfirmDialog } from '../components/Shared';
 import { exportPackagingCSV } from '../../io/io';
-
-function generateId(existing: PackagingItem[]): string {
-  const ids = new Set(existing.map(i => i.id));
-  for (let i = 1; i < 9999; i++) {
-    const id = `pkg_${i}`;
-    if (!ids.has(id)) return id;
-  }
-  return 'pkg_' + Date.now();
-}
+import { generateId } from '../../engine/utils';
 
 function getUsedIn(id: string, data: ReturnType<typeof useStore>['state']['data']): string[] {
   const used: string[] = [];
@@ -46,13 +38,13 @@ export function PackagingPage() {
 
   const openNew = () => {
     setIsNew(true);
-    setEditing({ id: generateId(data.packaging_items), name: '', price: 0 });
+    setEditing({ id: generateId('pkg'), name: '', price: 0 });
   };
 
   const openEdit = (p: PackagingItem) => { setIsNew(false); setEditing({ ...p }); };
   const duplicate = (p: PackagingItem) => {
     setIsNew(true);
-    setEditing({ ...p, id: generateId(data.packaging_items), name: p.name + ' (copy)' });
+    setEditing({ ...p, id: generateId('pkg'), name: p.name + ' (copy)' });
   };
 
   const save = () => {

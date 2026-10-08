@@ -1,6 +1,6 @@
 {
  "format": "bakery-costing-data",
- "schema_version": "1.0",
+ "schema_version": "1.2",
  "exported_at": "",
  "app_version": "",
  "settings": {
@@ -18,7 +18,8 @@
   "cake_box_item_id": null,
   "mdf_board_item_id": null,
   "standard_board_item_id": null,
-  "wallpaper_item_id": null
+  "wallpaper_item_id": null,
+  "price_rounding_step": 0
  },
  "ingredients": [],
  "packaging_items": [],
@@ -28,14 +29,48 @@
  "batch_products": [],
  "assembled_products": [],
  "size_guide": [
-  { "label": "5\"", "kg": 0.7, "servings": 10 },
-  { "label": "6\"", "kg": 1, "servings": 15 },
-  { "label": "7\"", "kg": 1.5, "servings": 20 },
-  { "label": "8\"", "kg": 2, "servings": 30 },
-  { "label": "9\"", "kg": 2.5, "servings": 38 },
-  { "label": "10\"", "kg": 3, "servings": 45 },
-  { "label": "11\"", "kg": 3.5, "servings": 52 },
-  { "label": "12\"", "kg": 4.5, "servings": 67 }
+  {
+   "label": "5\"",
+   "kg": 0.7,
+   "servings": 10
+  },
+  {
+   "label": "6\"",
+   "kg": 1,
+   "servings": 15
+  },
+  {
+   "label": "7\"",
+   "kg": 1.5,
+   "servings": 20
+  },
+  {
+   "label": "8\"",
+   "kg": 2,
+   "servings": 30
+  },
+  {
+   "label": "9\"",
+   "kg": 2.5,
+   "servings": 38
+  },
+  {
+   "label": "10\"",
+   "kg": 3,
+   "servings": 45
+  },
+  {
+   "label": "11\"",
+   "kg": 3.5,
+   "servings": 52
+  },
+  {
+   "label": "12\"",
+   "kg": 4.5,
+   "servings": 67
+  }
  ],
- "saved_quotes": []
+ "saved_quotes": [],
+ "customers": [],
+ "orders": []
 }

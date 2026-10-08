@@ -752,34 +752,33 @@ describe('Bakery Costing App - Golden Tests', () => {
   // -------------------------------------------------------------------------
   // Test T27: Phase 3 — Editable Size Guide
   // -------------------------------------------------------------------------
-  it('T27: Phase 3 — Size guide data can be modified and persists in AppData', () => {
-    // We cannot easily test the UI rendering without React testing tools,
-    // but we can assert the engine and data model support arbitrary size_guide entries.
+  it('T27: Phase 3 — Size guide entries are stored and used for quote sizes', () => {
     const customSizeGuide = [
       { label: 'Mini', kg: 0.25, servings: 2 },
-      { label: 'Massive', kg: 10, servings: 200 }
+      { label: 'Massive', kg: 10, servings: 200 },
     ];
+    const modifiedData = { ...fixtureData, size_guide: customSizeGuide };
 
-    const modifiedData = {
-      ...fixtureData,
-      size_guide: customSizeGuide
-    };
-
-    // The QuotePage UI maps over data.size_guide to render pills.
-    // Confirm the size guide is properly saved and doesn't break engine compute
-    expect(modifiedData.size_guide.length).toBe(2);
+    // The size guide is stored correctly
+    expect(modifiedData.size_guide).toHaveLength(2);
     expect(modifiedData.size_guide[0].label).toBe('Mini');
-    
-    // Compute with a custom size using one of the new sizes to ensure it works
+
+    // A quote using the custom size produces a positive tier cost,
+    // using real fixture IDs so the cost is non-zero
     const r = compute(modifiedData, {
       ...quoteInput,
       tiers: [
-        { size_kg: 0.25, flavour_id: 'vanilla', filling_id: 'buttercream' },
-        ...quoteInput.tiers.slice(1)
-      ]
+        { size_kg: 0.25, flavour_id: 'plain', filling_id: 'f_jam' },
+        { size_kg: 0, flavour_id: null, filling_id: null },
+        { size_kg: 0, flavour_id: null, filling_id: null },
+        { size_kg: 0, flavour_id: null, filling_id: null },
+        { size_kg: 0, flavour_id: null, filling_id: null },
+        { size_kg: 0, flavour_id: null, filling_id: null },
+      ],
     });
     expect(r.quote).toBeDefined();
     expect(r.quote!.tier_cost).toBeGreaterThan(0);
+    expect(r.quote!.tiers_used).toBe(1);
   });
 
   // -------------------------------------------------------------------------
