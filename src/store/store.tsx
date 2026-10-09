@@ -360,9 +360,9 @@ function reducer(state: StoreState, action: Action): StoreState {
     case 'CLOUD_STATUS_LOADED':
       return { ...state, cloud: { ...state.cloud, configured: action.configured, signedIn: action.signedIn, user: action.user, lastBackupAt: action.lastBackupAt, lastBackupFileId: action.lastBackupFileId } };
     case 'CLOUD_SIGNED_IN':
-      return { ...state, cloud: { ...state.cloud, signedIn: true, user: action.user, error: null } };
+      return { ...state, cloud: { ...state.cloud, signedIn: true, user: action.user, error: null, busy: false } };
     case 'CLOUD_SIGNED_OUT':
-      return { ...state, cloud: { ...state.cloud, signedIn: false, user: null, error: null } };
+      return { ...state, cloud: { ...state.cloud, signedIn: false, user: null, error: null, busy: false } };
     case 'CLOUD_BUSY':
       return { ...state, cloud: { ...state.cloud, busy: true, error: null } };
     case 'CLOUD_IDLE':

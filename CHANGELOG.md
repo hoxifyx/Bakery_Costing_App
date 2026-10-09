@@ -2,6 +2,11 @@
 
 All notable changes to the Bakery Costing App (OvenCost Pro) will be documented in this file.
 
+## [1.1.4] - 2026-10-09
+
+*   **Fix Google Drive backup hang:** The "Back up now" button was permanently disabled after sign-in because the `CLOUD_SIGNED_IN` and `CLOUD_SIGNED_OUT` reducer cases did not reset `cloud.busy` to `false`. Sign-in now correctly clears the busy flag, so the button enables and the backup can be triggered. The underlying Google Drive upload was working the whole time — the UI just wouldn't let the user start it.
+*   **Remove redundant intermediate variable:** Simplified `createBackup()` in `src/cloud/backupManager.ts` to return the timeout-wrapped promise directly.
+
 ## [1.1.3] - 2026-10-08
 
 *   **Lockfile sync:** Updated `package-lock.json` root `version` field from `0.0.0` to `1.1.3` to match `package.json`. No dependency versions changed. `npm ci` now works on a fresh clone without warnings.

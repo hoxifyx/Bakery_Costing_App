@@ -38,7 +38,7 @@ async function _createBackup(appData: AppData): Promise<{ fileId: string; filena
   const jsonStr = exportAllData(appData);
   const size = new Blob([jsonStr]).size;
   const filename = generateFilename();
-  
+
   const meta = await drive.uploadBackup(jsonStr, filename);
   await drive.pruneOldBackups(10);
   
