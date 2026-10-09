@@ -78,23 +78,11 @@ export async function signIn(): Promise<{ email: string; name?: string }> {
             return;
           }
           accessToken = response.access_token;
-
-          // Try to fetch basic profile info using the token
-          try {
-            const userInfoRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-              headers: { Authorization: `Bearer ${accessToken}` },
-            });
-            if (userInfoRes.ok) {
-              const info = await userInfoRes.json();
-              signedInUser = { email: info.email, name: info.name };
-            } else {
-              signedInUser = { email: 'Unknown User' };
-            }
-          } catch (e) {
-            signedInUser = { email: 'Unknown User' };
-          }
-
-          resolve(signedInUser!);
+          // We only requested the drive.appdata scope, so we have no way to
+          // fetch the user's email/name. Use a placeholder instead of calling
+          // the userinfo endpoint (which would require an identity scope).
+          signedInUser = { email: 'Google Drive user' };
+          resolve(signedInUser);
         },
       });
       client.requestAccessToken({ prompt: 'consent' });

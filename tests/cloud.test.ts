@@ -213,4 +213,13 @@ describe('Cloud Backup & Restore (Phase 21)', () => {
     expect(deleteSpy).toHaveBeenCalledWith('f4');
     expect(deleteSpy).toHaveBeenCalledWith('f5');
   });
+
+  it('C13: createBackup eventually rejects if network hangs', async () => {
+    // Mock uploadBackup to hang indefinitely
+    vi.spyOn(driveModule, 'uploadBackup').mockImplementation(() => new Promise(() => {}));
+    
+    await expect(backupManager.createBackup(EMPTY_APP_DATA)).rejects.toThrow('Operation timed out after 30 seconds');
+  }, 35000);
 });
+
+

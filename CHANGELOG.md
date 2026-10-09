@@ -4,7 +4,8 @@ All notable changes to the Bakery Costing App (OvenCost Pro) will be documented 
 
 ## [1.1.3] - 2026-10-08
 
-*   **Lockfile sync:** Updated `package-lock.json` root `version` field from `0.0.0` to `1.1.2` to match `package.json`. No dependency versions changed. `npm ci` now works on a fresh clone without warnings.
+*   **Lockfile sync:** Updated `package-lock.json` root `version` field from `0.0.0` to `1.1.3` to match `package.json`. No dependency versions changed. `npm ci` now works on a fresh clone without warnings.
+*   **Timeout safety net:** Added a 30‑second timeout wrapper to `createBackup` and `restoreBackup` to prevent UI hangs when network calls stall.
 
 ## [1.1.2] - 2026-10-08
 
