@@ -30,3 +30,7 @@ dist-ssr
 
 # Source Excel workbook — reference only, not part of the build
 *.xlsx
+
+# Project handoff bundle (generated artifact — keep local, don't commit)
+PROJECT_BUNDLE.json
+PROJECT_BUNDLE.json.sha256
