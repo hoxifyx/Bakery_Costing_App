@@ -716,13 +716,20 @@ export function QuotePage() {
                 </div>
               </div>
 
-              {/* 4. Profit Gauge */}
+              {/* 4. Net Yield gauge */}
               <div className="net-yield-box">
                 <div className="net-yield-top">
-                  <span className="net-yield-label">Net Yield</span>
-                  <span className="net-yield-profit">{fmt(displayQ.profit, cur)}</span>
+                  <span className="net-yield-label">Calculated Net Yield</span>
+                  <span className={isMarginMet ? 'status-badge-ready' : 'status-badge-below'}>
+                    {isMarginMet ? 'Healthy Margin' : 'Under Target'}
+                  </span>
                 </div>
-
+                <div className="net-yield-mid">
+                  <span className="net-yield-profit">{fmt(displayQ.profit, cur)}</span>
+                  <span className="net-yield-target">
+                    {(displayQ.margin_check * 100).toFixed(1)}% / {(settings.target_margin * 100).toFixed(0)}%
+                  </span>
+                </div>
                 <div className="net-yield-bar-track">
                   <div
                     className="net-yield-bar-fill"
@@ -732,10 +739,8 @@ export function QuotePage() {
                     }}
                   />
                 </div>
-
                 <div className="net-yield-footer">
-                  <span>Margin: {(displayQ.margin_check * 100).toFixed(1)}%</span>
-                  <span>Target: {(settings.target_margin * 100).toFixed(1)}%</span>
+                  Target margin {(settings.target_margin * 100).toFixed(0)}% applied on non-delivery revenue.
                 </div>
               </div>
 
@@ -794,39 +799,32 @@ export function QuotePage() {
       {/* Save Quote Dialog */}
       {showSaveDialog && (
         <div
-          className="modal-overlay"
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(0, 0, 0, 0.75)',
-            zIndex: 200,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: 16,
-          }}
+          className="modal-backdrop"
           onClick={() => setShowSaveDialog(false)}
           role="dialog"
           aria-modal="true"
           aria-labelledby="save-dialog-title"
         >
           <div
-            className="card"
-            style={{ width: '100%', maxWidth: 440, background: 'var(--bg-surface)', border: '1px solid var(--border)' }}
+            className="modal"
+            style={{ maxWidth: 440 }}
             onClick={e => e.stopPropagation()}
           >
-            <div className="card-header">
-              <div id="save-dialog-title" className="card-title">💾 Save Quote</div>
+            <div className="modal-header">
+              <h2 id="save-dialog-title" className="modal-title" style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                <span className="material-symbols-outlined ms-18" aria-hidden>save</span>
+                Save Quote
+              </h2>
               <button
                 type="button"
                 className="btn btn-ghost btn-sm"
                 onClick={() => setShowSaveDialog(false)}
                 aria-label="Close dialog"
               >
-                ✕
+                <span className="material-symbols-outlined ms-18" aria-hidden>close</span>
               </button>
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginTop: 12 }}>
+            <div className="modal-body">
               <div className="form-group">
                 <label htmlFor="save-quote-name">Quote Name</label>
                 <input
@@ -850,22 +848,22 @@ export function QuotePage() {
                   placeholder="e.g. Wedding cake for Sarah, floral theme..."
                 />
               </div>
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 8 }}>
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  onClick={() => setShowSaveDialog(false)}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  className="btn btn-primary"
-                  onClick={handleSaveQuote}
-                >
-                  Save Quote
-                </button>
-              </div>
+            </div>
+            <div className="modal-footer">
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => setShowSaveDialog(false)}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={handleSaveQuote}
+              >
+                Save Quote
+              </button>
             </div>
           </div>
         </div>
