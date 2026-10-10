@@ -211,7 +211,7 @@ export function SettingsPage() {
                 value={localSettings.cake_batches_per_kg}
                 onChange={v => handleChange('cake_batches_per_kg', v)}
                 step={0.05}
-                min={0.01}
+                min={0}
               />
               <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>
                 Number of sponge batches needed to yield 1 kg of finished cake (default: 1.0).
@@ -224,7 +224,7 @@ export function SettingsPage() {
                 value={localSettings.frosting_batches_per_kg}
                 onChange={v => handleChange('frosting_batches_per_kg', v)}
                 step={0.05}
-                min={0.01}
+                min={0}
               />
               <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>
                 Number of frosting batches needed to cover/crumb coat 1 kg of cake (default: 1.25).

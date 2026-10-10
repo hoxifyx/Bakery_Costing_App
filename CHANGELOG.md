@@ -5,6 +5,11 @@ All notable changes to the Bakery Costing App (OvenCost Pro) will be documented 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.12] - 2026-10-10
+
+### Fixed
+- **Settings:** Changed the minimum for Cake Batches per kg and Frosting Batches per kg to zero. Their previous `min={0.01}` with `step={0.05}` made the default values invalid under native form validation, blocking Settings submission.
+
 ## [1.4.11] - 2026-10-10
 
 ### Added
