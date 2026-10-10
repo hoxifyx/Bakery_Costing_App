@@ -102,7 +102,20 @@ export function Layout({ currentPage, onNavigate, children }: LayoutProps) {
     return () => clearInterval(interval);
   }, [state.lastSaved]);
 
-  const navSections = [
+  interface NavItem {
+    id: string;
+    label: string;
+    icon: string;
+    badge?: number;
+    badgeDanger?: boolean;
+  }
+
+  interface NavSection {
+    title: string;
+    items: NavItem[];
+  }
+
+  const navSections: NavSection[] = [
     {
       title: 'Quote',
       items: [
@@ -131,7 +144,7 @@ export function Layout({ currentPage, onNavigate, children }: LayoutProps) {
       title: 'Tools',
       items: [
         { id: 'settings', label: 'Settings', icon: '⚙️' },
-        { id: 'health', label: 'Data Health', icon: '🏥', badge: warningCount },
+        { id: 'health', label: 'Data Health', icon: '🏥', badge: warningCount, badgeDanger: warningCount > 0 },
         { id: 'import_export', label: 'Import / Export', icon: '📤' },
       ],
     },
@@ -142,29 +155,15 @@ export function Layout({ currentPage, onNavigate, children }: LayoutProps) {
     setMobileMenuOpen(false);
   };
 
+  const currencyCode = state.data.settings.currency_code || 'USD';
+
   return (
-    <div className="app-container" style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg-base)' }}>
-      {/* Mobile Header Bar */}
-      <div
-        className="mobile-header"
-        style={{
-          display: 'none',
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          height: 56,
-          background: 'var(--bg-card)',
-          borderBottom: '1px solid var(--border)',
-          zIndex: 100,
-          padding: '0 16px',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <span style={{ fontSize: 20 }}>🎂</span>
-          <span style={{ fontWeight: 700, fontSize: 16, letterSpacing: '-0.02em' }}>OvenCost Pro</span>
+    <div className="app-shell">
+      {/* Mobile top bar */}
+      <header className="mobile-header">
+        <div className="mobile-header-brand">
+          <span className="mobile-header-logo">🎂</span>
+          <span className="mobile-header-title">OvenCost Pro</span>
         </div>
         <button
           ref={menuBtnRef}
@@ -175,142 +174,59 @@ export function Layout({ currentPage, onNavigate, children }: LayoutProps) {
         >
           {mobileMenuOpen ? '✕' : '☰'}
         </button>
-      </div>
+      </header>
 
-      {/* Sidebar Overlay for Mobile */}
+      {/* Mobile overlay */}
       {mobileMenuOpen && (
         <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(0,0,0,0.6)',
-            zIndex: 90,
-          }}
+          className="mobile-overlay"
           onClick={() => setMobileMenuOpen(false)}
+          aria-hidden="true"
         />
       )}
 
       {/* Sidebar */}
-      <aside
-        className={`sidebar ${mobileMenuOpen ? 'sidebar-mobile-open' : ''}`}
-        style={{
-          width: 250,
-          background: 'var(--bg-card)',
-          borderRight: '1px solid var(--border)',
-          display: 'flex',
-          flexDirection: 'column',
-          flexShrink: 0,
-          position: 'sticky',
-          top: 0,
-          height: '100vh',
-          zIndex: 95,
-          userSelect: 'none',
-        }}
-      >
-        {/* Brand */}
-        <div style={{ padding: '24px 20px 20px', borderBottom: '1px solid var(--border)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div
-              style={{
-                width: 34,
-                height: 34,
-                borderRadius: 8,
-                background: 'linear-gradient(135deg, var(--accent) 0%, #8b5cf6 100%)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: 18,
-                boxShadow: '0 4px 12px rgba(167, 139, 250, 0.25)',
-              }}
-            >
-              🎂
-            </div>
-            <div>
-              <div style={{ fontWeight: 700, fontSize: 16, letterSpacing: '-0.02em', lineHeight: 1.2 }}>
-                OvenCost Pro
-              </div>
-              <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>Costing &amp; Pricing Engine</div>
+      <aside className={`sidebar ${mobileMenuOpen ? 'open' : ''}`}>
+        <div className="sidebar-inner">
+          {/* Logo / Brand */}
+          <div className="sidebar-logo">
+            <div className="sidebar-logo-icon">🎂</div>
+            <div className="sidebar-logo-text-wrap">
+              <span className="sidebar-logo-text">OvenCost Pro</span>
+              <span className="sidebar-logo-sub">Costing Engine</span>
             </div>
           </div>
-        </div>
 
-        {/* Navigation Links */}
-        <nav style={{ flex: 1, padding: '12px 10px', overflowY: 'auto' }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          {/* Navigation */}
+          <nav className="sidebar-nav">
             {navSections.map(sec => {
               const isCollapsed = collapsedSections.includes(sec.title);
               return (
-                <div key={sec.title} style={{ marginBottom: 6 }}>
-                  <div
+                <div key={sec.title} className="nav-section">
+                  <button
+                    type="button"
+                    className="nav-section-label"
                     onClick={() => toggleSection(sec.title)}
-                    style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      fontSize: 10,
-                      fontWeight: 700,
-                      letterSpacing: '0.06em',
-                      textTransform: 'uppercase',
-                      color: 'var(--text-muted)',
-                      padding: '6px 12px 4px',
-                      cursor: 'pointer',
-                      userSelect: 'none',
-                    }}
+                    aria-expanded={!isCollapsed}
                   >
                     <span>{sec.title}</span>
-                    <span style={{ fontSize: 8, opacity: 0.5 }}>{isCollapsed ? '▼' : '▲'}</span>
-                  </div>
+                    <span className={`nav-section-caret ${!isCollapsed ? 'open' : ''}`}>▼</span>
+                  </button>
                   {!isCollapsed && (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                    <div className="nav-section-items">
                       {sec.items.map(item => {
                         const active = currentPage === item.id;
                         return (
                           <button
                             key={item.id}
+                            type="button"
+                            className={`nav-item ${active ? 'active' : ''}`}
                             onClick={() => handleNavClick(item.id)}
-                            style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'space-between',
-                              width: '100%',
-                              padding: '8px 12px',
-                              borderRadius: 6,
-                              border: 'none',
-                              background: active ? 'rgba(167, 139, 250, 0.15)' : 'transparent',
-                              color: active ? 'var(--accent)' : 'var(--text-secondary)',
-                              fontWeight: active ? 600 : 400,
-                              fontSize: 13,
-                              cursor: 'pointer',
-                              transition: 'all 120ms ease-out',
-                              textAlign: 'left',
-                            }}
-                            onMouseEnter={e => {
-                              if (!active) {
-                                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.04)';
-                                e.currentTarget.style.color = 'var(--text-primary)';
-                              }
-                            }}
-                            onMouseLeave={e => {
-                              if (!active) {
-                                e.currentTarget.style.background = 'transparent';
-                                e.currentTarget.style.color = 'var(--text-secondary)';
-                              }
-                            }}
                           >
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                              <span style={{ fontSize: 14 }}>{item.icon}</span>
-                              <span>{item.label}</span>
-                            </div>
-
+                            <span className="nav-item-icon">{item.icon}</span>
+                            <span className="nav-item-label">{item.label}</span>
                             {item.badge !== undefined && item.badge > 0 && (
-                              <span
-                                className="badge badge-accent"
-                                style={{
-                                  padding: '1px 7px',
-                                  fontSize: 11,
-                                  borderRadius: 12,
-                                }}
-                              >
+                              <span className={`nav-badge ${item.badgeDanger ? 'nav-badge-danger' : ''}`}>
                                 {item.badge}
                               </span>
                             )}
@@ -322,52 +238,41 @@ export function Layout({ currentPage, onNavigate, children }: LayoutProps) {
                 </div>
               );
             })}
-          </div>
-        </nav>
+          </nav>
+        </div>
 
-        {/* Footer: Autosave Status */}
-        <div
-          style={{
-            padding: '16px 20px',
-            borderTop: '1px solid var(--border)',
-            background: 'var(--bg-surface)',
-            fontSize: 12,
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-            <span
-              style={{
-                width: 8,
-                height: 8,
-                borderRadius: '50%',
-                background: state.saving ? 'var(--accent-amber)' : 'var(--accent-green)',
-                boxShadow: `0 0 6px ${state.saving ? 'var(--accent-amber)' : 'var(--accent-green)'}`,
-                display: 'inline-block',
-              }}
-            />
-            <span style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>
-              {state.saving ? 'Saving...' : 'IndexedDB Autosave'}
+        {/* Sidebar Footer */}
+        <div className="sidebar-footer">
+          <div className="save-pill">
+            <span className={`save-dot ${state.saving ? 'saving' : ''}`} />
+            <span className="save-pill-text">
+              {state.saving ? 'Saving…' : `Saved: ${timeAgoText}`}
             </span>
-          </div>
-          <div style={{ color: 'var(--text-muted)', fontSize: 11 }}>
-            {state.saving ? 'Writing changes...' : `Saved: ${timeAgoText}`}
           </div>
         </div>
       </aside>
 
       {/* Main Content Area */}
-      <main
-        style={{
-          flex: 1,
-          padding: '28px 32px',
-          overflowY: 'auto',
-          maxWidth: 1240,
-          margin: '0 auto',
-          width: '100%',
-        }}
-      >
-        {children}
-      </main>
+      <div className="main-content">
+        <header className="app-header">
+          <div className="app-header-left">
+            <div className="app-header-context">
+              <span>Main Production Lab</span>
+            </div>
+          </div>
+          <div className="app-header-right">
+            <div className="app-header-chip">
+              <span className="app-header-chip-accent">{currencyCode}</span>
+              <span className="app-header-chip-sep">/</span>
+              <span>Active</span>
+            </div>
+          </div>
+        </header>
+
+        <main className="page-content">
+          {children}
+        </main>
+      </div>
     </div>
   );
 }
