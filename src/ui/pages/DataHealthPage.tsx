@@ -81,138 +81,135 @@ export function DataHealthPage({ onNavigate }: DataHealthPageProps) {
   };
 
   return (
-    <div style={{ maxWidth: 980, margin: '0 auto' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-        <div>
-          <h2>Data Health & Diagnostics</h2>
-          <div style={{ color: 'var(--text-muted)', fontSize: 13, marginTop: 4 }}>
-            System-wide integrity check, audit warnings, and pricing completeness diagnostics.
+    <>
+      <div className="quote-header">
+        <div className="quote-header-main">
+          <div className="quote-breadcrumbs">
+            <span className="quote-crumb-accent">Tools</span>
+            <span className="quote-crumb-sep">/</span>
+            <span className="quote-crumb-tertiary">Data Health</span>
+          </div>
+          <div className="quote-title-row">
+            <h1 className="quote-title">Data Health</h1>
+            {all_warnings.length === 0 ? (
+              <span className="badge badge-green" style={{ fontSize: 12, padding: '4px 10px' }}>
+                <span className="material-symbols-outlined ms-14" aria-hidden>check_circle</span>
+                All Clear
+              </span>
+            ) : (
+              <span className="badge badge-amber" style={{ fontSize: 12, padding: '4px 10px' }}>
+                <span className="material-symbols-outlined ms-14" aria-hidden>warning</span>
+                {all_warnings.length} Warning{all_warnings.length !== 1 ? 's' : ''}
+              </span>
+            )}
           </div>
         </div>
-        <div>
+      </div>
+
+      <div className="quote-page-root">
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: 16 }}>
+          <div className="quote-section-card" style={{ padding: 16, gap: 6, borderLeft: unpricedIngredients.length > 0 ? '3px solid var(--accent-amber)' : '3px solid var(--accent-green)' }}>
+            <div className="text-label-caps">Unpriced Ingredients</div>
+            <div className="text-headline-xl" style={{ color: unpricedIngredients.length > 0 ? 'var(--accent-amber)' : 'var(--text-primary)', fontVariantNumeric: 'tabular-nums' }}>
+              {unpricedIngredients.length}
+            </div>
+            <div className="text-body-md">{unpricedIngredients.length > 0 ? 'Pack price is zero or missing' : 'All ingredients priced'}</div>
+          </div>
+
+          <div className="quote-section-card" style={{ padding: 16, gap: 6, borderLeft: zeroLabourProducts.length > 0 ? '3px solid var(--accent-amber)' : '3px solid var(--accent-green)' }}>
+            <div className="text-label-caps">Zero-Labour Products</div>
+            <div className="text-headline-xl" style={{ color: zeroLabourProducts.length > 0 ? 'var(--accent-amber)' : 'var(--text-primary)', fontVariantNumeric: 'tabular-nums' }}>
+              {zeroLabourProducts.length}
+            </div>
+            <div className="text-body-md">{zeroLabourProducts.length > 0 ? 'Labour hours set to 0' : 'All products have labour'}</div>
+          </div>
+
+          <div className="quote-section-card" style={{ padding: 16, gap: 6, borderLeft: '3px solid var(--border)' }}>
+            <div className="text-label-caps">Flavours with Zero Add-on</div>
+            <div className="text-headline-xl" style={{ fontVariantNumeric: 'tabular-nums' }}>{zeroAddonFlavours.length}</div>
+            <div className="text-body-md">Base pricing only (no surcharge)</div>
+          </div>
+
+          <div className="quote-section-card" style={{ padding: 16, gap: 6, borderLeft: zeroWeightRecipes.length > 0 ? '3px solid var(--accent-amber)' : '3px solid var(--accent-green)' }}>
+            <div className="text-label-caps">Zero-Weight Recipes</div>
+            <div className="text-headline-xl" style={{ color: zeroWeightRecipes.length > 0 ? 'var(--accent-amber)' : 'var(--text-primary)', fontVariantNumeric: 'tabular-nums' }}>
+              {zeroWeightRecipes.length}
+            </div>
+            <div className="text-body-md">{zeroWeightRecipes.length > 0 ? 'Yield weight is zero or negative' : 'All recipes yield &gt; 0g'}</div>
+          </div>
+        </div>
+
+        <div className="quote-section-card">
+          <div className="decorations-section-header">
+            <div className="decorations-header-left">
+              <span className="material-symbols-outlined ms-20" aria-hidden>warning</span>
+              <h2 className="decorations-header-title">Detected Warnings by Category</h2>
+            </div>
+            <span className="decorations-header-right">{all_warnings.length} total</span>
+          </div>
+
           {all_warnings.length === 0 ? (
-            <span className="badge badge-success" style={{ padding: '8px 16px', fontSize: 14 }}>
-              ✓ All Clear (0 Warnings)
-            </span>
+            <div className="empty-state" style={{ padding: '40px 20px' }}>
+              <div className="empty-state-icon">
+                <span className="material-symbols-outlined ms-32" aria-hidden>verified_user</span>
+              </div>
+              <div className="empty-state-title">Your database is completely healthy!</div>
+              <div className="empty-state-text">
+                No missing references, zero-cost ingredients, unconfigured role mappings, or invalid weights detected.
+              </div>
+            </div>
           ) : (
-            <span className="badge badge-warning" style={{ padding: '8px 16px', fontSize: 14 }}>
-              ⚠️ {all_warnings.length} Active Warning{all_warnings.length > 1 ? 's' : ''}
-            </span>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {Array.from(groupedWarnings.entries()).map(([code, list]) => (
+                <div key={code} className="quote-section-card" style={{ padding: 0, gap: 0, overflow: 'hidden' }}>
+                  <div className="decorations-section-header" style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)' }}>
+                    <div className="decorations-header-left">
+                      <span className="material-symbols-outlined ms-18" aria-hidden>warning</span>
+                      <span className="badge badge-amber" style={{ fontSize: 11 }}>{code}</span>
+                      <h3 className="decorations-header-title">{warningCodeLabels[code] || code}</h3>
+                    </div>
+                    <span className="decorations-header-right">{list.length} occurrence{list.length !== 1 ? 's' : ''}</span>
+                  </div>
+
+                  <div style={{ padding: '8px 16px' }}>
+                    {list.map((w, idx) => (
+                      <div
+                        key={idx}
+                        style={{
+                          padding: '10px 0',
+                          borderBottom: idx < list.length - 1 ? '1px solid var(--border)' : 'none',
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          gap: 12,
+                          flexWrap: 'wrap',
+                          fontSize: 13,
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, minWidth: 0, flex: '1 1 240px', lineHeight: 1.5 }}>
+                          <span className="material-symbols-outlined ms-16" style={{ color: 'var(--accent-amber)', flexShrink: 0 }} aria-hidden>warning</span>
+                          <span style={{ overflowWrap: 'anywhere' }}>{w.context}</span>
+                        </div>
+                        {w.path && onNavigate && (
+                          <button
+                            type="button"
+                            className="quote-toolbar-btn"
+                            style={{ flexShrink: 0 }}
+                            onClick={() => onNavigate(getPageForItem(w))}
+                          >
+                            <span>View {getPageForItem(w)}</span>
+                            <span className="material-symbols-outlined ms-16" aria-hidden>arrow_forward</span>
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
           )}
         </div>
       </div>
-
-      {/* KPI Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: 16, marginBottom: 24 }}>
-        <div className="card" style={{ padding: 16, borderLeft: unpricedIngredients.length > 0 ? '3px solid var(--accent-amber)' : '3px solid var(--accent-green)' }}>
-          <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Unpriced Ingredients</div>
-          <div style={{ fontSize: 24, fontWeight: 700, margin: '6px 0', color: unpricedIngredients.length > 0 ? 'var(--accent-amber)' : 'var(--text-primary)' }}>
-            {unpricedIngredients.length}
-          </div>
-          <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
-            {unpricedIngredients.length > 0 ? 'Pack price is zero or missing' : 'All ingredients priced'}
-          </div>
-        </div>
-
-        <div className="card" style={{ padding: 16, borderLeft: zeroLabourProducts.length > 0 ? '3px solid var(--accent-amber)' : '3px solid var(--accent-green)' }}>
-          <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Zero-Labour Products</div>
-          <div style={{ fontSize: 24, fontWeight: 700, margin: '6px 0', color: zeroLabourProducts.length > 0 ? 'var(--accent-amber)' : 'var(--text-primary)' }}>
-            {zeroLabourProducts.length}
-          </div>
-          <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
-            {zeroLabourProducts.length > 0 ? 'Labour hours set to 0' : 'All products have labour'}
-          </div>
-        </div>
-
-        <div className="card" style={{ padding: 16, borderLeft: '3px solid var(--border)' }}>
-          <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Flavours with Zero Add-on</div>
-          <div style={{ fontSize: 24, fontWeight: 700, margin: '6px 0' }}>
-            {zeroAddonFlavours.length}
-          </div>
-          <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
-            Base pricing only (no surcharge)
-          </div>
-        </div>
-
-        <div className="card" style={{ padding: 16, borderLeft: zeroWeightRecipes.length > 0 ? '3px solid var(--accent-amber)' : '3px solid var(--accent-green)' }}>
-          <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Zero-Weight Recipes</div>
-          <div style={{ fontSize: 24, fontWeight: 700, margin: '6px 0', color: zeroWeightRecipes.length > 0 ? 'var(--accent-amber)' : 'var(--text-primary)' }}>
-            {zeroWeightRecipes.length}
-          </div>
-          <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
-            {zeroWeightRecipes.length > 0 ? 'Yield weight is zero or negative' : 'All recipes yield &gt; 0g'}
-          </div>
-        </div>
-      </div>
-
-      {/* Warnings List */}
-      <div className="card">
-        <h3 style={{ fontSize: 16, marginBottom: 16 }}>Detected Warnings by Category</h3>
-
-        {all_warnings.length === 0 ? (
-          <div className="empty-state" style={{ padding: '40px 20px' }}>
-            <div style={{ fontSize: 36, marginBottom: 12 }}>🛡️</div>
-            <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 4 }}>
-              Your database is completely healthy!
-            </div>
-            <div style={{ color: 'var(--text-muted)', fontSize: 13, maxWidth: 440, margin: '0 auto' }}>
-              No missing references, zero-cost ingredients, unconfigured role mappings, or invalid weights detected.
-            </div>
-          </div>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-            {Array.from(groupedWarnings.entries()).map(([code, list]) => (
-              <div key={code} style={{ border: '1px solid var(--border)', borderRadius: 8, overflow: 'hidden' }}>
-                <div style={{
-                  padding: '10px 16px',
-                  background: 'var(--bg-surface)',
-                  borderBottom: '1px solid var(--border)',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center'
-                }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <span className="badge badge-warning" style={{ fontSize: 11 }}>{code}</span>
-                    <strong style={{ fontSize: 14 }}>{warningCodeLabels[code] || code}</strong>
-                  </div>
-                  <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{list.length} occurrence{list.length > 1 ? 's' : ''}</span>
-                </div>
-
-                <div style={{ padding: '8px 16px' }}>
-                  {list.map((w, idx) => (
-                    <div
-                      key={idx}
-                      style={{
-                        padding: '8px 0',
-                        borderBottom: idx < list.length - 1 ? '1px solid var(--border)' : 'none',
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        fontSize: 13,
-                      }}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                        <span style={{ color: 'var(--accent-amber)' }}>⚠️</span>
-                        <span>{w.context}</span>
-                      </div>
-                      {w.path && onNavigate && (
-                        <button
-                          type="button"
-                          className="btn btn-secondary"
-                          style={{ padding: '4px 10px', fontSize: 12 }}
-                          onClick={() => onNavigate(getPageForItem(w))}
-                        >
-                          View {getPageForItem(w)} →
-                        </button>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
+    </>
   );
 }
