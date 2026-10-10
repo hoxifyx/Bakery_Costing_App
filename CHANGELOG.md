@@ -2,6 +2,99 @@
 
 All notable changes to the Bakery Costing App (OvenCost Pro) will be documented in this file.
 
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [1.4.11] - 2026-10-10
+
+### Added
+*   Unified page headers, breadcrumbs, section cards, toolbars, and Material Symbols across the redesigned application pages.
+
+### Changed
+*   Restyled the Flavours and Products tabs to match the current visual design.
+*   Replaced the SearchBar emoji with the `search` Material Symbol.
+*   Removed unused CSS left over from the previous design.
+*   Verified the assembled-product suggested-price line with rounding enabled. The batch-product suggested-price line was reviewed in code only because no batch recipes were available for a live row check.
+
+### Fixed
+*   **Data Health:** Unpriced-ingredient warnings now navigate to Ingredients, where the price can be edited. Singular recipe-line warning paths also route to Recipes.
+*   **Orders:** Delivered and Cancelled order badges now use the existing green and red badge classes.
+*   **Settings:** Removed the Target Gross Margin field's HTML `max` constraint so the existing validation handler can report invalid values.
+*   **Data Health:** Warning badges now use the defined `badge-amber` class.
+*   **Import / Export:** Import preview badges now use the defined `badge-green` and `badge-red` classes. CSV status banners now reflect success, warning, or error states.
+
+## [1.4.10] - 2026-10-10
+
+### Changed
+*   Redesigned the Import / Export page to match the shared visual design.
+
+## [1.4.9] - 2026-10-10
+
+### Changed
+*   Redesigned the Data Health page to match the shared visual design.
+
+## [1.4.8] - 2026-10-10
+
+### Changed
+*   Redesigned the Settings page to match the shared visual design.
+
+### Fixed
+*   Removed the Target Gross Margin field's HTML `max` constraint so the existing validation handler can report invalid values.
+
+## [1.4.7] - 2026-10-10
+
+### Changed
+*   Redesigned the Saved Quotes page to match the shared visual design.
+*   Replaced the gradient page title with the standard solid page title.
+
+## [1.4.6] - 2026-10-10
+
+### Changed
+*   Redesigned the Customers page to match the shared visual design.
+
+## [1.4.5] - 2026-10-10
+
+### Changed
+*   Redesigned the Orders page to match the shared visual design.
+
+### Fixed
+*   Delivered and Cancelled order badges now use the existing green and red badge classes.
+
+## [1.4.4] - 2026-10-10
+
+### Changed
+*   Redesigned the Products page to match the shared visual design.
+
+## [1.4.3] - 2026-10-10
+
+### Changed
+*   Redesigned the Flavours & Fillings page to match the shared visual design.
+
+## [1.4.2] - 2026-10-10
+
+### Changed
+*   Redesigned the Recipes page to match the shared visual design.
+
+## [1.4.1] - 2026-10-10
+
+### Changed
+*   Redesigned the Packaging page to match the shared visual design.
+
+## [1.4.0] - 2026-10-10
+
+### Changed
+*   Redesigned the Ingredients page to match the shared visual design.
+*   Established the shared page shell and visual patterns for the catalog pages.
+
+## [1.3.3] - 2026-10-10
+
+### Changed
+*   Redesigned the Quote page and sidebar to establish the visual language used by subsequent pages.
+
+## [1.3.2] and earlier
+
+See Git tags for historical details.
+
 ## [1.1.4] - 2026-10-09
 
 *   **Fix Google Drive backup hang:** The "Back up now" button was permanently disabled after sign-in because the `CLOUD_SIGNED_IN` and `CLOUD_SIGNED_OUT` reducer cases did not reset `cloud.busy` to `false`. Sign-in now correctly clears the busy flag, so the button enables and the backup can be triggered. The underlying Google Drive upload was working the whole time — the UI just wouldn't let the user start it.

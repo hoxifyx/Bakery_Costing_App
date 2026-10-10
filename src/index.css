@@ -248,39 +248,6 @@ input, select, textarea, button {
 button { cursor: pointer; }
 
 /* ============================================================
-   Page layout primitives (preserved for other pages)
-   ============================================================ */
-.page-header {
-  padding: 24px 0 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  margin-bottom: 20px;
-}
-.page-title {
-  font-size: 24px;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  margin: 0;
-}
-.page-subtitle {
-  font-size: 13px;
-  color: var(--text-secondary);
-  margin: 0;
-}
-.page-actions {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  margin-top: 12px;
-}
-.page-body {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-/* ============================================================
    App shell
    ============================================================ */
 .app-shell {
@@ -1162,95 +1129,9 @@ tbody tr:hover {
 
 .result-row:last-child { border-bottom: none; }
 
-.result-row-label { color: var(--text-secondary); }
-
-.result-row-total {
-  font-weight: 700;
-  font-size: 14px;
-  color: var(--text-primary);
-}
-
-.result-row-price {
-  font-size: 16px;
-  font-weight: 800;
-  color: var(--accent-vivid);
-  background: linear-gradient(135deg, var(--accent), var(--accent-vivid));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
 /* ============================================================
    Quote screen
    ============================================================ */
-.tier-cards {
-  display: grid;
-  gap: 12px;
-}
-
-.tier-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: var(--r-lg);
-  padding: 16px;
-  transition: border-color var(--t-normal);
-}
-
-.tier-card.active {
-  border-color: var(--accent-dim);
-}
-
-.tier-card-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 12px;
-}
-
-.tier-label {
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--accent);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.size-guide-pills {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 5px;
-  margin-top: 6px;
-}
-
-.size-pill {
-  font-size: 11px;
-  padding: 3px 9px;
-  border-radius: 20px;
-  background: var(--bg-input);
-  border: 1px solid var(--border);
-  cursor: pointer;
-  color: var(--text-secondary);
-  transition: all var(--t-fast);
-}
-
-.size-pill:hover {
-  background: var(--accent-glow);
-  border-color: var(--accent-dim);
-  color: var(--accent);
-}
-
-.results-summary {
-  position: sticky;
-  top: 80px;
-}
-
-.results-big {
-  text-align: center;
-  padding: 20px 0;
-  border-bottom: 1px solid var(--border);
-  margin-bottom: 12px;
-}
-
 /* ============================================================
    Explain / audit tree
    ============================================================ */
@@ -1291,20 +1172,6 @@ tbody tr:hover {
 }
 
 /* ============================================================
-   Data health
-   ============================================================ */
-.health-count {
-  font-size: 48px;
-  font-weight: 800;
-  color: var(--accent-green);
-  text-align: center;
-  display: block;
-  margin: 12px 0;
-}
-
-.health-count.has-issues { color: var(--accent-amber); }
-
-/* ============================================================
    Searchbar
    ============================================================ */
 .search-bar {
@@ -1322,15 +1189,6 @@ tbody tr:hover {
 
 .search-bar .input {
   padding-left: 32px;
-}
-
-/* ============================================================
-   Section divider
-   ============================================================ */
-.section-divider {
-  height: 1px;
-  background: var(--border);
-  margin: 20px 0;
 }
 
 /* ============================================================
@@ -1359,27 +1217,6 @@ tbody tr:hover {
   font-size: 13px;
   margin-bottom: 16px;
 }
-
-/* ============================================================
-   Collapsible
-   ============================================================ */
-.collapsible-trigger {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  cursor: pointer;
-  padding: 8px 0;
-  color: var(--text-secondary);
-  font-weight: 600;
-  font-size: 13px;
-  background: none;
-  border: none;
-  width: 100%;
-  text-align: left;
-  transition: color var(--t-fast);
-}
-
-.collapsible-trigger:hover { color: var(--text-primary); }
 
 .collapsible-arrow {
   font-size: 10px;
@@ -1418,15 +1255,6 @@ tbody tr:hover {
   .form-row-4 {
     grid-template-columns: 1fr;
   }
-}
-
-/* ============================================================
-   Gradient text
-   ============================================================ */
-.gradient-text {
-  color: var(--accent);
-  background: none;
-  -webkit-text-fill-color: currentColor;
 }
 
 /* ============================================================
