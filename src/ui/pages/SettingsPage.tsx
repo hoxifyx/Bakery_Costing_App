@@ -48,45 +48,77 @@ export function SettingsPage() {
   };
 
   return (
-    <div className="card" style={{ maxWidth: 840, margin: '0 auto' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-        <div>
-          <h2>System Settings</h2>
-          <div style={{ color: 'var(--text-muted)', fontSize: 13, marginTop: 4 }}>
-            Configure global labor rates, overhead multipliers, target margins, batch factors, and role mappings.
+    <form onSubmit={handleSave}>
+      <div className="quote-header">
+        <div className="quote-header-main">
+          <div className="quote-breadcrumbs">
+            <span className="quote-crumb-accent">Tools</span>
+            <span className="quote-crumb-sep">/</span>
+            <span className="quote-crumb-tertiary">Settings</span>
+          </div>
+          <div className="quote-title-row">
+            <h1 className="quote-title">System Settings</h1>
           </div>
         </div>
-        {savedMsg && <span className="badge badge-success" style={{ padding: '6px 12px' }}>✓ Settings Saved</span>}
+        <div className="quote-toolbar">
+          {savedMsg && (
+            <span className="badge badge-green" style={{ padding: '6px 12px' }}>
+              <span className="material-symbols-outlined ms-14" aria-hidden>check_circle</span>
+              Settings Saved
+            </span>
+          )}
+          <button
+            type="button"
+            className="quote-toolbar-btn"
+            onClick={() => {
+              setLocalSettings({ ...settings });
+              setLocalSizeGuide([...size_guide]);
+            }}
+          >
+            <span className="material-symbols-outlined ms-16" aria-hidden>restart_alt</span>
+            <span>Discard</span>
+          </button>
+          <button type="submit" className="quote-toolbar-btn quote-toolbar-btn-primary">
+            <span className="material-symbols-outlined ms-18" aria-hidden>save</span>
+            <span>Save Settings</span>
+          </button>
+        </div>
       </div>
 
       {errorMsg && (
-        <div className="error-banner" style={{ marginBottom: 16 }}>
-          ⚠️ {errorMsg}
+        <div className="error-banner" style={{ marginTop: 16 }}>
+          <span className="material-symbols-outlined ms-16" aria-hidden>error</span>
+          <span>{errorMsg}</span>
         </div>
       )}
 
-      <form onSubmit={handleSave}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: 20 }}>
-          {/* Financial & Rates Block */}
-          <div className="card" style={{ background: 'var(--bg-surface)' }}>
-            <h3 style={{ fontSize: 16, marginBottom: 14, color: 'var(--accent)' }}>Pricing & Economics</h3>
-
-            <div style={{ marginBottom: 14 }}>
-              <label style={{ display: 'block', fontSize: 13, fontWeight: 500, marginBottom: 4 }}>Currency Code</label>
-              <input
-                type="text"
-                className="input"
-                style={{ width: '100%' }}
-                value={localSettings.currency_code}
-                onChange={e => handleChange('currency_code', e.target.value)}
-                placeholder="BDT, USD, EUR..."
-                required
-              />
-              <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Symbol or ISO code displayed next to all monetary amounts.</span>
+      <div className="quote-page-root">
+        <div className="quote-section-card">
+          <div className="decorations-section-header">
+            <div className="decorations-header-left">
+              <span className="material-symbols-outlined ms-20" aria-hidden>payments</span>
+              <h2 className="decorations-header-title">Pricing &amp; Economics</h2>
             </div>
+            <span className="decorations-header-right">SECTION 01</span>
+          </div>
 
-            <div style={{ marginBottom: 14 }}>
-              <label style={{ display: 'block', fontSize: 13, fontWeight: 500, marginBottom: 4 }}>Labour Rate per Hour</label>
+          <div className="form-group">
+            <label>Currency Code</label>
+            <input
+              type="text"
+              className="input"
+              style={{ width: '100%' }}
+              value={localSettings.currency_code}
+              onChange={e => handleChange('currency_code', e.target.value)}
+              placeholder="BDT, USD, EUR..."
+              required
+            />
+            <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Symbol or ISO code displayed next to all monetary amounts.</span>
+          </div>
+
+          <div className="form-row form-row-2" style={{ marginBottom: 0 }}>
+            <div className="form-group">
+              <label>Labour Rate per Hour</label>
               <NumberInput
                 value={localSettings.labour_rate_per_hour}
                 onChange={v => handleChange('labour_rate_per_hour', v)}
@@ -96,10 +128,8 @@ export function SettingsPage() {
               <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Standard hourly rate for bakery decoration and prep labour.</span>
             </div>
 
-            <div style={{ marginBottom: 14 }}>
-              <label style={{ display: 'block', fontSize: 13, fontWeight: 500, marginBottom: 4 }}>
-                Overhead Percentage (e.g. 0.25 for 25%)
-              </label>
+            <div className="form-group">
+              <label>Overhead Percentage (e.g. 0.25 for 25%)</label>
               <NumberInput
                 value={localSettings.overhead_pct}
                 onChange={v => handleChange('overhead_pct', v)}
@@ -113,26 +143,21 @@ export function SettingsPage() {
               </span>
             </div>
 
-            <div style={{ marginBottom: 14 }}>
-              <label style={{ display: 'block', fontSize: 13, fontWeight: 500, marginBottom: 4 }}>
-                Target Gross Margin (e.g. 0.30 for 30%)
-              </label>
+            <div className="form-group">
+              <label>Target Gross Margin (e.g. 0.30 for 30%)</label>
               <NumberInput
                 value={localSettings.target_margin}
                 onChange={v => handleChange('target_margin', v)}
                 step={0.01}
                 min={0}
-                max={0.999}
               />
               <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>
                 Target profit margin on non-delivery revenue: Profit = (Cost - Delivery) × Margin / (1 - Margin). Must be &lt; 1.0 (100%).
               </span>
             </div>
 
-            <div style={{ marginBottom: 14 }}>
-              <label style={{ display: 'block', fontSize: 13, fontWeight: 500, marginBottom: 4 }}>
-                Packaging Allowance (e.g. 0.20 for 20%)
-              </label>
+            <div className="form-group">
+              <label>Packaging Allowance (e.g. 0.20 for 20%)</label>
               <NumberInput
                 value={localSettings.packaging_allowance_pct}
                 onChange={v => handleChange('packaging_allowance_pct', v)}
@@ -142,8 +167,8 @@ export function SettingsPage() {
               <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Contingency buffer percentage applied to total packaging costs.</span>
             </div>
 
-            <div style={{ marginBottom: 14 }}>
-              <label style={{ display: 'block', fontSize: 13, fontWeight: 500, marginBottom: 4 }}>Standard Topper Price</label>
+            <div className="form-group">
+              <label>Standard Topper Price</label>
               <NumberInput
                 value={localSettings.topper_price}
                 onChange={v => handleChange('topper_price', v)}
@@ -153,8 +178,8 @@ export function SettingsPage() {
               <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Default price charged per standard acrylic/paper cake topper.</span>
             </div>
 
-            <div style={{ marginBottom: 14 }}>
-              <label style={{ display: 'block', fontSize: 13, fontWeight: 500, marginBottom: 4 }}>Price Rounding Step (0 = Off)</label>
+            <div className="form-group">
+              <label>Price Rounding Step (0 = Off)</label>
               <NumberInput
                 value={localSettings.price_rounding_step ?? 0}
                 onChange={v => handleChange('price_rounding_step', v)}
@@ -168,13 +193,20 @@ export function SettingsPage() {
               </span>
             </div>
           </div>
+        </div>
 
-          {/* Cake Engineering & Ratios */}
-          <div className="card" style={{ background: 'var(--bg-surface)' }}>
-            <h3 style={{ fontSize: 16, marginBottom: 14, color: 'var(--accent)' }}>Cake Engineering Factors</h3>
+        <div className="quote-section-card">
+          <div className="decorations-section-header">
+            <div className="decorations-header-left">
+              <span className="material-symbols-outlined ms-20" aria-hidden>architecture</span>
+              <h2 className="decorations-header-title">Cake Engineering Factors</h2>
+            </div>
+            <span className="decorations-header-right">SECTION 02</span>
+          </div>
 
-            <div style={{ marginBottom: 14 }}>
-              <label style={{ display: 'block', fontSize: 13, fontWeight: 500, marginBottom: 4 }}>Cake Batches per kg of Cake</label>
+          <div className="form-row form-row-3" style={{ marginBottom: 0 }}>
+            <div className="form-group">
+              <label>Cake Batches per kg of Cake</label>
               <NumberInput
                 value={localSettings.cake_batches_per_kg}
                 onChange={v => handleChange('cake_batches_per_kg', v)}
@@ -186,8 +218,8 @@ export function SettingsPage() {
               </span>
             </div>
 
-            <div style={{ marginBottom: 14 }}>
-              <label style={{ display: 'block', fontSize: 13, fontWeight: 500, marginBottom: 4 }}>Frosting Batches per kg of Cake</label>
+            <div className="form-group">
+              <label>Frosting Batches per kg of Cake</label>
               <NumberInput
                 value={localSettings.frosting_batches_per_kg}
                 onChange={v => handleChange('frosting_batches_per_kg', v)}
@@ -199,8 +231,8 @@ export function SettingsPage() {
               </span>
             </div>
 
-            <div style={{ marginBottom: 14 }}>
-              <label style={{ display: 'block', fontSize: 13, fontWeight: 500, marginBottom: 4 }}>Filling Grams per kg of Cake</label>
+            <div className="form-group" style={{ marginBottom: 0 }}>
+              <label>Filling Grams per kg of Cake</label>
               <NumberInput
                 value={localSettings.filling_grams_per_kg}
                 onChange={v => handleChange('filling_grams_per_kg', v)}
@@ -211,14 +243,24 @@ export function SettingsPage() {
                 Standard weight in grams of filling used per 1 kg of layered cake (default: 150g).
               </span>
             </div>
+          </div>
+        </div>
 
-            <h3 style={{ fontSize: 16, marginTop: 24, marginBottom: 14, color: 'var(--accent)' }}>Role Mappings</h3>
-            <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 12 }}>
-              Map generic quote roles (fondant, edible print, boards, boxes) to specific items in your catalog.
+        <div className="quote-section-card">
+          <div className="decorations-section-header">
+            <div className="decorations-header-left">
+              <span className="material-symbols-outlined ms-20" aria-hidden>link</span>
+              <h2 className="decorations-header-title">Role Mappings</h2>
             </div>
+            <span className="decorations-header-right">SECTION 03</span>
+          </div>
+          <div className="text-muted" style={{ fontSize: 12 }}>
+            Map generic quote roles (fondant, edible print, boards, boxes) to specific items in your catalog.
+          </div>
 
-            <div style={{ marginBottom: 12 }}>
-              <label style={{ display: 'block', fontSize: 13, fontWeight: 500, marginBottom: 4 }}>Fondant Ingredient</label>
+          <div className="form-row form-row-2" style={{ marginBottom: 0 }}>
+            <div className="form-group">
+              <label>Fondant Ingredient</label>
               <select
                 className="select"
                 style={{ width: '100%' }}
@@ -232,8 +274,8 @@ export function SettingsPage() {
               </select>
             </div>
 
-            <div style={{ marginBottom: 12 }}>
-              <label style={{ display: 'block', fontSize: 13, fontWeight: 500, marginBottom: 4 }}>Edible Print Item</label>
+            <div className="form-group">
+              <label>Edible Print Item</label>
               <select
                 className="select"
                 style={{ width: '100%' }}
@@ -247,8 +289,8 @@ export function SettingsPage() {
               </select>
             </div>
 
-            <div style={{ marginBottom: 12 }}>
-              <label style={{ display: 'block', fontSize: 13, fontWeight: 500, marginBottom: 4 }}>Standard Cake Box</label>
+            <div className="form-group">
+              <label>Standard Cake Box</label>
               <select
                 className="select"
                 style={{ width: '100%' }}
@@ -262,8 +304,8 @@ export function SettingsPage() {
               </select>
             </div>
 
-            <div style={{ marginBottom: 12 }}>
-              <label style={{ display: 'block', fontSize: 13, fontWeight: 500, marginBottom: 4 }}>MDF Drum Board</label>
+            <div className="form-group">
+              <label>MDF Drum Board</label>
               <select
                 className="select"
                 style={{ width: '100%' }}
@@ -277,8 +319,8 @@ export function SettingsPage() {
               </select>
             </div>
 
-            <div style={{ marginBottom: 12 }}>
-              <label style={{ display: 'block', fontSize: 13, fontWeight: 500, marginBottom: 4 }}>Standard Cake Board (per extra tier)</label>
+            <div className="form-group">
+              <label>Standard Cake Board (per extra tier)</label>
               <select
                 className="select"
                 style={{ width: '100%' }}
@@ -292,8 +334,8 @@ export function SettingsPage() {
               </select>
             </div>
 
-            <div style={{ marginBottom: 12 }}>
-              <label style={{ display: 'block', fontSize: 13, fontWeight: 500, marginBottom: 4 }}>Wallpaper / Cake Wrap</label>
+            <div className="form-group" style={{ marginBottom: 0 }}>
+              <label>Wallpaper / Cake Wrap</label>
               <select
                 className="select"
                 style={{ width: '100%' }}
@@ -309,16 +351,22 @@ export function SettingsPage() {
           </div>
         </div>
 
-        {/* Size Guide */}
-        <div className="card" style={{ background: 'var(--bg-surface)', marginTop: 20 }}>
-          <h3 style={{ fontSize: 16, marginBottom: 14, color: 'var(--accent)' }}>Size Guide</h3>
-          <div style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 16 }}>
+        <div className="quote-section-card">
+          <div className="decorations-section-header">
+            <div className="decorations-header-left">
+              <span className="material-symbols-outlined ms-20" aria-hidden>straighten</span>
+              <h2 className="decorations-header-title">Size Guide</h2>
+            </div>
+            <span className="decorations-header-right">SECTION 04</span>
+          </div>
+          <div className="text-muted" style={{ fontSize: 13 }}>
             Define the pan sizes available when building a quote tier. Drag the handle to reorder.
           </div>
+
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {localSizeGuide.map((sg, idx) => (
-              <div 
-                key={idx} 
+              <div
+                key={idx}
                 draggable
                 onDragStart={e => { setDraggedSgIndex(idx); e.dataTransfer.effectAllowed = 'move'; }}
                 onDragOver={e => e.preventDefault()}
@@ -331,14 +379,23 @@ export function SettingsPage() {
                   setLocalSizeGuide(newG);
                   setDraggedSgIndex(null);
                 }}
-                style={{ 
-                  display: 'flex', gap: 12, alignItems: 'center', background: 'var(--bg-card)', 
-                  padding: '12px', borderRadius: 'var(--r-md)', border: '1px solid var(--border)' 
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: '20px minmax(0, 1fr) 32px',
+                  gap: 8,
+                  alignItems: 'center',
+                  minWidth: 0,
+                  background: 'var(--bg-surface-container)',
+                  padding: 12,
+                  borderRadius: 'var(--r-md)',
+                  border: '1px solid var(--border)',
                 }}
               >
-                <div style={{ cursor: 'grab', opacity: 0.5 }}>☰</div>
-                <div className="form-row form-row-3" style={{ flex: 1, gap: 12, marginBottom: 0 }}>
-                  <div className="form-group" style={{ marginBottom: 0 }}>
+                <div style={{ cursor: 'grab', opacity: 0.5, display: 'flex', alignItems: 'center' }}>
+                  <span className="material-symbols-outlined ms-20" aria-hidden>drag_indicator</span>
+                </div>
+                <div className="form-row form-row-3" style={{ minWidth: 0, gap: 12, marginBottom: 0 }}>
+                  <div className="form-group" style={{ minWidth: 0, marginBottom: 0 }}>
                     <label>Label</label>
                     <input type="text" className="input" style={{ width: '100%' }} value={sg.label} onChange={e => {
                       const newG = [...localSizeGuide];
@@ -346,7 +403,7 @@ export function SettingsPage() {
                       setLocalSizeGuide(newG);
                     }} placeholder='e.g. 5"' required />
                   </div>
-                  <div className="form-group" style={{ marginBottom: 0 }}>
+                  <div className="form-group" style={{ minWidth: 0, marginBottom: 0 }}>
                     <label>Weight (kg)</label>
                     <NumberInput value={sg.kg} onChange={v => {
                       const newG = [...localSizeGuide];
@@ -354,7 +411,7 @@ export function SettingsPage() {
                       setLocalSizeGuide(newG);
                     }} step={0.1} min={0} />
                   </div>
-                  <div className="form-group" style={{ marginBottom: 0 }}>
+                  <div className="form-group" style={{ minWidth: 0, marginBottom: 0 }}>
                     <label>Servings</label>
                     <NumberInput value={sg.servings} onChange={v => {
                       const newG = [...localSizeGuide];
@@ -363,26 +420,22 @@ export function SettingsPage() {
                     }} step={1} min={0} />
                   </div>
                 </div>
-                <button type="button" className="btn btn-ghost btn-sm btn-icon text-danger" onClick={() => {
+                <button type="button" className="quote-toolbar-btn" aria-label={`Remove ${sg.label || 'size'} row`} title="Remove size" style={{ width: 32, height: 32, padding: 0 }} onClick={() => {
                   setLocalSizeGuide(g => g.filter((_, i) => i !== idx));
-                }}>✕</button>
+                }}>
+                  <span className="material-symbols-outlined ms-16" aria-hidden>close</span>
+                </button>
               </div>
             ))}
           </div>
-          <button type="button" className="btn btn-secondary btn-sm mt-4" onClick={() => {
+          <button type="button" className="quote-toolbar-btn" onClick={() => {
             setLocalSizeGuide(g => [...g, { label: '', kg: 0, servings: 0 }]);
-          }}>+ Add Size</button>
-        </div>
-
-        <div style={{ marginTop: 24, display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
-          <button type="button" className="btn btn-secondary" onClick={() => { setLocalSettings({ ...settings }); setLocalSizeGuide([...size_guide]); }}>
-            Discard Changes
-          </button>
-          <button type="submit" className="btn btn-primary">
-            Save Settings
+          }}>
+            <span className="material-symbols-outlined ms-16" aria-hidden>add</span>
+            <span>Add Size</span>
           </button>
         </div>
-      </form>
-    </div>
+      </div>
+    </form>
   );
 }
