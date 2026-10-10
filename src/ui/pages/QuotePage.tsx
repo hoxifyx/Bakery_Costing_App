@@ -177,23 +177,23 @@ export function QuotePage() {
 
         <div className="quote-toolbar">
           <button className="quote-toolbar-btn" id="explain-btn" onClick={() => setShowExplain(true)} disabled={!displayQ} aria-label="Explain cost calculation">
-            <span aria-hidden>🧠</span>
+            <span className="material-symbols-outlined ms-16" aria-hidden>psychology</span>
             <span>Explain Cost</span>
           </button>
           <button className="quote-toolbar-btn" onClick={copyText} disabled={!displayQ} aria-label="Copy quote summary">
-            <span aria-hidden>📋</span>
+            <span className="material-symbols-outlined ms-16" aria-hidden>content_copy</span>
             <span>Copy</span>
           </button>
           <button className="quote-toolbar-btn" onClick={() => window.print()} aria-label="Print quote">
-            <span aria-hidden>🖨️</span>
+            <span className="material-symbols-outlined ms-16" aria-hidden>print</span>
             <span>Print Spec</span>
           </button>
           <button className="quote-toolbar-btn quote-toolbar-btn-reset" onClick={() => dispatch({ type: 'RESET_QUOTE' })} aria-label="Reset quote inputs">
-            <span aria-hidden>↺</span>
+            <span className="material-symbols-outlined ms-16" aria-hidden>restart_alt</span>
             <span>Reset</span>
           </button>
           <button className="quote-toolbar-btn quote-toolbar-btn-primary" onClick={handleOpenSaveDialog} aria-label="Save quote">
-            <span aria-hidden>💾</span>
+            <span className="material-symbols-outlined ms-18" aria-hidden>save</span>
             <span>Save Quote</span>
           </button>
         </div>
@@ -216,7 +216,7 @@ export function QuotePage() {
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span style={{ fontSize: 20 }}>💾</span>
+            <span className="material-symbols-outlined ms-20" aria-hidden>save</span>
             <div>
               <div style={{ fontWeight: 600, fontSize: 14 }}>
                 Loaded from saved quote: {activeSavedQuote.name} — {new Date(activeSavedQuote.created_at).toLocaleDateString()}
@@ -259,7 +259,9 @@ export function QuotePage() {
 
       <div className="quote-hero-banner">
         <div className="quote-hero-left">
-          <div className="quote-hero-tile" aria-hidden>🎂</div>
+          <div className="quote-hero-tile" aria-hidden>
+            <span className="material-symbols-outlined ms-32">cake</span>
+          </div>
           <div className="quote-hero-text">
             <h2 className="quote-hero-title">Architectural Tier Assembly</h2>
             <p className="quote-hero-subtitle">
@@ -296,7 +298,7 @@ export function QuotePage() {
           <div className="quote-section-card">
             <div className="decorations-section-header">
               <div className="decorations-header-left">
-                <span style={{ fontSize: 20 }} aria-hidden>📚</span>
+                <span className="material-symbols-outlined ms-20" aria-hidden>layers</span>
                 <h2 className="decorations-header-title">Tier Structure</h2>
               </div>
               <span className="decorations-header-right">
@@ -445,7 +447,7 @@ export function QuotePage() {
           <div className="tier-item-row" style={{ gap: 16 }}>
             <div className="decorations-section-header">
               <div className="decorations-header-left">
-                <span style={{ fontSize: 20 }} aria-hidden>🎨</span>
+                <span className="material-symbols-outlined ms-20" aria-hidden>palette</span>
                 <h2 className="decorations-header-title">Decorations, Materials &amp; Logistics</h2>
               </div>
               <span className="decorations-header-right">All overhead rates active</span>
@@ -455,7 +457,7 @@ export function QuotePage() {
               <div className="decoration-card">
                 <div className="decoration-card-top">
                   <span className="decoration-card-label">Fondant</span>
-                  <span className="decoration-card-icon" aria-hidden>🎂</span>
+                  <span className="material-symbols-outlined ms-18 decoration-card-icon" aria-hidden>cake</span>
                 </div>
                 <div className="decoration-card-bottom">
                   <span className="decoration-card-hint">kg</span>
@@ -473,7 +475,7 @@ export function QuotePage() {
               <div className="decoration-card">
                 <div className="decoration-card-top">
                   <span className="decoration-card-label">Edible Prints</span>
-                  <span className="decoration-card-icon" aria-hidden>🖨️</span>
+                  <span className="material-symbols-outlined ms-18 decoration-card-icon" aria-hidden>print</span>
                 </div>
                 <div className="decoration-card-bottom">
                   <span className="decoration-card-hint">count</span>
@@ -490,7 +492,7 @@ export function QuotePage() {
               <div className="decoration-card">
                 <div className="decoration-card-top">
                   <span className="decoration-card-label">Sugar Flowers</span>
-                  <span className="decoration-card-icon" aria-hidden>🌸</span>
+                  <span className="material-symbols-outlined ms-18 decoration-card-icon" aria-hidden>local_florist</span>
                 </div>
                 <div className="decoration-card-bottom">
                   <span className="decoration-card-hint">{cur}</span>
@@ -507,7 +509,7 @@ export function QuotePage() {
               <div className="decoration-card">
                 <div className="decoration-card-top">
                   <span className="decoration-card-label">Acrylic Toppers</span>
-                  <span className="decoration-card-icon" aria-hidden>🎯</span>
+                  <span className="material-symbols-outlined ms-18 decoration-card-icon" aria-hidden>emoji_events</span>
                 </div>
                 <div className="decoration-card-bottom">
                   <span className="decoration-card-hint">count</span>
@@ -524,7 +526,7 @@ export function QuotePage() {
               <div className="decoration-card">
                 <div className="decoration-card-top">
                   <span className="decoration-card-label">Other costs</span>
-                  <span className="decoration-card-icon" aria-hidden>🧾</span>
+                  <span className="material-symbols-outlined ms-18 decoration-card-icon" aria-hidden>receipt_long</span>
                 </div>
                 <div className="decoration-card-bottom">
                   <span className="decoration-card-hint">{cur}</span>
@@ -541,7 +543,7 @@ export function QuotePage() {
               <div className="decoration-card">
                 <div className="decoration-card-top">
                   <span className="decoration-card-label">Delivery Run</span>
-                  <span className="decoration-card-icon" aria-hidden>🚚</span>
+                  <span className="material-symbols-outlined ms-18 decoration-card-icon" aria-hidden>local_shipping</span>
                 </div>
                 <div className="decoration-card-bottom">
                   <span className="decoration-card-hint">{cur}</span>
@@ -626,7 +628,9 @@ export function QuotePage() {
           {!displayQ ? (
             <div className="summary-card-inner">
               <div className="empty-state" style={{ padding: '32px 16px', textAlign: 'center' }}>
-                <div style={{ fontSize: 32, marginBottom: 8 }}>🎂</div>
+                <div style={{ fontSize: 32, marginBottom: 8 }}>
+                  <span className="material-symbols-outlined ms-32" aria-hidden>cake</span>
+                </div>
                 <div style={{ fontWeight: 600, fontSize: 15, marginBottom: 4 }}>Configure Tier 1</div>
                 <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
                   Enter a size for Tier 1 to view live price calculation
@@ -748,7 +752,8 @@ export function QuotePage() {
                 onClick={() => setShowExplain(true)}
                 aria-label="Inspect Cost Engine Hierarchy"
               >
-                <span>🔍 Inspect Cost Engine Hierarchy</span>
+                <span className="material-symbols-outlined ms-18" aria-hidden>account_tree</span>
+                <span>Inspect Cost Engine Hierarchy</span>
               </button>
 
               {displayQ && displayQ.audit.length > 0 && (
@@ -762,7 +767,7 @@ export function QuotePage() {
                     onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setLedgerOpen(o => !o); } }}
                   >
                     <span className="formula-ledger-title text-label-caps">
-                      <span className="text-tertiary">◆</span>
+                      <span className="material-symbols-outlined ms-18 text-tertiary" aria-hidden>data_object</span>
                       <span>Real-Time Formula Ledger</span>
                     </span>
                     <span className="formula-ledger-toggle-icon">{ledgerOpen ? '▾ collapse' : '▸ expand'}</span>
