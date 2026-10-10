@@ -70,73 +70,110 @@ export function PackagingPage() {
 
   return (
     <div>
-      <div className="page-header">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="page-title">📦 Packaging</h1>
-            <p className="page-subtitle">{data.packaging_items.length} items · Boxes, boards, prints</p>
+      <div className="quote-header">
+        <div className="quote-header-main">
+          <div className="quote-breadcrumbs">
+            <span className="quote-crumb-accent">Catalog</span>
+            <span className="quote-crumb-sep">/</span>
+            <span className="quote-crumb-tertiary">Packaging</span>
           </div>
-          <div className="flex gap-8">
-            <button className="btn btn-ghost btn-sm" onClick={exportCSV}>CSV ⬇</button>
-            <button className="btn btn-primary btn-sm" onClick={openNew}>+ Add packaging</button>
+          <div className="quote-title-row">
+            <h1 className="quote-title">Packaging</h1>
           </div>
+        </div>
+        <div className="quote-toolbar">
+          <button className="quote-toolbar-btn" onClick={exportCSV}>
+            <span className="material-symbols-outlined ms-16" aria-hidden>download</span>
+            <span>Export CSV</span>
+          </button>
+          <button className="quote-toolbar-btn quote-toolbar-btn-primary" onClick={openNew}>
+            <span className="material-symbols-outlined ms-18" aria-hidden>add</span>
+            <span>Add packaging</span>
+          </button>
         </div>
       </div>
 
-      <div className="page-body">
-        <div className="flex justify-between items-center mb-12">
-          <SearchBar value={search} onChange={setSearch} placeholder="Search packaging…" />
-        </div>
+      <div className="quote-page-root">
+        <div className="quote-section-card">
+          <div className="decorations-section-header">
+            <div className="decorations-header-left">
+              <span className="material-symbols-outlined ms-20" aria-hidden>inventory_2</span>
+              <h2 className="decorations-header-title">Packaging Catalog</h2>
+            </div>
+            <span className="decorations-header-right">
+              {filtered.length} of {data.packaging_items.length} items
+            </span>
+          </div>
 
-        {filtered.length === 0 ? (
-          <div className="empty-state">
-            <div className="empty-state-icon">📦</div>
-            <div className="empty-state-title">No packaging items yet</div>
-            <button className="btn btn-primary mt-12" onClick={openNew}>+ Add packaging</button>
-          </div>
-        ) : (
-          <div className="table-wrapper">
-            <table>
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>Price</th>
-                  <th>Used in</th>
-                  <th>Notes</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map(p => (
-                  <tr key={p.id}>
-                    <td>
-                      <div style={{ fontWeight: 600 }}>{p.name}</div>
-                      <div className="text-muted" style={{ fontSize: 11 }}>{p.id}</div>
-                    </td>
-                    <td className="td-mono text-green">{cur} {p.price.toFixed(2)}</td>
-                    <td className="text-secondary text-sm">{getUsedIn(p.id, data).length || '—'}</td>
-                    <td className="text-muted text-sm truncate" style={{ maxWidth: 200 }}>{p.notes || '—'}</td>
-                    <td>
-                      <div className="td-actions">
-                        <button className="btn btn-ghost btn-sm btn-icon" onClick={() => openEdit(p)}>✏️</button>
-                        <button className="btn btn-ghost btn-sm btn-icon" onClick={() => duplicate(p)}>📋</button>
-                        <button className="btn btn-danger btn-sm btn-icon" onClick={() => confirmDelete(p)}>🗑</button>
-                      </div>
-                    </td>
+          <SearchBar value={search} onChange={setSearch} placeholder="Search packaging…" />
+
+          {filtered.length === 0 ? (
+            <div className="empty-state">
+              <div className="empty-state-icon">
+                <span className="material-symbols-outlined ms-32" aria-hidden>inventory_2</span>
+              </div>
+              <div className="empty-state-title">No packaging items yet</div>
+              <div className="empty-state-text">Add boxes, boards, prints, or wraps to get started</div>
+              <button className="quote-toolbar-btn quote-toolbar-btn-primary" onClick={openNew}>
+                <span className="material-symbols-outlined ms-18" aria-hidden>add</span>
+                <span>Add packaging</span>
+              </button>
+            </div>
+          ) : (
+            <div className="table-wrapper">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Price</th>
+                    <th>Used in</th>
+                    <th>Notes</th>
+                    <th></th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+                </thead>
+                <tbody>
+                  {filtered.map(p => (
+                    <tr key={p.id}>
+                      <td>
+                        <div style={{ fontWeight: 600 }}>{p.name}</div>
+                        <div className="text-muted" style={{ fontSize: 11 }}>{p.id}</div>
+                      </td>
+                      <td className="td-mono text-green">{cur} {p.price.toFixed(2)}</td>
+                      <td className="text-secondary text-sm">{getUsedIn(p.id, data).length || '—'}</td>
+                      <td className="text-muted text-sm truncate" style={{ maxWidth: 200 }}>{p.notes || '—'}</td>
+                      <td>
+                        <div className="td-actions">
+                          <button className="quote-toolbar-btn" onClick={() => openEdit(p)} title="Edit" aria-label={`Edit ${p.name}`} style={{ width: 32, height: 32, padding: 0 }}>
+                            <span className="material-symbols-outlined ms-16" aria-hidden>edit</span>
+                          </button>
+                          <button className="quote-toolbar-btn" onClick={() => duplicate(p)} title="Duplicate" aria-label={`Duplicate ${p.name}`} style={{ width: 32, height: 32, padding: 0 }}>
+                            <span className="material-symbols-outlined ms-16" aria-hidden>content_copy</span>
+                          </button>
+                          <button className="quote-toolbar-btn" onClick={() => confirmDelete(p)} title="Delete" aria-label={`Delete ${p.name}`} style={{ width: 32, height: 32, padding: 0 }}>
+                            <span className="material-symbols-outlined ms-16" aria-hidden>delete</span>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
       </div>
 
       {editing && (
         <div className="modal-backdrop" onClick={() => setEditing(null)}>
           <div className="modal" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <h2 className="modal-title">{isNew ? 'Add packaging' : `Edit: ${editing.name}`}</h2>
-              <button className="btn btn-ghost btn-sm" onClick={() => setEditing(null)}>✕</button>
+              <h2 className="modal-title" style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                <span className="material-symbols-outlined ms-18" aria-hidden>{isNew ? 'add' : 'edit'}</span>
+                {isNew ? 'Add packaging' : `Edit: ${editing.name}`}
+              </h2>
+              <button className="quote-toolbar-btn" style={{ width: 32, height: 32, padding: 0 }} onClick={() => setEditing(null)} aria-label="Close">
+                <span className="material-symbols-outlined ms-16" aria-hidden>close</span>
+              </button>
             </div>
             <div className="modal-body">
               <div className="form-group">
@@ -153,8 +190,11 @@ export function PackagingPage() {
               </div>
             </div>
             <div className="modal-footer">
-              <button className="btn btn-ghost" onClick={() => setEditing(null)}>Cancel</button>
-              <button className="btn btn-primary" onClick={save} disabled={!editing.name.trim()}>Save</button>
+              <button className="quote-toolbar-btn" onClick={() => setEditing(null)}>Cancel</button>
+              <button className="quote-toolbar-btn quote-toolbar-btn-primary" onClick={save} disabled={!editing.name.trim()}>
+                <span className="material-symbols-outlined ms-16" aria-hidden>save</span>
+                <span>Save</span>
+              </button>
             </div>
           </div>
         </div>
