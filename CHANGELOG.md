@@ -5,6 +5,12 @@ All notable changes to the Bakery Costing App (OvenCost Pro) will be documented 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.14] — 2026-10-11
+
+### Changed
+- Refreshed `README.md`, `PROJECT_HANDOFF.md`, and `MIGRATIONS.md` to reflect the current v1.4.13 implementation (47 tests, Material Symbols font subsetting, current schema behavior).
+- Added historical-status notes to `Bakery_Costing_App_Build_Prompt.md` and `OvenCost Pro — Phased Upgrade Plan.md` to clarify their role as original specifications rather than current-state descriptions.
+
 ## [1.4.13] - 2026-10-10
 
 ### Changed
