@@ -179,35 +179,51 @@ export function ImportExportPage() {
   };
 
   return (
-    <div style={{ maxWidth: 960, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 24 }}>
-      {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div>
-          <h2>Import & Export</h2>
-          <div style={{ color: 'var(--text-muted)', fontSize: 13, marginTop: 4 }}>
+    <>
+      <div className="quote-header">
+        <div className="quote-header-main">
+          <div className="quote-breadcrumbs">
+            <span className="quote-crumb-accent">Tools</span>
+            <span className="quote-crumb-sep">/</span>
+            <span className="quote-crumb-tertiary">Import / Export</span>
+          </div>
+          <div className="quote-title-row">
+            <h1 className="quote-title">Import / Export</h1>
+          </div>
+          <div style={{ color: 'var(--text-muted)', fontSize: 13 }}>
             Full system backups, selective data transfers, spreadsheet CSV sync, and template downloads.
           </div>
         </div>
-        {state.undoSnapshot && (
-          <button className="btn btn-warning" onClick={handleUndo}>
-            ↶ Undo Last Import
-          </button>
-        )}
+        <div className="quote-toolbar">
+          {state.undoSnapshot && (
+            <button className="quote-toolbar-btn" onClick={handleUndo}>
+              <span className="material-symbols-outlined ms-16" aria-hidden>undo</span>
+              <span>Undo Last Import</span>
+            </button>
+          )}
+        </div>
       </div>
 
-      {importStatus && (
-        <div className={importStatus.type === 'success' ? 'success-banner' : 'error-banner'}>
-          {importStatus.type === 'success' ? '✓ ' : '⚠️ '}
-          {importStatus.message}
-        </div>
-      )}
+      <div className="quote-page-root">
+        {importStatus && (
+          <div className={importStatus.type === 'success' ? 'success-banner' : 'error-banner'}>
+            <span className="material-symbols-outlined ms-18" aria-hidden>
+              {importStatus.type === 'success' ? 'check_circle' : 'error'}
+            </span>
+            <span>{importStatus.message}</span>
+          </div>
+        )}
 
-      {/* ─── Cloud Backup ─────────────────────────────────────────────────── */}
-      <CloudBackupCard />
+        <CloudBackupCard />
 
-      {/* Import Section */}
-      <div className="card">
-        <h3 style={{ fontSize: 16, marginBottom: 14 }}>Import JSON Dataset</h3>
+        <div className="quote-section-card">
+          <div className="decorations-section-header">
+            <div className="decorations-header-left">
+              <span className="material-symbols-outlined ms-20" aria-hidden>upload_file</span>
+              <h2 className="decorations-header-title">Import JSON Dataset</h2>
+            </div>
+            <span className="decorations-header-right">Schema 1.0</span>
+          </div>
         <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 16 }}>
           Select or drop a standard bakery costing JSON export. Data will be inspected and validated before any changes are applied.
         </p>
@@ -227,7 +243,9 @@ export function ImportExportPage() {
           }}
           onClick={() => fileInputRef.current?.click()}
         >
-          <div style={{ fontSize: 36, marginBottom: 10 }}>📥</div>
+          <div style={{ marginBottom: 10 }}>
+            <span className="material-symbols-outlined ms-32" aria-hidden>cloud_upload</span>
+          </div>
           <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 4 }}>
             Click or drag & drop a .json file here
           </div>
@@ -248,8 +266,9 @@ export function ImportExportPage() {
           <div style={{ marginTop: 20, padding: 16, background: 'var(--bg-surface)', borderRadius: 8, border: '1px solid var(--border)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
               <h4 style={{ fontSize: 15 }}>Import Preview</h4>
-              <span className={`badge ${preview.valid ? 'badge-success' : 'badge-danger'}`}>
-                {preview.valid ? '✓ Valid Dataset' : '⚠️ Has Validation Errors'}
+              <span className={`badge ${preview.valid ? 'badge-green' : 'badge-red'}`}>
+                <span className="material-symbols-outlined ms-14" aria-hidden>{preview.valid ? 'check_circle' : 'error'}</span>
+                {preview.valid ? 'Valid Dataset' : 'Has Validation Errors'}
               </span>
             </div>
 
@@ -372,38 +391,45 @@ export function ImportExportPage() {
               )}
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
-              <button className="btn btn-secondary" onClick={() => setPreview(null)}>Cancel</button>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, flexWrap: 'wrap' }}>
+              <button className="quote-toolbar-btn" onClick={() => setPreview(null)}>Cancel</button>
               <button
-                className="btn btn-primary"
+                className="quote-toolbar-btn quote-toolbar-btn-primary"
                 onClick={handleApplyImport}
                 disabled={!preview.valid}
               >
-                Apply Import (Atomic)
+                <span className="material-symbols-outlined ms-16" aria-hidden>check_circle</span>
+                <span>Apply Import (Atomic)</span>
               </button>
             </div>
           </div>
         )}
-      </div>
+        </div>
 
       {/* Export Section */}
-      <div className="card">
-        <h3 style={{ fontSize: 16, marginBottom: 14 }}>Export Data</h3>
+      <div className="quote-section-card">
+        <div className="decorations-section-header">
+          <div className="decorations-header-left">
+            <span className="material-symbols-outlined ms-20" aria-hidden>download</span>
+            <h2 className="decorations-header-title">Export Data</h2>
+          </div>
+        </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 20 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 320px), 1fr))', gap: 20 }}>
           {/* Full Export */}
           <div style={{ padding: 16, background: 'var(--bg-surface)', borderRadius: 8, border: '1px solid var(--border)' }}>
             <h4 style={{ fontSize: 14, marginBottom: 8 }}>Complete Database Backup</h4>
             <p style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 16 }}>
               Exports all settings, ingredients, packaging, recipes, flavours, products, size guide, and saved quotes into one standard JSON file.
             </p>
-            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-              <button className="btn btn-primary" style={{ flex: 1 }} onClick={handleFullExport}>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+              <button className="quote-toolbar-btn quote-toolbar-btn-primary" style={{ flex: 1 }} onClick={handleFullExport}>
+                <span className="material-symbols-outlined ms-16" aria-hidden>download</span>
                 Download Full Export (.json)
               </button>
               {state.cloud.signedIn && (
                 <button 
-                  className="btn btn-ghost" 
+                  className="quote-toolbar-btn"
                   onClick={async () => {
                     dispatch({ type: 'CLOUD_BUSY' });
                     try {
@@ -419,7 +445,9 @@ export function ImportExportPage() {
                   aria-label="Backup to Drive"
                   title="Backup to Google Drive"
                 >
-                  {state.cloud.busy ? '⏳' : '☁️'}
+                  <span className="material-symbols-outlined ms-18" aria-hidden>
+                    {state.cloud.busy ? 'sync' : 'cloud_upload'}
+                  </span>
                 </button>
               )}
             </div>
@@ -431,7 +459,7 @@ export function ImportExportPage() {
             <p style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 12 }}>
               Tick the entity categories you want to include in the exported file:
             </p>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 16 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 140px), 1fr))', gap: 8, marginBottom: 16 }}>
               {Object.keys(selectedExportGroups).map(k => (
                 <label key={k} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, cursor: 'pointer' }}>
                   <input
@@ -443,7 +471,8 @@ export function ImportExportPage() {
                 </label>
               ))}
             </div>
-            <button className="btn btn-secondary" style={{ width: '100%' }} onClick={handlePartialExport}>
+            <button className="quote-toolbar-btn quote-toolbar-btn-primary" style={{ width: '100%' }} onClick={handlePartialExport}>
+              <span className="material-symbols-outlined ms-16" aria-hidden>download</span>
               Export Selected Categories
             </button>
           </div>
@@ -451,16 +480,24 @@ export function ImportExportPage() {
       </div>
 
       {/* CSV Spreadsheet Sync & Blank Template */}
-      <div className="card">
-        <h3 style={{ fontSize: 16, marginBottom: 14 }}>Spreadsheet Sync & Blank Templates</h3>
+      <div className="quote-section-card">
+        <div className="decorations-section-header">
+          <div className="decorations-header-left">
+            <span className="material-symbols-outlined ms-20" aria-hidden>table_chart</span>
+            <h2 className="decorations-header-title">Spreadsheet Sync &amp; Blank Templates</h2>
+          </div>
+        </div>
 
         {csvStatus && (
-          <div className="success-banner" style={{ marginBottom: 16 }}>
-            {csvStatus}
+          <div className={csvStatus.startsWith('CSV Import Error:') ? 'error-banner' : csvStatus.startsWith('Imported with warnings:') ? 'warning-banner' : 'success-banner'}>
+            <span className="material-symbols-outlined ms-18" aria-hidden>
+              {csvStatus.startsWith('CSV Import Error:') ? 'error' : csvStatus.startsWith('Imported with warnings:') ? 'warning' : 'check_circle'}
+            </span>
+            <span>{csvStatus}</span>
           </div>
         )}
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 20 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))', gap: 20 }}>
           {/* CSV Export */}
           <div style={{ padding: 16, background: 'var(--bg-surface)', borderRadius: 8 }}>
             <h4 style={{ fontSize: 14, marginBottom: 8 }}>Export Spreadsheets (CSV)</h4>
@@ -469,7 +506,7 @@ export function ImportExportPage() {
             </p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               <button
-                className="btn btn-secondary"
+                className="quote-toolbar-btn"
                 onClick={() => {
                   const csv = exportIngredientsCSV(state.data.ingredients);
                   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -481,10 +518,11 @@ export function ImportExportPage() {
                   URL.revokeObjectURL(url);
                 }}
               >
+                <span className="material-symbols-outlined ms-16" aria-hidden>download</span>
                 Export Ingredients (CSV)
               </button>
               <button
-                className="btn btn-secondary"
+                className="quote-toolbar-btn"
                 onClick={() => {
                   const csv = exportPackagingCSV(state.data.packaging_items);
                   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -496,6 +534,7 @@ export function ImportExportPage() {
                   URL.revokeObjectURL(url);
                 }}
               >
+                <span className="material-symbols-outlined ms-16" aria-hidden>download</span>
                 Export Packaging (CSV)
               </button>
             </div>
@@ -520,10 +559,11 @@ export function ImportExportPage() {
               style={{ display: 'none' }}
             />
             <button
-              className="btn btn-secondary"
+              className="quote-toolbar-btn"
               style={{ width: '100%' }}
               onClick={() => csvInputRef.current?.click()}
             >
+              <span className="material-symbols-outlined ms-16" aria-hidden>upload</span>
               Upload Ingredients CSV
             </button>
           </div>
@@ -534,13 +574,15 @@ export function ImportExportPage() {
             <p style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 12 }}>
               Download the official schema-valid empty template (Appendix B) to start populating your catalog from scratch.
             </p>
-            <button className="btn btn-secondary" style={{ width: '100%' }} onClick={downloadBlankTemplate}>
+            <button className="quote-toolbar-btn" style={{ width: '100%' }} onClick={downloadBlankTemplate}>
+              <span className="material-symbols-outlined ms-16" aria-hidden>description</span>
               Download Blank Template (.json)
             </button>
           </div>
         </div>
       </div>
-    </div>
+      </div>
+    </>
   );
 }
 
@@ -554,40 +596,46 @@ function CloudBackupCard() {
   const [backupMsg, setBackupMsg] = useState<string | null>(null);
 
   return (
-    <div className="card">
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
-        <span style={{ fontSize: 22 }}>☁️</span>
-        <h3 style={{ fontSize: 16, margin: 0 }}>Google Drive Cloud Backup</h3>
+    <div className="quote-section-card">
+      <div className="decorations-section-header">
+        <div className="decorations-header-left">
+          <span className="material-symbols-outlined ms-20" aria-hidden>cloud_sync</span>
+          <h2 className="decorations-header-title">Google Drive Cloud Backup</h2>
+        </div>
       </div>
       <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 16 }}>
         Back up your entire bakery database to a hidden, app-only folder in your Google Drive — invisible to other apps and to you in regular Drive UI.
       </p>
 
       {state.cloud.error && (
-        <div className="error-banner" style={{ marginBottom: 16 }} role="alert">
-          ⚠️ {state.cloud.error}
+        <div className="error-banner" role="alert">
+          <span className="material-symbols-outlined ms-18" aria-hidden>error</span>
+          <span>{state.cloud.error}</span>
           <button
-            className="btn btn-ghost btn-sm"
-            style={{ marginLeft: 12 }}
+            className="quote-toolbar-btn"
+            style={{ marginLeft: 'auto', width: 32, height: 32, padding: 0 }}
             onClick={() => dispatch({ type: 'CLOUD_IDLE' })}
             aria-label="Dismiss error"
-          >✕</button>
+          >
+            <span className="material-symbols-outlined ms-16" aria-hidden>close</span>
+          </button>
         </div>
       )}
 
       {backupMsg && (
-        <div className="success-banner" style={{ marginBottom: 16 }}>
-          ✓ {backupMsg}
+        <div className="success-banner">
+          <span className="material-symbols-outlined ms-18" aria-hidden>check_circle</span>
+          <span>{backupMsg}</span>
         </div>
       )}
 
       {!state.cloud.configured ? (
-        <div style={{ padding: 16, background: 'var(--bg-surface)', borderRadius: 8, border: '1px solid var(--border)', fontSize: 13, color: 'var(--text-muted)' }}>
+        <div style={{ padding: 16, background: 'var(--bg-surface-container)', borderRadius: 8, border: '1px solid var(--border)', fontSize: 13, color: 'var(--text-muted)' }}>
           <strong>Not configured.</strong> Add <code>VITE_GOOGLE_CLIENT_ID</code> to your <code>.env</code> file to enable cloud backup. See <em>README.md → Cloud Backup (Google Drive)</em> for setup instructions.
         </div>
       ) : !state.cloud.signedIn ? (
         <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start', padding: 16, background: 'var(--bg-surface)', borderRadius: 8, border: '1px solid var(--border)' }}>
-          <div style={{ fontSize: 32 }}>🔒</div>
+          <span className="material-symbols-outlined ms-32" aria-hidden>lock</span>
           <div style={{ flex: 1 }}>
             <div style={{ fontWeight: 600, marginBottom: 6 }}>Not connected to Google Drive</div>
             <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 14 }}>
@@ -595,7 +643,7 @@ function CloudBackupCard() {
             </div>
             <button
               id="cloud-connect-btn"
-              className="btn btn-primary"
+              className="quote-toolbar-btn quote-toolbar-btn-primary"
               disabled={state.cloud.busy}
               onClick={async () => {
                 dispatch({ type: 'CLOUD_BUSY' });
@@ -607,20 +655,21 @@ function CloudBackupCard() {
                 }
               }}
             >
-              {state.cloud.busy ? '⏳ Connecting...' : '🔗 Connect Google Drive'}
+              <span className="material-symbols-outlined ms-16" aria-hidden>{state.cloud.busy ? 'sync' : 'link'}</span>
+              <span>{state.cloud.busy ? 'Connecting...' : 'Connect Google Drive'}</span>
             </button>
           </div>
         </div>
       ) : (
         <div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', background: 'var(--bg-surface)', borderRadius: 8, border: '1px solid var(--border)', marginBottom: 14 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap', padding: '10px 14px', background: 'var(--bg-surface)', borderRadius: 8, border: '1px solid var(--border)', marginBottom: 14 }}>
             <div aria-live="polite" style={{ fontSize: 13 }}>
-              <span style={{ marginRight: 8 }}>✅</span>
+              <span className="material-symbols-outlined ms-16" aria-hidden style={{ marginRight: 8, verticalAlign: 'middle', color: 'var(--accent-green)' }}>check_circle</span>
               <strong>{state.cloud.user?.email}</strong>
               {state.cloud.user?.name ? <span style={{ color: 'var(--text-muted)', marginLeft: 6 }}>({state.cloud.user.name})</span> : null}
             </div>
             <button
-              className="btn btn-ghost btn-sm"
+              className="quote-toolbar-btn"
               onClick={() => { signOut(); dispatch({ type: 'CLOUD_SIGNED_OUT' }); }}
             >
               Disconnect
@@ -630,7 +679,7 @@ function CloudBackupCard() {
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 12 }}>
             <button
               id="cloud-backup-now-btn"
-              className="btn btn-primary"
+              className="quote-toolbar-btn quote-toolbar-btn-primary"
               disabled={state.cloud.busy}
               onClick={async () => {
                 dispatch({ type: 'CLOUD_BUSY' });
@@ -644,15 +693,17 @@ function CloudBackupCard() {
                 }
               }}
             >
-              {state.cloud.busy ? '⏳ Backing up...' : '⬆️ Back up now'}
+              <span className="material-symbols-outlined ms-16" aria-hidden>{state.cloud.busy ? 'sync' : 'backup'}</span>
+              <span>{state.cloud.busy ? 'Backing up...' : 'Back up now'}</span>
             </button>
             <button
               id="cloud-restore-btn"
-              className="btn btn-secondary"
+              className="quote-toolbar-btn"
               disabled={state.cloud.busy}
               onClick={() => setRestoreModalOpen(true)}
             >
-              ⬇️ Restore from backup
+              <span className="material-symbols-outlined ms-16" aria-hidden>settings_backup_restore</span>
+              <span>Restore from backup</span>
             </button>
           </div>
 
@@ -704,18 +755,27 @@ function RestoreModal({ onClose }: { onClose: () => void }) {
     <div className="modal-backdrop" onClick={onClose} role="dialog" aria-modal="true" aria-label="Restore from Google Drive">
       <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 600, width: '90%', maxHeight: '90vh', overflowY: 'auto' }}>
         <div className="modal-header">
-          <h2 className="modal-title">Restore from Google Drive</h2>
-          <button className="btn btn-ghost btn-sm" onClick={onClose} aria-label="Close">✕</button>
+          <h2 className="modal-title" style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+            <span className="material-symbols-outlined ms-18" aria-hidden>settings_backup_restore</span>
+            Restore from Google Drive
+          </h2>
+          <button className="quote-toolbar-btn" style={{ width: 32, height: 32, padding: 0 }} onClick={onClose} aria-label="Close">
+            <span className="material-symbols-outlined ms-16" aria-hidden>close</span>
+          </button>
         </div>
         <div className="modal-body">
           {loading ? (
-            <div style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>⏳ Loading backups…</div>
+            <div style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>
+              <span className="material-symbols-outlined ms-24" aria-hidden>sync</span>
+              <div>Loading backups…</div>
+            </div>
           ) : preview ? (
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
                 <h4 style={{ fontSize: 15 }}>Import Preview</h4>
-                <span className={`badge ${preview.valid ? 'badge-success' : 'badge-danger'}`}>
-                  {preview.valid ? '✓ Valid' : '⚠️ Errors'}
+                <span className={`badge ${preview.valid ? 'badge-green' : 'badge-red'}`}>
+                  <span className="material-symbols-outlined ms-14" aria-hidden>{preview.valid ? 'check_circle' : 'error'}</span>
+                  {preview.valid ? 'Valid' : 'Errors'}
                 </span>
               </div>
 
@@ -755,30 +815,36 @@ function RestoreModal({ onClose }: { onClose: () => void }) {
               </div>
 
               <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
-                <button className="btn btn-ghost btn-sm" onClick={() => setPreview(null)}>← Back to list</button>
-                <button className="btn btn-secondary" disabled={!preview.valid} onClick={() => handleApply('merge')}>Merge into current data</button>
-                <button className="btn btn-primary" disabled={!preview.valid} onClick={() => handleApply('replace')}>Replace all with this backup</button>
+                <button className="quote-toolbar-btn" onClick={() => setPreview(null)}>
+                  <span className="material-symbols-outlined ms-16" aria-hidden>arrow_back</span>
+                  Back to list
+                </button>
+                <button className="quote-toolbar-btn" disabled={!preview.valid} onClick={() => handleApply('merge')}>Merge into current data</button>
+                <button className="quote-toolbar-btn quote-toolbar-btn-primary" disabled={!preview.valid} onClick={() => handleApply('replace')}>Replace all with this backup</button>
               </div>
             </div>
           ) : !backups || backups.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: 32, color: 'var(--text-muted)' }}>
-              <div style={{ fontSize: 36, marginBottom: 12 }}>📭</div>
-              <div>No backups found for this Google account.</div>
-              <button className="btn btn-secondary btn-sm mt-4" onClick={onClose}>Close</button>
+            <div className="empty-state">
+              <div className="empty-state-icon">
+                <span className="material-symbols-outlined ms-32" aria-hidden>inbox</span>
+              </div>
+              <div className="empty-state-title">No backups found</div>
+              <div className="empty-state-text">No backups found for this Google account.</div>
+              <button className="quote-toolbar-btn" onClick={onClose}>Close</button>
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {backups.map(b => (
-                <div key={b.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 12, background: 'var(--bg-surface)', borderRadius: 8, border: '1px solid var(--border)' }}>
+                <div key={b.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12, padding: 12, background: 'var(--bg-surface)', borderRadius: 8, border: '1px solid var(--border)' }}>
                   <div>
                     <div style={{ fontWeight: 600, fontSize: 13 }}>{b.name}</div>
                     <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
                       {new Date(b.modifiedTime).toLocaleString()} &bull; {Math.round(b.size / 1024)} KB
                     </div>
                   </div>
-                  <div style={{ display: 'flex', gap: 8 }}>
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                     <button
-                      className="btn btn-secondary btn-sm"
+                      className="quote-toolbar-btn"
                       onClick={() => {
                         setLoading(true);
                         restoreBackup(b.id, state.data)
@@ -786,10 +852,12 @@ function RestoreModal({ onClose }: { onClose: () => void }) {
                           .catch(err => { dispatch({ type: 'CLOUD_ERROR', error: err.message }); onClose(); });
                       }}
                     >
-                      Preview & Restore
+                      <span className="material-symbols-outlined ms-16" aria-hidden>visibility</span>
+                      Preview &amp; Restore
                     </button>
                     <button
-                      className="btn btn-ghost btn-sm text-danger"
+                      className="quote-toolbar-btn"
+                      style={{ color: 'var(--accent-red)' }}
                       aria-label={`Delete backup ${b.name}`}
                       onClick={async () => {
                         if (confirm('Delete this backup permanently?')) {
@@ -801,6 +869,7 @@ function RestoreModal({ onClose }: { onClose: () => void }) {
                         }
                       }}
                     >
+                      <span className="material-symbols-outlined ms-16" aria-hidden>delete</span>
                       Delete
                     </button>
                   </div>
