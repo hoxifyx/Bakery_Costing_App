@@ -18,6 +18,7 @@ export function QuotePage() {
 
   const [showExplain, setShowExplain] = useState(false);
   const [activeTiers, setActiveTiers] = useState(1); // how many tier cards shown
+  const [ledgerOpen, setLedgerOpen] = useState(false);
 
   // Save dialog state
   const [showSaveDialog, setShowSaveDialog] = useState(false);
@@ -167,53 +168,33 @@ export function QuotePage() {
             <span className="quote-crumb-sep">/</span>
             <span>Bespoke Engineering</span>
             <span className="quote-crumb-sep">/</span>
-            <span className="quote-crumb-mint">Live Calculation</span>
+            <span className="quote-crumb-tertiary">Live Calculation Mode</span>
           </div>
-          <h1 className="quote-title">Tiered Cake Quote Builder</h1>
+          <div className="quote-title-row">
+            <h1 className="quote-title">Tiered Cake Quote Builder</h1>
+          </div>
         </div>
 
         <div className="quote-toolbar">
-          <button
-            type="button"
-            className="btn btn-secondary btn-sm"
-            onClick={() => setShowExplain(true)}
-            disabled={!displayQ}
-            aria-label="Explain cost calculation"
-          >
-            Explain
+          <button className="quote-toolbar-btn" id="explain-btn" onClick={() => setShowExplain(true)} disabled={!displayQ} aria-label="Explain cost calculation">
+            <span aria-hidden>🧠</span>
+            <span>Explain Cost</span>
           </button>
-          <button
-            type="button"
-            className="btn btn-secondary btn-sm"
-            onClick={copyText}
-            disabled={!displayQ}
-            aria-label="Copy quote summary"
-          >
-            Copy
+          <button className="quote-toolbar-btn" onClick={copyText} disabled={!displayQ} aria-label="Copy quote summary">
+            <span aria-hidden>📋</span>
+            <span>Copy</span>
           </button>
-          <button
-            type="button"
-            className="btn btn-secondary btn-sm"
-            onClick={() => window.print()}
-            aria-label="Print quote"
-          >
-            Print
+          <button className="quote-toolbar-btn" onClick={() => window.print()} aria-label="Print quote">
+            <span aria-hidden>🖨️</span>
+            <span>Print Spec</span>
           </button>
-          <button
-            type="button"
-            className="btn btn-secondary btn-sm"
-            onClick={() => dispatch({ type: 'RESET_QUOTE' })}
-            aria-label="Reset quote inputs"
-          >
-            Reset
+          <button className="quote-toolbar-btn quote-toolbar-btn-reset" onClick={() => dispatch({ type: 'RESET_QUOTE' })} aria-label="Reset quote inputs">
+            <span aria-hidden>↺</span>
+            <span>Reset</span>
           </button>
-          <button
-            type="button"
-            className="btn btn-primary btn-sm"
-            onClick={handleOpenSaveDialog}
-            aria-label="Save quote"
-          >
-            Save Quote
+          <button className="quote-toolbar-btn quote-toolbar-btn-primary" onClick={handleOpenSaveDialog} aria-label="Save quote">
+            <span aria-hidden>💾</span>
+            <span>Save Quote</span>
           </button>
         </div>
       </div>
@@ -276,15 +257,49 @@ export function QuotePage() {
         </div>
       )}
 
+      <div className="quote-hero-banner">
+        <div className="quote-hero-left">
+          <div className="quote-hero-tile" aria-hidden>🎂</div>
+          <div className="quote-hero-text">
+            <h2 className="quote-hero-title">Architectural Tier Assembly</h2>
+            <p className="quote-hero-subtitle">
+              Configuring {displayQ?.tiers_used ?? 0} active {(displayQ?.tiers_used ?? 0) === 1 ? 'tier' : 'tiers'}. Serving count automatically synced with cutting guides.
+            </p>
+          </div>
+        </div>
+
+        <div className="quote-hero-stats">
+          <div className="quote-hero-stat-block">
+            <span className="quote-hero-stat-label">Total Portions</span>
+            <span className="quote-hero-stat-val">
+              {quoteInput.tiers.reduce((acc, t) => {
+                const kg = t.size_kg ?? 0;
+                if (kg <= 0) return acc;
+                const entry = data.size_guide.find(sg => sg.kg === kg);
+                return acc + (entry ? entry.servings : 0);
+              }, 0)}
+            </span>
+          </div>
+          <span className="quote-hero-divider" />
+          <div className="quote-hero-stat-block">
+            <span className="quote-hero-stat-label">Active Tiers</span>
+            <span className="quote-hero-stat-val" style={{ color: 'var(--accent)' }}>{displayQ?.tiers_used ?? 0}</span>
+          </div>
+        </div>
+      </div>
+
       {/* Main Two-Column Layout */}
       <div className="quote-layout-grid">
         {/* Left: Configuration Column */}
         <div className="quote-config-col">
           {/* 1. Tier structure section */}
           <div className="quote-section-card">
-            <div className="quote-section-header">
-              <span className="quote-section-title">Tier Structure</span>
-              <span className="quote-section-sub">
+            <div className="decorations-section-header">
+              <div className="decorations-header-left">
+                <span style={{ fontSize: 20 }} aria-hidden>📚</span>
+                <h2 className="decorations-header-title">Tier Structure</h2>
+              </div>
+              <span className="decorations-header-right">
                 {displayQ ? `${displayQ.tiers_used} active tier${displayQ.tiers_used !== 1 ? 's' : ''}` : 'Tier 1 required'}
               </span>
             </div>
@@ -299,8 +314,19 @@ export function QuotePage() {
                 return (
                   <div key={idx} className={`tier-item-row ${isActive ? 'active' : ''}`}>
                     <div className="tier-item-topbar">
-                      <div className="tier-badge-pill" aria-label={`Tier ${idx + 1}`}>
-                        {idx + 1}
+                      <div className="tier-item-title-group">
+                        <div className="tier-badge-tile" aria-label={`Tier ${idx + 1}`}>
+                          {idx + 1}
+                        </div>
+                        <h3 className="tier-item-heading">
+                          Tier {idx + 1}
+                          {tier.size_kg ? `: ${data.size_guide.find(sg => sg.kg === tier.size_kg)?.label ?? ''} Tier` : ''}
+                        </h3>
+                        {isActive && (
+                          <span className="tier-portions-pill">
+                            {data.size_guide.find(sg => sg.kg === tier.size_kg)?.servings ?? 0} PORTIONS
+                          </span>
+                        )}
                       </div>
 
                       {isActive && res && (
@@ -327,8 +353,8 @@ export function QuotePage() {
 
                     <div className="tier-controls-grid">
                       {/* Size selector */}
-                      <div className="tier-size-col">
-                        <label className="extra-field-label">Size (kg)</label>
+                      <div className="tier-control-block">
+                        <label className="tier-control-label">Size (kg)</label>
                         <NumberInput
                           value={tier.size_kg ?? 0}
                           onChange={v => updateTier(idx, { size_kg: v })}
@@ -337,14 +363,14 @@ export function QuotePage() {
                           aria-label={`Tier ${idx + 1} size in kg`}
                         />
                         {visibleSizeGuide.length > 0 && (
-                          <div className="tier-size-pills-row">
+                          <div className="tier-size-pills-box">
                             {visibleSizeGuide.map(sg => {
                               const isSelected = tier.size_kg === sg.kg;
                               return (
                                 <button
                                   key={sg.label}
                                   type="button"
-                                  className={`tier-size-pill-btn ${isSelected ? 'selected' : ''}`}
+                                  className={`tier-size-pill-btn ${isSelected ? 'active' : ''}`}
                                   onClick={() => updateTier(idx, { size_kg: sg.kg })}
                                   aria-label={`${sg.label} (${sg.servings} servings)`}
                                   title={`${sg.label} (${sg.servings} servings)`}
@@ -358,35 +384,41 @@ export function QuotePage() {
                       </div>
 
                       {/* Flavour selector */}
-                      <div className="tier-size-col tier-select-wrap">
-                        <label className="extra-field-label">Flavour</label>
-                        <select
-                          className="select"
-                          value={tier.flavour_id ?? ''}
-                          onChange={e => updateTier(idx, { flavour_id: e.target.value || null })}
-                          aria-label={`Tier ${idx + 1} Flavour`}
-                        >
-                          <option value="">— pick flavour —</option>
-                          {flavourOptions.map(f => (
-                            <option key={f.id} value={f.id}>{f.name}</option>
-                          ))}
-                        </select>
+                      <div className="tier-control-block">
+                        <label className="tier-control-label">Flavour</label>
+                        <div className="tier-select-wrapper">
+                          <select
+                            className="tier-custom-select"
+                            value={tier.flavour_id ?? ''}
+                            onChange={e => updateTier(idx, { flavour_id: e.target.value || null })}
+                            aria-label={`Tier ${idx + 1} Flavour`}
+                          >
+                            <option value="">— pick flavour —</option>
+                            {flavourOptions.map(f => (
+                              <option key={f.id} value={f.id}>{f.name}</option>
+                            ))}
+                          </select>
+                          <span className="tier-select-chevron" aria-hidden>▾</span>
+                        </div>
                       </div>
 
                       {/* Filling selector */}
-                      <div className="tier-size-col tier-select-wrap">
-                        <label className="extra-field-label">Filling</label>
-                        <select
-                          className="select"
-                          value={tier.filling_id ?? ''}
-                          onChange={e => updateTier(idx, { filling_id: e.target.value || null })}
-                          aria-label={`Tier ${idx + 1} Filling`}
-                        >
-                          <option value="">— pick filling —</option>
-                          {fillingOptions.map(f => (
-                            <option key={f.id} value={f.id}>{f.name}</option>
-                          ))}
-                        </select>
+                      <div className="tier-control-block">
+                        <label className="tier-control-label">Filling</label>
+                        <div className="tier-select-wrapper">
+                          <select
+                            className="tier-custom-select"
+                            value={tier.filling_id ?? ''}
+                            onChange={e => updateTier(idx, { filling_id: e.target.value || null })}
+                            aria-label={`Tier ${idx + 1} Filling`}
+                          >
+                            <option value="">— pick filling —</option>
+                            {fillingOptions.map(f => (
+                              <option key={f.id} value={f.id}>{f.name}</option>
+                            ))}
+                          </select>
+                          <span className="tier-select-chevron" aria-hidden>▾</span>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -410,173 +442,176 @@ export function QuotePage() {
           </div>
 
           {/* 3. Decorations & Extras section */}
-          <div className="quote-section-card">
-            <div className="quote-section-header">
-              <span className="quote-section-title">Decorations & Extras</span>
+          <div className="tier-item-row" style={{ gap: 16 }}>
+            <div className="decorations-section-header">
+              <div className="decorations-header-left">
+                <span style={{ fontSize: 20 }} aria-hidden>🎨</span>
+                <h2 className="decorations-header-title">Decorations, Materials &amp; Logistics</h2>
+              </div>
+              <span className="decorations-header-right">All overhead rates active</span>
             </div>
 
-            <div className="extras-inputs-grid">
-              <div className="extra-field-group">
-                <label className="extra-field-label" htmlFor="input-fondant">Fondant (kg)</label>
-                <div className="extra-input-suffix-wrap">
+            <div className="decorations-grid">
+              <div className="decoration-card">
+                <div className="decoration-card-top">
+                  <span className="decoration-card-label">Fondant</span>
+                  <span className="decoration-card-icon" aria-hidden>🎂</span>
+                </div>
+                <div className="decoration-card-bottom">
+                  <span className="decoration-card-hint">kg</span>
                   <NumberInput
                     id="input-fondant"
                     value={quoteInput.decoration.fondant_kg}
                     onChange={v => updateDecoration('fondant_kg', v)}
                     step={0.1}
+                    className="decoration-inline-input"
                     aria-label="Fondant in kg"
                   />
-                  <span className="extra-input-suffix">kg</span>
                 </div>
               </div>
 
-              <div className="extra-field-group">
-                <label className="extra-field-label" htmlFor="input-prints">Edible Prints (count)</label>
-                <div className="extra-input-suffix-wrap">
+              <div className="decoration-card">
+                <div className="decoration-card-top">
+                  <span className="decoration-card-label">Edible Prints</span>
+                  <span className="decoration-card-icon" aria-hidden>🖨️</span>
+                </div>
+                <div className="decoration-card-bottom">
+                  <span className="decoration-card-hint">count</span>
                   <NumberInput
                     id="input-prints"
                     value={quoteInput.decoration.prints}
                     onChange={v => updateDecoration('prints', v)}
+                    className="decoration-inline-input"
                     aria-label="Edible prints count"
                   />
-                  <span className="extra-input-suffix">qty</span>
                 </div>
               </div>
 
-              <div className="extra-field-group">
-                <label className="extra-field-label" htmlFor="input-flowers">Flowers ({cur})</label>
-                <div className="extra-input-suffix-wrap">
+              <div className="decoration-card">
+                <div className="decoration-card-top">
+                  <span className="decoration-card-label">Sugar Flowers</span>
+                  <span className="decoration-card-icon" aria-hidden>🌸</span>
+                </div>
+                <div className="decoration-card-bottom">
+                  <span className="decoration-card-hint">{cur}</span>
                   <NumberInput
                     id="input-flowers"
                     value={quoteInput.decoration.flowers}
                     onChange={v => updateDecoration('flowers', v)}
+                    className="decoration-inline-input"
                     aria-label="Flowers cost"
                   />
-                  <span className="extra-input-suffix">{cur}</span>
                 </div>
               </div>
 
-              <div className="extra-field-group">
-                <label className="extra-field-label" htmlFor="input-toppers">Toppers (count)</label>
-                <div className="extra-input-suffix-wrap">
+              <div className="decoration-card">
+                <div className="decoration-card-top">
+                  <span className="decoration-card-label">Acrylic Toppers</span>
+                  <span className="decoration-card-icon" aria-hidden>🎯</span>
+                </div>
+                <div className="decoration-card-bottom">
+                  <span className="decoration-card-hint">count</span>
                   <NumberInput
                     id="input-toppers"
                     value={quoteInput.decoration.toppers}
                     onChange={v => updateDecoration('toppers', v)}
+                    className="decoration-inline-input"
                     aria-label="Toppers count"
                   />
-                  <span className="extra-input-suffix">qty</span>
                 </div>
               </div>
 
-              <div className="extra-field-group">
-                <label className="extra-field-label" htmlFor="input-time">Time (hours)</label>
-                <div className="extra-input-suffix-wrap">
-                  <NumberInput
-                    id="input-time"
-                    value={quoteInput.decoration.time_hours}
-                    onChange={v => updateDecoration('time_hours', v)}
-                    step={0.5}
-                    aria-label="Time in hours"
-                  />
-                  <span className="extra-input-suffix">hrs</span>
+              <div className="decoration-card">
+                <div className="decoration-card-top">
+                  <span className="decoration-card-label">Other costs</span>
+                  <span className="decoration-card-icon" aria-hidden>🧾</span>
                 </div>
-              </div>
-
-              <div className="extra-field-group">
-                <label className="extra-field-label" htmlFor="input-others">Other costs ({cur})</label>
-                <div className="extra-input-suffix-wrap">
+                <div className="decoration-card-bottom">
+                  <span className="decoration-card-hint">{cur}</span>
                   <NumberInput
                     id="input-others"
                     value={quoteInput.decoration.others}
                     onChange={v => updateDecoration('others', v)}
+                    className="decoration-inline-input"
                     aria-label="Other costs"
                   />
-                  <span className="extra-input-suffix">{cur}</span>
                 </div>
               </div>
 
-              <div className="extra-field-group">
-                <label className="extra-field-label" htmlFor="input-delivery">Delivery ({cur})</label>
-                <div className="extra-input-suffix-wrap">
+              <div className="decoration-card">
+                <div className="decoration-card-top">
+                  <span className="decoration-card-label">Delivery Run</span>
+                  <span className="decoration-card-icon" aria-hidden>🚚</span>
+                </div>
+                <div className="decoration-card-bottom">
+                  <span className="decoration-card-hint">{cur}</span>
                   <NumberInput
                     id="input-delivery"
                     value={quoteInput.decoration.delivery}
                     onChange={v => updateDecoration('delivery', v)}
+                    className="decoration-inline-input"
                     aria-label="Delivery cost"
                   />
-                  <span className="extra-input-suffix">{cur}</span>
-                </div>
-              </div>
-            </div>
-
-            {/* 4. Discount field with preset buttons */}
-            <div className="discount-section-group">
-              <label className="extra-field-label" htmlFor="input-discount">
-                Discount ({cur})
-              </label>
-              <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-                <div style={{ flex: '1 1 140px' }} className="extra-input-suffix-wrap">
-                  <NumberInput
-                    id="input-discount"
-                    value={quoteInput.decoration.discount ?? 0}
-                    onChange={v => updateDecoration('discount', Math.max(0, v))}
-                    placeholder="0"
-                    aria-label="Discount amount"
-                  />
-                  <span className="extra-input-suffix">{cur}</span>
-                </div>
-
-                <div className="discount-presets-row">
-                  <button
-                    type="button"
-                    className="discount-preset-btn"
-                    onClick={() => updateDecoration('discount', 0)}
-                    aria-label="Reset discount to 0"
-                  >
-                    0
-                  </button>
-                  <button
-                    type="button"
-                    className="discount-preset-btn"
-                    onClick={() => {
-                      const p = displayQ?.profit ?? 0;
-                      updateDecoration('discount', parseFloat((p * 0.25).toFixed(2)));
-                    }}
-                    aria-label="Apply 25% discount"
-                  >
-                    25%
-                  </button>
-                  <button
-                    type="button"
-                    className="discount-preset-btn"
-                    onClick={() => {
-                      const p = displayQ?.profit ?? 0;
-                      updateDecoration('discount', parseFloat((p * 0.50).toFixed(2)));
-                    }}
-                    aria-label="Apply 50% discount"
-                  >
-                    50%
-                  </button>
-                  <button
-                    type="button"
-                    className="discount-preset-btn"
-                    onClick={() => {
-                      const p = displayQ?.profit ?? 0;
-                      updateDecoration('discount', parseFloat(p.toFixed(2)));
-                    }}
-                    aria-label="Apply 100% discount"
-                  >
-                    100%
-                  </button>
                 </div>
               </div>
 
-              {displayQ && displayQ.discount_capped && (
-                <div className="discount-capped-note">
-                  <span>⚠ Capped to available profit</span>
+              {/* Full-width labour + discount strip */}
+              <div className="labour-discount-strip">
+                <div className="strip-col">
+                  <div className="strip-col-header">
+                    <span className="strip-label">Labour Allocation</span>
+                    <span className="strip-hint">
+                      {quoteInput.decoration.time_hours} hrs @ {settings.labour_rate_per_hour}/{cur}
+                    </span>
+                  </div>
+                  <div className="strip-controls-row">
+                    <NumberInput
+                      value={quoteInput.decoration.time_hours}
+                      onChange={v => updateDecoration('time_hours', v)}
+                      step={0.5}
+                      aria-label="Labour hours"
+                    />
+                    <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontWeight: 700, color: 'var(--text-primary)' }}>
+                      {fmt(quoteInput.decoration.time_hours * settings.labour_rate_per_hour, cur)}
+                    </span>
+                  </div>
                 </div>
-              )}
+
+                <div className="strip-col">
+                  <div className="strip-col-header">
+                    <span className="strip-label">Promo / Courtesy Discount</span>
+                    <span className="strip-hint">
+                      {displayQ?.discount_capped ? '⚠ Capped to profit' : 'Custom % applied'}
+                    </span>
+                  </div>
+                  <div className="strip-controls-row">
+                    <div className="discount-presets-group">
+                      {[0, 25, 50, 100].map(pct => (
+                        <button
+                          key={pct}
+                          type="button"
+                          className="discount-preset-chip"
+                          onClick={() => {
+                            const profit = displayQ?.profit ?? 0;
+                            updateDecoration('discount', parseFloat(((profit * pct) / 100).toFixed(2)));
+                          }}
+                          aria-label={`Apply ${pct}% discount`}
+                        >
+                          {pct}%
+                        </button>
+                      ))}
+                    </div>
+                    <div className="discount-input-wrapper">
+                      <NumberInput
+                        value={quoteInput.decoration.discount ?? 0}
+                        onChange={v => updateDecoration('discount', Math.max(0, v))}
+                        placeholder="0"
+                        aria-label="Discount amount"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -601,9 +636,9 @@ export function QuotePage() {
           ) : (
             <div className="summary-card-inner">
               {/* 1. Total Price Hero */}
-              <div className="summary-price-hero">
-                <div className="summary-price-hero-header">
-                  <span className="summary-price-label">Total Price</span>
+              <div className="summary-price-box">
+                <div className="summary-price-box-header">
+                  <span className="summary-price-caption">Total Price</span>
                   <span
                     className={`status-pill ${isMarginMet ? 'status-pill-ready' : 'status-pill-below'}`}
                   >
@@ -617,9 +652,9 @@ export function QuotePage() {
 
                 {/* 2. Suggested Price */}
                 {displayQ.suggested_price !== undefined && (
-                  <div className="summary-suggested-row">
-                    <span className="summary-suggested-label">Suggested Price</span>
-                    <span className="summary-suggested-val">
+                  <div className="summary-msrp-row">
+                    <span className="summary-msrp-label">Suggested Price</span>
+                    <span className="summary-msrp-pill">
                       {fmt(displayQ.suggested_price, cur)}
                     </span>
                   </div>
@@ -627,91 +662,125 @@ export function QuotePage() {
               </div>
 
               {/* 3. Cost Attribution Ledger */}
-              <div className="cost-attribution-ledger">
-                <div className="ledger-row">
-                  <div className="ledger-item-desc">
+              <div className="summary-ledger-section">
+                <div className="summary-ledger-row">
+                  <div className="ledger-item-left">
                     <span className="ledger-dot" style={{ background: 'var(--accent-amber)' }} />
                     <span>Tier Sponge & Filling</span>
                   </div>
-                  <span className="ledger-val">{fmt(displayQ.tier_cost, cur)}</span>
+                  <span className="ledger-item-val">{fmt(displayQ.tier_cost, cur)}</span>
                 </div>
 
-                <div className="ledger-row">
-                  <div className="ledger-item-desc">
+                <div className="summary-ledger-row">
+                  <div className="ledger-item-left">
                     <span className="ledger-dot" style={{ background: '#f97316' }} />
                     <span>Decorations & Add-ons</span>
                   </div>
-                  <span className="ledger-val">{fmt(decorationsTotal, cur)}</span>
+                  <span className="ledger-item-val">{fmt(decorationsTotal, cur)}</span>
                 </div>
 
-                <div className="ledger-row">
-                  <div className="ledger-item-desc">
+                <div className="summary-ledger-row">
+                  <div className="ledger-item-left">
                     <span className="ledger-dot" style={{ background: 'var(--accent-mint)' }} />
                     <span>Production Labour</span>
                   </div>
-                  <span className="ledger-val">{fmt(displayQ.time, cur)}</span>
+                  <span className="ledger-item-val">{fmt(displayQ.time, cur)}</span>
                 </div>
 
-                <div className="ledger-row">
-                  <div className="ledger-item-desc">
+                <div className="summary-ledger-row">
+                  <div className="ledger-item-left">
                     <span className="ledger-dot" style={{ background: 'var(--text-muted)' }} />
                     <span>Overhead</span>
                   </div>
-                  <span className="ledger-val">{fmt(displayQ.overhead, cur)}</span>
+                  <span className="ledger-item-val">{fmt(displayQ.overhead, cur)}</span>
                 </div>
 
-                <div className="ledger-row">
-                  <div className="ledger-item-desc">
+                <div className="summary-ledger-row">
+                  <div className="ledger-item-left">
                     <span className="ledger-dot" style={{ background: '#38bdf8' }} />
                     <span>Packaging</span>
                   </div>
-                  <span className="ledger-val">{fmt(displayQ.packaging, cur)}</span>
+                  <span className="ledger-item-val">{fmt(displayQ.packaging, cur)}</span>
                 </div>
 
-                <div className="ledger-row">
-                  <div className="ledger-item-desc">
+                <div className="summary-ledger-row">
+                  <div className="ledger-item-left">
                     <span className="ledger-dot" style={{ background: '#a855f7' }} />
                     <span>Delivery</span>
                   </div>
-                  <span className="ledger-val">{fmt(displayQ.delivery, cur)}</span>
+                  <span className="ledger-item-val">{fmt(displayQ.delivery, cur)}</span>
                 </div>
               </div>
 
               {/* 4. Profit Gauge */}
-              <div className="profit-gauge-box">
-                <div className="profit-gauge-header">
-                  <span className="profit-gauge-title">Net Yield</span>
-                  <span className="profit-gauge-val">{fmt(displayQ.profit, cur)}</span>
+              <div className="net-yield-box">
+                <div className="net-yield-top">
+                  <span className="net-yield-label">Net Yield</span>
+                  <span className="net-yield-profit">{fmt(displayQ.profit, cur)}</span>
                 </div>
 
-                <div className="profit-progress-track">
+                <div className="net-yield-bar-track">
                   <div
-                    className={`profit-progress-bar ${isMarginMet ? 'mint' : 'amber'}`}
-                    style={{ width: `${Math.min(100, Math.max(0, marginRatio * 100))}%` }}
+                    className="net-yield-bar-fill"
+                    style={{
+                      width: `${Math.min(100, Math.max(0, marginRatio * 100))}%`,
+                      background: isMarginMet ? 'var(--tertiary)' : 'var(--accent)',
+                    }}
                   />
                 </div>
 
-                <div className="profit-gauge-sub">
+                <div className="net-yield-footer">
                   <span>Margin: {(displayQ.margin_check * 100).toFixed(1)}%</span>
                   <span>Target: {(settings.target_margin * 100).toFixed(1)}%</span>
                 </div>
               </div>
 
               {/* 5. Total Cost Row */}
-              <div className="summary-total-cost-row">
+              <div className="summary-ledger-row">
                 <span>Total Cost</span>
-                <span className="summary-total-cost-val">{fmt(displayQ.total_cost, cur)}</span>
+                <span className="summary-price-val">{fmt(displayQ.total_cost, cur)}</span>
               </div>
 
               {/* 6. Inspect Cost Engine Hierarchy Button */}
               <button
                 type="button"
-                className="btn-inspect-audit"
+                className="btn-inspect-hierarchy"
                 onClick={() => setShowExplain(true)}
                 aria-label="Inspect Cost Engine Hierarchy"
               >
                 <span>🔍 Inspect Cost Engine Hierarchy</span>
               </button>
+
+              {displayQ && displayQ.audit.length > 0 && (
+                <div className="formula-ledger-card">
+                  <div
+                    className="formula-ledger-header"
+                    onClick={() => setLedgerOpen(o => !o)}
+                    role="button"
+                    tabIndex={0}
+                    aria-expanded={ledgerOpen}
+                    onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setLedgerOpen(o => !o); } }}
+                  >
+                    <span className="formula-ledger-title text-label-caps">
+                      <span className="text-tertiary">◆</span>
+                      <span>Real-Time Formula Ledger</span>
+                    </span>
+                    <span className="formula-ledger-toggle-icon">{ledgerOpen ? '▾ collapse' : '▸ expand'}</span>
+                  </div>
+                  {ledgerOpen && (
+                    <div className="formula-ledger-list">
+                      {displayQ.audit.map((step, i) => (
+                        <div key={i} className="formula-entry-card">
+                          <span className="formula-entry-label">[{step.label}]</span>
+                          <span className="formula-entry-math">
+                            {step.formula} = {cur} {step.value.toFixed(2)}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
         </div>
