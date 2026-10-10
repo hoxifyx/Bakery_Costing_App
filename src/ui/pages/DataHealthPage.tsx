@@ -70,7 +70,8 @@ export function DataHealthPage({ onNavigate }: DataHealthPageProps) {
 
   const getPageForItem = (warning: typeof all_warnings[0]): string => {
     const p = warning.path || '';
-    if (p.startsWith('recipes')) return 'recipes';
+    if (warning.code === 'W_UNPRICED_INGREDIENT') return 'ingredients';
+    if (p.startsWith('recipes') || p.startsWith('recipe[')) return 'recipes';
     if (p.startsWith('flavours') || p.startsWith('fillings')) return 'flavours';
     if (p.startsWith('batch_products') || p.startsWith('assembled_products') || p.startsWith('products')) return 'products';
     if (p.startsWith('settings')) return 'settings';

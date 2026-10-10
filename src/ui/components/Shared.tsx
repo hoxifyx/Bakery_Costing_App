@@ -117,7 +117,7 @@ interface SearchBarProps {
 export function SearchBar({ value, onChange, placeholder = 'Search…' }: SearchBarProps) {
   return (
     <div className="search-bar" style={{ maxWidth: 280 }}>
-      <span className="search-bar-icon">🔍</span>
+      <span className="search-bar-icon material-symbols-outlined ms-14" aria-hidden>search</span>
       <input
         className="input"
         style={{ paddingLeft: 32 }}

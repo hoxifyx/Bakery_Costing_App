@@ -1025,22 +1025,29 @@ tbody tr:hover {
    ============================================================ */
 .tabs {
   display: flex;
-  gap: 2px;
+  gap: 4px;
   border-bottom: 1px solid var(--border);
   margin-bottom: 20px;
+  overflow-x: auto;
 }
 
 .tab {
   padding: 10px 16px;
+  font-family: var(--font-body);
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--text-secondary);
   background: transparent;
   border: none;
   border-bottom: 2px solid transparent;
   cursor: pointer;
-  transition: all var(--t-fast);
+  transition: color var(--t-fast), border-color var(--t-fast);
   margin-bottom: -1px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .tab:hover {
@@ -1050,6 +1057,7 @@ tbody tr:hover {
 .tab.active {
   color: var(--accent);
   border-bottom-color: var(--accent);
+  font-weight: 600;
 }
 
 /* ============================================================
@@ -2582,4 +2590,3 @@ tbody tr:hover {
   color: var(--text-secondary);
   word-break: break-all;
 }
-
