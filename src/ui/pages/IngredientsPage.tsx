@@ -118,99 +118,150 @@ export function IngredientsPage() {
 
   return (
     <div>
-      <div className="page-header">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="page-title">🧂 Ingredients</h1>
-            <p className="page-subtitle">{data.ingredients.length} items · Prices per gram or per piece</p>
+      <div className="quote-header">
+        <div className="quote-header-main">
+          <div className="quote-breadcrumbs">
+            <span className="quote-crumb-accent">Catalog</span>
+            <span className="quote-crumb-sep">/</span>
+            <span className="quote-crumb-tertiary">Ingredients</span>
           </div>
-          <div className="flex gap-8">
-            <button className="btn btn-ghost btn-sm" onClick={() => setCsvMode(m => !m)}>CSV ▾</button>
-            <button className="btn btn-primary btn-sm" onClick={openNew}>+ Add ingredient</button>
+          <div className="quote-title-row">
+            <h1 className="quote-title">Ingredients</h1>
           </div>
         </div>
-        {csvMode && (
-          <div className="card mt-12" style={{ marginTop: 12 }}>
-            <div className="flex gap-8 flex-wrap">
-              <button className="btn btn-secondary btn-sm" onClick={exportCSV}>⬇ Export CSV</button>
-              <label className="btn btn-secondary btn-sm" style={{ cursor: 'pointer' }}>
-                ⬆ Import CSV <input type="file" accept=".csv" style={{ display: 'none' }} onChange={e => importCSV(e, false)} />
-              </label>
-              <label className="btn btn-secondary btn-sm" style={{ cursor: 'pointer' }}>
-                💰 Update prices only <input type="file" accept=".csv" style={{ display: 'none' }} onChange={e => importCSV(e, true)} />
-              </label>
-            </div>
-            {csvError && <div className="error-banner mt-8">{csvError}</div>}
-          </div>
-        )}
+        <div className="quote-toolbar">
+          <button className="quote-toolbar-btn" onClick={() => setCsvMode(m => !m)}>
+            <span className="material-symbols-outlined ms-16" aria-hidden>upload_file</span>
+            <span>CSV</span>
+          </button>
+          <button className="quote-toolbar-btn quote-toolbar-btn-primary" onClick={openNew}>
+            <span className="material-symbols-outlined ms-18" aria-hidden>add</span>
+            <span>Add ingredient</span>
+          </button>
+        </div>
       </div>
 
-      <div className="page-body">
-        <div className="flex justify-between items-center mb-12">
+      {csvMode && (
+        <div className="quote-section-card" style={{ marginTop: 16 }}>
+          <div className="decorations-section-header">
+            <div className="decorations-header-left">
+              <span className="material-symbols-outlined ms-20" aria-hidden>table_view</span>
+              <h2 className="decorations-header-title">CSV Actions</h2>
+            </div>
+            <span className="decorations-header-right">Spreadsheet sync</span>
+          </div>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <button className="quote-toolbar-btn" onClick={exportCSV}>
+              <span className="material-symbols-outlined ms-16" aria-hidden>download</span>
+              <span>Export CSV</span>
+            </button>
+            <label className="quote-toolbar-btn" style={{ cursor: 'pointer' }}>
+              <span className="material-symbols-outlined ms-16" aria-hidden>upload</span>
+              <span>Import CSV</span>
+              <input type="file" accept=".csv" style={{ display: 'none' }} onChange={e => importCSV(e, false)} />
+            </label>
+            <label className="quote-toolbar-btn" style={{ cursor: 'pointer' }}>
+              <span className="material-symbols-outlined ms-16" aria-hidden>payments</span>
+              <span>Update prices only</span>
+              <input type="file" accept=".csv" style={{ display: 'none' }} onChange={e => importCSV(e, true)} />
+            </label>
+          </div>
+          {csvError && (
+            <div className="error-banner" style={{ marginTop: 12 }}>{csvError}</div>
+          )}
+        </div>
+      )}
+
+      <div className="quote-page-root">
+        <div style={{ marginBottom: 16 }}>
           <SearchBar value={search} onChange={setSearch} placeholder="Search ingredients…" />
         </div>
 
         {filtered.length === 0 ? (
           <div className="empty-state">
-            <div className="empty-state-icon">🧂</div>
+            <div className="empty-state-icon">
+              <span className="material-symbols-outlined ms-32" aria-hidden>grocery</span>
+            </div>
             <div className="empty-state-title">No ingredients yet</div>
             <div className="empty-state-text">Add your first ingredient to get started</div>
-            <button className="btn btn-primary" onClick={openNew}>+ Add ingredient</button>
+            <button className="quote-toolbar-btn quote-toolbar-btn-primary" onClick={openNew}>
+              <span className="material-symbols-outlined ms-18" aria-hidden>add</span>
+              <span>Add ingredient</span>
+            </button>
           </div>
         ) : (
-          <div className="table-wrapper">
-            <table>
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>Type</th>
-                  <th>Pack qty</th>
-                  <th>Pack price</th>
-                  <th>Per kg / piece</th>
-                  <th>Piece weight</th>
-                  <th>g/tsp</th>
-                  <th>Used in</th>
-                  <th>Status</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map(ing => {
-                  const ppu = ing.pack_quantity > 0 ? ing.pack_price / ing.pack_quantity : 0;
-                  const perKg = ing.unit_type === 'g' ? ppu * 1000 : ppu;
-                  const priced = ing.pack_quantity > 0 && ing.pack_price > 0;
-                  const usedIn = getUsedIn(ing.id, data).length;
-                  return (
-                    <tr key={ing.id}>
-                      <td>
-                        <div style={{ fontWeight: 600 }}>{ing.name}</div>
-                        <div className="text-muted" style={{ fontSize: 11 }}>{ing.id}</div>
-                      </td>
-                      <td><span className="badge badge-muted">{ing.unit_type}</span></td>
-                      <td className="td-mono">{ing.pack_quantity}</td>
-                      <td className="td-mono">{cur} {ing.pack_price.toFixed(2)}</td>
-                      <td className="td-mono text-green">{cur} {perKg.toFixed(2)}</td>
-                      <td className="td-mono">{ing.piece_weight_g ? `${ing.piece_weight_g}g` : '—'}</td>
-                      <td className="td-mono">{ing.grams_per_tsp ?? '—'}</td>
-                      <td className="text-secondary text-sm">{usedIn || '—'}</td>
-                      <td>
-                        {!priced
-                          ? <span className="badge badge-amber">Unpriced</span>
-                          : <span className="badge badge-green">Priced</span>}
-                      </td>
-                      <td>
-                        <div className="td-actions">
-                          <button className="btn btn-ghost btn-sm btn-icon" onClick={() => setHistoryTarget(ing)} title="Price history">🕐</button>
-                          <button className="btn btn-ghost btn-sm btn-icon" onClick={() => openEdit(ing)} title="Edit">✏️</button>
-                          <button className="btn btn-ghost btn-sm btn-icon" onClick={() => duplicate(ing)} title="Duplicate">📋</button>
-                          <button className="btn btn-danger btn-sm btn-icon" onClick={() => confirmDelete(ing)} title="Delete">🗑</button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+          <div className="quote-section-card">
+            <div className="decorations-section-header">
+              <div className="decorations-header-left">
+                <span className="material-symbols-outlined ms-20" aria-hidden>grocery</span>
+                <h2 className="decorations-header-title">Ingredient Catalog</h2>
+              </div>
+              <span className="decorations-header-right">
+                {filtered.length} of {data.ingredients.length} items
+              </span>
+            </div>
+            <div className="table-wrapper">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Type</th>
+                    <th>Pack qty</th>
+                    <th>Pack price</th>
+                    <th>Per kg / piece</th>
+                    <th>Piece weight</th>
+                    <th>g/tsp</th>
+                    <th>Used in</th>
+                    <th>Status</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filtered.map(ing => {
+                    const ppu = ing.pack_quantity > 0 ? ing.pack_price / ing.pack_quantity : 0;
+                    const perKg = ing.unit_type === 'g' ? ppu * 1000 : ppu;
+                    const priced = ing.pack_quantity > 0 && ing.pack_price > 0;
+                    const usedIn = getUsedIn(ing.id, data).length;
+                    return (
+                      <tr key={ing.id}>
+                        <td>
+                          <div style={{ fontWeight: 600 }}>{ing.name}</div>
+                          <div className="text-muted" style={{ fontSize: 11 }}>{ing.id}</div>
+                        </td>
+                        <td><span className="badge badge-muted">{ing.unit_type}</span></td>
+                        <td className="td-mono">{ing.pack_quantity}</td>
+                        <td className="td-mono">{cur} {ing.pack_price.toFixed(2)}</td>
+                        <td className="td-mono text-green">{cur} {perKg.toFixed(2)}</td>
+                        <td className="td-mono">{ing.piece_weight_g ? `${ing.piece_weight_g}g` : '—'}</td>
+                        <td className="td-mono">{ing.grams_per_tsp ?? '—'}</td>
+                        <td className="text-secondary text-sm">{usedIn || '—'}</td>
+                        <td>
+                          {!priced
+                            ? <span className="badge badge-amber">Unpriced</span>
+                            : <span className="badge badge-green">Priced</span>}
+                        </td>
+                        <td>
+                          <div className="td-actions">
+                            <button className="quote-toolbar-btn" onClick={() => setHistoryTarget(ing)} title="Price history" aria-label={`Price history for ${ing.name}`} style={{ width: 32, height: 32, padding: 0 }}>
+                              <span className="material-symbols-outlined ms-16" aria-hidden>schedule</span>
+                            </button>
+                            <button className="quote-toolbar-btn" onClick={() => openEdit(ing)} title="Edit" aria-label={`Edit ${ing.name}`} style={{ width: 32, height: 32, padding: 0 }}>
+                              <span className="material-symbols-outlined ms-16" aria-hidden>edit</span>
+                            </button>
+                            <button className="quote-toolbar-btn" onClick={() => duplicate(ing)} title="Duplicate" aria-label={`Duplicate ${ing.name}`} style={{ width: 32, height: 32, padding: 0 }}>
+                              <span className="material-symbols-outlined ms-16" aria-hidden>content_copy</span>
+                            </button>
+                            <button className="quote-toolbar-btn" onClick={() => confirmDelete(ing)} title="Delete" aria-label={`Delete ${ing.name}`} style={{ width: 32, height: 32, padding: 0 }}>
+                              <span className="material-symbols-outlined ms-16" aria-hidden>delete</span>
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
       </div>
@@ -220,8 +271,13 @@ export function IngredientsPage() {
         <div className="modal-backdrop" onClick={() => setEditing(null)}>
           <div className="modal" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <h2 className="modal-title">{isNew ? 'Add ingredient' : `Edit: ${editing.name}`}</h2>
-              <button className="btn btn-ghost btn-sm" onClick={() => setEditing(null)}>✕</button>
+              <h2 className="modal-title" style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                <span className="material-symbols-outlined ms-18" aria-hidden>{isNew ? 'add' : 'edit'}</span>
+                {isNew ? 'Add ingredient' : `Edit: ${editing.name}`}
+              </h2>
+              <button className="quote-toolbar-btn" style={{ width: 32, height: 32, padding: 0 }} onClick={() => setEditing(null)} aria-label="Close">
+                <span className="material-symbols-outlined ms-16" aria-hidden>close</span>
+              </button>
             </div>
             <div className="modal-body">
               <div className="form-group">
@@ -276,8 +332,11 @@ export function IngredientsPage() {
               )}
             </div>
             <div className="modal-footer">
-              <button className="btn btn-ghost" onClick={() => setEditing(null)}>Cancel</button>
-              <button className="btn btn-primary" onClick={save} disabled={!editing.name.trim()}>Save</button>
+              <button className="quote-toolbar-btn" onClick={() => setEditing(null)}>Cancel</button>
+              <button className="quote-toolbar-btn quote-toolbar-btn-primary" onClick={save} disabled={!editing.name.trim()}>
+                <span className="material-symbols-outlined ms-16" aria-hidden>save</span>
+                <span>Save</span>
+              </button>
             </div>
           </div>
         </div>
@@ -298,8 +357,13 @@ export function IngredientsPage() {
         <div className="modal-backdrop" onClick={() => setHistoryTarget(null)}>
           <div className="modal modal-lg" onClick={e => e.stopPropagation()} style={{ maxWidth: 600 }}>
             <div className="modal-header">
-              <h2 className="modal-title">🕐 Price History — {historyTarget.name}</h2>
-              <button className="btn btn-ghost btn-sm" onClick={() => setHistoryTarget(null)}>✕</button>
+              <h2 className="modal-title" style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                <span className="material-symbols-outlined ms-18" aria-hidden>schedule</span>
+                Price History — {historyTarget.name}
+              </h2>
+              <button className="quote-toolbar-btn" style={{ width: 32, height: 32, padding: 0 }} onClick={() => setHistoryTarget(null)} aria-label="Close">
+                <span className="material-symbols-outlined ms-16" aria-hidden>close</span>
+              </button>
             </div>
             <div className="modal-body">
               {(!historyTarget.price_history || historyTarget.price_history.length === 0) ? (
@@ -345,7 +409,7 @@ export function IngredientsPage() {
               <div style={{ fontSize: 12, color: 'var(--text-muted)', flex: 1 }}>
                 Current: {cur} {historyTarget.pack_price.toFixed(2)} / {historyTarget.pack_quantity} {historyTarget.unit_type === 'g' ? 'g' : 'pcs'}
               </div>
-              <button className="btn btn-ghost" onClick={() => setHistoryTarget(null)}>Close</button>
+              <button className="quote-toolbar-btn" onClick={() => setHistoryTarget(null)}>Close</button>
             </div>
           </div>
         </div>

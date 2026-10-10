@@ -1679,6 +1679,45 @@ tbody tr:hover {
   background: var(--accent-hover);
 }
 
+.quote-section-card {
+  background: var(--bg-surface-low);
+  border: 1px solid var(--border);
+  border-radius: var(--r-xl);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.decorations-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.decorations-header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.decorations-header-title {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.decorations-header-right {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--tertiary);
+}
+
 /* Hero Banner */
 .quote-hero-banner {
   display: flex;
@@ -2543,5 +2582,4 @@ tbody tr:hover {
   color: var(--text-secondary);
   word-break: break-all;
 }
-
 
