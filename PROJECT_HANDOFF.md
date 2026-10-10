@@ -2,7 +2,7 @@
 
 ## What This Is
 <!-- BEGIN AGENT:what_this_is -->
-OvenCost Pro is a local-first bakery costing app feature-complete through Phase 9 of the upgrade plan. See CHANGELOG.md for what's in and what's skipped.
+OvenCost Pro is a local-first bakery costing and pricing app. The current release is v1.4.13; see CHANGELOG.md for shipped changes. The phased plan and build prompt are original product documents, and their unimplemented planned phases are not a release-status checklist.
 <!-- END AGENT:what_this_is -->
 
 ## Quick Start
@@ -23,7 +23,7 @@ npm install
 
 ### Configure
 <!-- BEGIN SCRIPT:configure -->
-For Cloud Backup functionality, copy `.env.example` to `.env` and set `VITE_GOOGLE_CLIENT_ID` to your Google OAuth 2.0 Client ID.
+Google Drive backup is optional. To enable it, create a local `.env` file and set `VITE_GOOGLE_CLIENT_ID` to your Google OAuth 2.0 Client ID. See the README for setup details. Do not commit `.env`.
 <!-- END SCRIPT:configure -->
 
 ### Run
@@ -36,7 +36,7 @@ npm run dev
 
 ### Test
 <!-- BEGIN AGENT:test -->
-Run the automated test suite (including all golden tests):
+Run the automated Vitest suite:
 ```bash
 npm test
 ```
@@ -44,19 +44,22 @@ npm test
 
 ## Project Structure
 <!-- BEGIN SCRIPT:structure -->
-- `public/`
-- `src/`
-- `tests/`
+- `public/` — static assets and fonts (includes the original and subset Material Symbols fonts)
+- `scripts/` — Material Symbols icon manifest and reproducible subset script
+- `src/` — application source
+- `tests/` — Vitest suites
 <!-- END SCRIPT:structure -->
 
 ## Entry Points
 <!-- BEGIN SCRIPT:entry_points -->
-- `index.html`
+- `index.html` — Vite HTML entry point
+- `src/main.tsx` — React application entry point
+- `src/engine/engine.ts` — calculation engine
 <!-- END SCRIPT:entry_points -->
 
 ## Warnings
 <!-- BEGIN SCRIPT:warnings -->
-No build or test warnings were detected at generation time. Runtime warnings (unpriced ingredients, missing flavour/filling on a tier, discount capped to profit, orders past due, etc.) are surfaced in-app on the **Data Health** page.
+At v1.4.13, the automated suite has 47 passing tests. The production build emits a known `INEFFECTIVE_DYNAMIC_IMPORT` warning for `src/cloud/drive.ts`; lint emits existing warnings in `tests/cloud.test.ts`, `src/store/store.tsx`, and `src/ui/pages/QuotePage.tsx`. Runtime data warnings are surfaced in-app on the **Data Health** page.
 <!-- END SCRIPT:warnings -->
 
 ## What's Excluded and Why
@@ -85,8 +88,10 @@ No suspicious content detected.
 
 ## Known Gotchas
 <!-- BEGIN AGENT:gotchas -->
-- The application relies heavily on `IndexedDB` for persistence. If users use Incognito/Private Browsing, their data will be wiped when the window closes.
-- Calculations use `decimal.js` exclusively; avoid using standard JavaScript floating point arithmetic for any monetary or weight updates.
+- Application data is stored in browser `IndexedDB`; private browsing may discard it when the session closes. Users should export backups regularly.
+- Calculations use `decimal.js`; avoid binary floating-point arithmetic for monetary calculations.
+- Material Symbols ligatures in the bundled font use the OpenType `rlig` feature. When regenerating the font, use the checked-in manifest and script; do not replace `rlig` with `liga`.
+- `src/index.css` contains two Material Symbols `@font-face` declarations; keep both pointed at the active font asset.
 <!-- END AGENT:gotchas -->
 
 ## How to Extend
@@ -97,23 +102,17 @@ No suspicious content detected.
 4.  **UI**: Create a new page under `src/ui/pages/`, register it in `App.tsx`, and add a navigation link in `Layout.tsx`.
 <!-- END AGENT:extend -->
 
-## How to Reconstruct
-<!-- BEGIN SCRIPT:reconstruct -->
-To verify:
-    python3 verify_bundle.py PROJECT_BUNDLE.json
+## Bundle-specific notes
 
-To extract:
-    python3 extract_bundle.py PROJECT_BUNDLE.json <output_dir>
-<!-- END SCRIPT:reconstruct -->
+The source repository does not include project-bundle reconstruction utilities. If a separate bundle archive is supplied with its own verification and extraction scripts, follow that archive's instructions; otherwise, use Git to clone or copy the repository.
 
 ## Owner Notes
 <!-- BEGIN OWNER_NOTES -->
-The application is feature-complete up to Phase 9 of the Phased Upgrade Plan.
-Core calculations (Phase 1), price rounding (Phase 2), configurable size guides (Phase 3), order management (Phase 4), historical pricing (Phase 5), recipe scaling (Phase 6), and sidebar navigation (Phase 9) are all implemented and rigorously tested.
+The shipped release is v1.4.13. Recent releases include the page redesigns, the v1.4.12 Settings native-validation fix, and the v1.4.13 Material Symbols font subset. The latest verified test suite contains 47 passing tests.
 
-The test suite consists of 33 passing tests with complete coverage for the added functionality. The UI is fully responsive with an accessible slide-out mobile drawer.
+The application data schema remains version 1.2. The v1.4.12 and v1.4.13 changes did not require data migrations; see `MIGRATIONS.md`.
 
-The user intentionally skipped Phases 7, 8, and 10 through 18. The next maintainer should review the `OvenCost Pro — Phased Upgrade Plan.md` document and implement these skipped phases if requested.
+The original `OvenCost Pro — Phased Upgrade Plan.md` describes proposed product phases, including phases not implemented. Consult the actual source and `CHANGELOG.md` before treating any plan item as current behavior.
 <!-- END OWNER_NOTES -->
 
 ## When Not to Use This Bundle

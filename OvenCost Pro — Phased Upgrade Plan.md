@@ -385,10 +385,16 @@ Wait for me to reply "confirmed" (or "fix X first") before moving on.
 
 **Responsive:** final manual check across the seven widths listed in Phase 18.
 
+### Current documentation status (2026-10-11)
+
+This file records the original phased proposal and should not be read as a definitive inventory of shipped features. The app's current release is v1.4.13; consult `CHANGELOG.md`, `README.md`, and `PROJECT_HANDOFF.md` for the current release and maintenance instructions.
+
+The v1.4.12 Settings validation fix and v1.4.13 Material Symbols font subset are release-series work outside the original feature-phase sequence. The subset uses the source font's `rlig` ligature feature and is reproducible from `scripts/material-symbols-manifest.txt` with `scripts/subset-material-symbols.sh`. These releases do not change the current data schema (`1.2`).
+
 ---
 
 ## PROMPT — END
 
-That's the whole plan. Start with **Phase 1 — Saved Quotes**, run the full test suite, and report in the format above. Wait for my confirmation before starting Phase 2.
+Historical kickoff instruction (superseded): start with **Phase 1 — Saved Quotes**, run the full test suite, and wait for confirmation before starting Phase 2. The current shipped release and completed work are documented above and in `CHANGELOG.md`.
 
 ---

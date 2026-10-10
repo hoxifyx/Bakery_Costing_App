@@ -1,72 +1,109 @@
-# 🎂 OvenCost Pro
+# OvenCost Pro
 
-OvenCost Pro is a high-precision, offline-first web application designed for bakeries, custom cake studios, and confectioners. It helps you accurately calculate recipe costs, price your products, and generate complex multi-tier cake quotes without ever relying on error-prone spreadsheets.
+OvenCost Pro is an offline-first costing and pricing app for bakeries, cake studios, and confectioners. Build ingredient and packaging catalogs, calculate recipe and product costs, prepare multi-tier cake quotes, and track customers and orders. Application data is stored locally in the browser.
 
-## 🌟 Key Features
+The latest release is **v1.4.13**. See [CHANGELOG.md](./CHANGELOG.md) for release history.
 
-- **Multi-Tier Cake Quoting:** Cost out cakes up to 6 tiers, automatically applying overhead, delivery, decoration costs, and your target profit margin.
-- **Accurate Recipe Costing:** Input ingredients in grams or pieces, build recipes, and let the engine instantly calculate batch yields and raw costs.
-- **Scale on the Fly:** Instantly preview what scaling a recipe by 2x, 3x, or 0.5x does to your raw costs and yields.
-- **Flavours & Fillings:** Mix and match recipes into base Flavours (like a Vanilla Cake + Buttercream) to cost out cake per kg.
-- **Order & Customer Tracking:** Keep a basic CRM of your customers, associate quotes with orders, and track due dates and payment statuses.
-- **Offline First & Private:** Your data stays on your device. The app runs completely offline using your browser's IndexedDB.
+## Features
 
-## 🚀 Installation & Deployment
+- **Cake quotes:** Price cakes of up to six tiers, including recipes, fillings, decorations, labour, packaging, delivery, overhead, and target margin.
+- **Catalog and costing:** Manage ingredients, packaging, recipes, flavours, fillings, batch products, and assembled products.
+- **Recipe scaling and price suggestions:** Preview scaled recipe costs and optional rounded suggested prices without changing exact calculation results.
+- **Size guide:** Maintain the pan-size and serving guide used to help fill quote weights.
+- **Customers and orders:** Keep customer records and track order dates, due dates, and payment status.
+- **Data Health:** Review warnings about missing or invalid data and navigate to the relevant records.
+- **Import and export:** Create full or selective JSON exports, import validated datasets and ingredient CSVs, export ingredient and packaging CSVs, and download a blank JSON template.
+- **Optional Google Drive backup:** Connect Google Drive to back up and restore data in the app-specific Drive folder.
+- **Local-first storage:** App data is persisted in the browser's IndexedDB; no app server or account is required.
 
-OvenCost Pro is a static React application built with Vite. It requires no backend or database.
+## Run locally
 
-### Prerequisites
-- [Node.js](https://nodejs.org/) (v18 or higher)
-- npm (v9 or higher)
+### Requirements
 
-### Run Locally
-1. Clone this repository.
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-3. Start the development server:
-   ```bash
-   npm run dev
-   ```
-4. Open `http://localhost:5173` in your browser.
+- Node.js 18 or later
+- npm 9 or later
 
-### Deploy to Production
-To build the application for deployment (e.g., Netlify, Vercel, or GitHub Pages):
+### Development
+
 ```bash
+git clone https://github.com/hoxifyx/Bakery_Costing_App.git
+cd Bakery_Costing_App
+npm install
+npm run dev
+```
+
+Open the local URL printed by Vite (normally `http://localhost:5173`).
+
+### Test, lint, and build
+
+```bash
+npm test
+npm run lint
 npm run build
 ```
-Upload the contents of the `dist/` directory to any static file host. 
 
-*(Note for developers: If deploying to a subdirectory like GitHub Pages, ensure you configure the `base` path in `vite.config.ts` prior to building!)*
+To serve the production build locally:
 
-## 💾 Backup & Data Management
+```bash
+npm run preview
+```
 
-Because OvenCost Pro is offline-first, your data lives in your browser. **You must back up your data regularly.**
+The production site is static: deploy the contents of `dist/` to a static web host. If deploying under a URL subdirectory, configure Vite's `base` path before building.
 
-1. Go to the **Import / Export** tab in the sidebar.
-2. Click **Export All Data (Backup)** to save a JSON file to your computer.
-3. Keep this file safe. You can restore your entire bakery setup at any time by dropping this file back into the app.
+## Back up your data
 
-### Cloud Backup (Google Drive)
-You can configure OvenCost Pro to manually backup and restore from a hidden app-specific folder in your Google Drive. 
-To enable this:
-1. Create a Google Cloud project and enable the **Google Drive API**.
-2. Create an OAuth 2.0 Client ID for a Web Application.
-3. Register your redirect URI (`http://localhost:5173` for local dev, or your production URL).
-4. Create a `.env` file at the root of the project and set `VITE_GOOGLE_CLIENT_ID` to your Client ID:
+Your catalog, settings, and records are kept in the current browser profile. Export them regularly from **Import / Export** and store the downloaded JSON file somewhere safe. The page also supports selective JSON export, validated JSON import with preview and undo, CSV workflows, and blank-template downloads.
+
+Private/incognito browsing may discard locally stored data when the private session ends. Clearing browser site data can also remove the app's local database; keep an export outside the browser.
+
+### Optional Google Drive backup
+
+Google Drive backup is configured at build time and requires a Google OAuth web client:
+
+1. Enable the Google Drive API in a Google Cloud project and create an OAuth 2.0 Client ID for a web application.
+2. Add the local development URL and deployed site URL to the client's authorized JavaScript origins.
+3. Set `VITE_GOOGLE_CLIENT_ID` in a local `.env` file before starting or building the app:
+
    ```env
    VITE_GOOGLE_CLIENT_ID=your-client-id.apps.googleusercontent.com
    ```
-5. Ensure you request the `https://www.googleapis.com/auth/drive.appdata` scope during consent. This is a hidden per-app folder the user cannot see or accidentally delete, and the app cannot see anything else in their Drive.
 
-## 🛠️ How to Add a Feature (For Developers)
+4. Use the **Import / Export** page to connect and manage backups.
 
-The app is built on a strict, pure calculation engine to prevent rounding drift. If you want to add a new feature or data type:
+The app requests the `drive.appdata` scope for its hidden, app-specific folder. Do not commit your `.env` file or credentials.
 
-1. **Update Data Model**: Add your interface to `src/engine/types.ts` and attach it to `AppData`.
-2. **Update Core Engine**: Add mathematical rules inside `src/engine/engine.ts`.
-3. **Migration & IO**: Bump `CURRENT_SCHEMA_VERSION` in `src/io/io.ts` and write validation/fallback logic for old backups.
-4. **Build UI**: Add your screens to `src/ui/pages/` and wire them into `App.tsx` and the sidebar (`Layout.tsx`).
+## Developer notes
 
-_Built with React 19, Vite, and Decimal.js for mathematical precision._
+- `src/engine/` contains the calculation logic. Preserve its pure-engine boundary and use `decimal.js` for monetary calculations.
+- `src/io/` validates imports and exports; update it and [MIGRATIONS.md](./MIGRATIONS.md) when changing the data schema.
+- `src/ui/` contains the React application and pages.
+- `tests/` contains the Vitest suites.
+- [PROJECT_HANDOFF.md](./PROJECT_HANDOFF.md) has maintainer notes; [OvenCost Pro — Phased Upgrade Plan.md](./OvenCost%20Pro%20%E2%80%94%20Phased%20Upgrade%20Plan.md) and [Bakery_Costing_App_Build_Prompt.md](./Bakery_Costing_App_Build_Prompt.md) are the original product specifications and plans.
+
+### Material Symbols font
+
+The app ships a subsetted Material Symbols Outlined font to reduce the icon-font payload. The original font is retained as a rollback. The authoritative icon list is [scripts/material-symbols-manifest.txt](./scripts/material-symbols-manifest.txt), and [scripts/subset-material-symbols.sh](./scripts/subset-material-symbols.sh) regenerates and validates the subset.
+
+The script requires Python with `fontTools` and Brotli support. Install the local tooling with:
+
+```bash
+python3 -m pip install --user fonttools brotli
+```
+
+Then run:
+
+```bash
+scripts/subset-material-symbols.sh
+```
+
+The subset preserves the source font's `rlig` icon-name ligature feature and variable axes. If the manifest changes, regenerate the subset and verify icons in the development and production preview builds before release.
+
+## Add a feature
+
+1. Update the data types in `src/engine/types.ts` when a new data shape is needed.
+2. Update pure calculations in `src/engine/engine.ts`, with tests for changed behavior.
+3. Update import/export validation and migrations if the persisted schema changes.
+4. Add or update UI under `src/ui/`, including responsive and accessible interaction states.
+5. Run `npm test`, `npm run lint`, and `npm run build`; update the changelog and relevant docs.
+
+Built with React, TypeScript, Vite, and Decimal.js.
