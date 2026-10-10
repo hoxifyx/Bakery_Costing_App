@@ -12,10 +12,17 @@ function emptyLine(): RecipeLine {
 }
 
 const KIND_LABELS: Record<string, string> = {
-  cake: '🎂 Cake',
-  frosting_filling: '🧁 Frosting / Filling',
-  batch_product: '🍩 Batch product',
-  other: '📦 Other',
+  cake: 'Cake',
+  frosting_filling: 'Frosting / Filling',
+  batch_product: 'Batch product',
+  other: 'Other',
+};
+
+const KIND_ICONS: Record<Recipe['kind'], string> = {
+  cake: 'cake',
+  frosting_filling: 'bakery_dining',
+  batch_product: 'cookie',
+  other: 'inventory_2',
 };
 
 export function RecipesPage() {
@@ -121,24 +128,33 @@ export function RecipesPage() {
 
   return (
     <div>
-      <div className="page-header">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="page-title">📋 Recipes</h1>
-            <p className="page-subtitle">{data.recipes.length} recipes across {Object.keys(KIND_LABELS).length} types</p>
+      <div className="quote-header">
+        <div className="quote-header-main">
+          <div className="quote-breadcrumbs">
+            <span className="quote-crumb-accent">Catalog</span>
+            <span className="quote-crumb-sep">/</span>
+            <span className="quote-crumb-tertiary">Recipes</span>
           </div>
-          <button className="btn btn-primary btn-sm" onClick={openNew}>+ Add recipe</button>
+          <div className="quote-title-row">
+            <h1 className="quote-title">Recipes</h1>
+          </div>
+        </div>
+        <div className="quote-toolbar">
+          <button className="quote-toolbar-btn quote-toolbar-btn-primary" onClick={openNew}>
+            <span className="material-symbols-outlined ms-18" aria-hidden>add</span>
+            <span>Add recipe</span>
+          </button>
         </div>
       </div>
 
-      <div className="page-body">
-        <div className="flex gap-12 items-center mb-12 flex-wrap">
+      <div className="quote-page-root">
+        <div className="quote-section-card">
           <SearchBar value={search} onChange={setSearch} placeholder="Search recipes…" />
-          <div className="flex gap-4">
+          <div className="quote-toolbar">
             {['all', ...Object.keys(KIND_LABELS)].map(k => (
               <button
                 key={k}
-                className={`btn btn-sm ${kindFilter === k ? 'btn-primary' : 'btn-ghost'}`}
+                className={`quote-toolbar-btn ${kindFilter === k ? 'quote-toolbar-btn-primary' : ''}`}
                 onClick={() => setKindFilter(k)}
               >
                 {k === 'all' ? 'All' : KIND_LABELS[k]}
@@ -147,82 +163,113 @@ export function RecipesPage() {
           </div>
         </div>
 
-        {filtered.length === 0 ? (
-          <div className="empty-state">
-            <div className="empty-state-icon">📋</div>
-            <div className="empty-state-title">No recipes yet</div>
-            <button className="btn btn-primary mt-12" onClick={openNew}>+ Add recipe</button>
+        <div className="quote-section-card">
+          <div className="decorations-section-header">
+            <div className="decorations-header-left">
+              <span className="material-symbols-outlined ms-20" aria-hidden>menu_book</span>
+              <h2 className="decorations-header-title">Recipe Catalog</h2>
+            </div>
+            <span className="decorations-header-right">
+              {filtered.length} of {data.recipes.length} recipes
+            </span>
           </div>
-        ) : (
-          <div className="table-wrapper">
-            <table>
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>Kind</th>
-                  <th>Lines</th>
-                  <th>Scale</th>
-                  <th>Raw cost</th>
-                  <th>CWO</th>
-                  <th>Weight</th>
-                  <th>Per gram</th>
-                  <th>Cake /kg</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map(r => {
-                  const res = result.recipes[r.id];
-                  const baseRes = baseResult.recipes[r.id];
-                  const scale = scales[r.id] ?? 1;
-                  return (
-                    <tr key={r.id}>
-                      <td>
-                        <div style={{ fontWeight: 600 }}>{r.name}</div>
-                        <div className="text-muted" style={{ fontSize: 11 }}>{r.id}</div>
-                      </td>
-                      <td><span className="badge badge-muted">{KIND_LABELS[r.kind]}</span></td>
-                      <td className="text-secondary">{r.lines.length}</td>
-                      <td>
-                        <div style={{ width: 60 }}>
-                          <NumberInput value={scale} onChange={v => setScales(s => ({ ...s, [r.id]: v }))} min={0} step={0.1} />
-                        </div>
-                      </td>
-                      <td className="td-mono">
-                        {scale !== 1 && <div className="text-muted" style={{ textDecoration: 'line-through', fontSize: 11 }}>{cur} {baseRes?.raw.toFixed(2)}</div>}
-                        {cur} {res?.raw.toFixed(2) ?? '—'}
-                      </td>
-                      <td className="td-mono text-green">
-                        {scale !== 1 && <div className="text-muted" style={{ textDecoration: 'line-through', fontSize: 11 }}>{cur} {baseRes?.cwo.toFixed(2)}</div>}
-                        {cur} {res?.cwo.toFixed(2) ?? '—'}
-                      </td>
-                      <td className="td-mono">
-                        {scale !== 1 && <div className="text-muted" style={{ textDecoration: 'line-through', fontSize: 11 }}>{baseRes?.weight.toFixed(0)}g</div>}
-                        {res?.weight.toFixed(0) ?? '—'}g
-                      </td>
-                      <td className="td-mono">
-                        {scale !== 1 && <div className="text-muted" style={{ textDecoration: 'line-through', fontSize: 11 }}>{cur} {baseRes?.per_gram_cwo.toFixed(4)}</div>}
-                        {cur} {res?.per_gram_cwo.toFixed(4) ?? '—'}
-                      </td>
-                      <td className="td-mono text-green">
-                        {scale !== 1 && <div className="text-muted" style={{ textDecoration: 'line-through', fontSize: 11 }}>{cur} {baseRes?.cake_cost_per_kg.toFixed(2)}</div>}
-                        {cur} {res?.cake_cost_per_kg.toFixed(2) ?? '—'}
-                      </td>
-                      <td>
-                        <div className="td-actions">
-                          <button className="btn btn-ghost btn-sm" onClick={() => setExplainTarget(r)}>🔍</button>
-                          <button className="btn btn-ghost btn-sm btn-icon" onClick={() => openEdit(r)}>✏️</button>
-                          <button className="btn btn-ghost btn-sm btn-icon" onClick={() => duplicate(r)}>📋</button>
-                          <button className="btn btn-danger btn-sm btn-icon" onClick={() => confirmDelete(r)}>🗑</button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
+
+          {filtered.length === 0 ? (
+            <div className="empty-state">
+              <div className="empty-state-icon">
+                <span className="material-symbols-outlined ms-32" aria-hidden>menu_book</span>
+              </div>
+              <div className="empty-state-title">No recipes yet</div>
+              <div className="empty-state-text">Add your first recipe to get started</div>
+              <button className="quote-toolbar-btn quote-toolbar-btn-primary" onClick={openNew}>
+                <span className="material-symbols-outlined ms-18" aria-hidden>add</span>
+                <span>Add recipe</span>
+              </button>
+            </div>
+          ) : (
+            <div className="table-wrapper">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Kind</th>
+                    <th>Lines</th>
+                    <th>Scale</th>
+                    <th>Raw cost</th>
+                    <th>CWO</th>
+                    <th>Weight</th>
+                    <th>Per gram</th>
+                    <th>Cake /kg</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filtered.map(r => {
+                    const res = result.recipes[r.id];
+                    const baseRes = baseResult.recipes[r.id];
+                    const scale = scales[r.id] ?? 1;
+                    return (
+                      <tr key={r.id}>
+                        <td>
+                          <div style={{ fontWeight: 600 }}>{r.name}</div>
+                          <div className="text-muted" style={{ fontSize: 11 }}>{r.id}</div>
+                        </td>
+                        <td>
+                          <span className="badge badge-muted">
+                            <span className="material-symbols-outlined ms-14" aria-hidden>{KIND_ICONS[r.kind]}</span>
+                            {KIND_LABELS[r.kind]}
+                          </span>
+                        </td>
+                        <td className="text-secondary">{r.lines.length}</td>
+                        <td>
+                          <div style={{ width: 60 }}>
+                            <NumberInput value={scale} onChange={v => setScales(s => ({ ...s, [r.id]: v }))} min={0} step={0.1} />
+                          </div>
+                        </td>
+                        <td className="td-mono">
+                          {scale !== 1 && <div className="text-muted" style={{ textDecoration: 'line-through', fontSize: 11 }}>{cur} {baseRes?.raw.toFixed(2)}</div>}
+                          {cur} {res?.raw.toFixed(2) ?? '—'}
+                        </td>
+                        <td className="td-mono text-green">
+                          {scale !== 1 && <div className="text-muted" style={{ textDecoration: 'line-through', fontSize: 11 }}>{cur} {baseRes?.cwo.toFixed(2)}</div>}
+                          {cur} {res?.cwo.toFixed(2) ?? '—'}
+                        </td>
+                        <td className="td-mono">
+                          {scale !== 1 && <div className="text-muted" style={{ textDecoration: 'line-through', fontSize: 11 }}>{baseRes?.weight.toFixed(0)}g</div>}
+                          {res?.weight.toFixed(0) ?? '—'}g
+                        </td>
+                        <td className="td-mono">
+                          {scale !== 1 && <div className="text-muted" style={{ textDecoration: 'line-through', fontSize: 11 }}>{cur} {baseRes?.per_gram_cwo.toFixed(4)}</div>}
+                          {cur} {res?.per_gram_cwo.toFixed(4) ?? '—'}
+                        </td>
+                        <td className="td-mono text-green">
+                          {scale !== 1 && <div className="text-muted" style={{ textDecoration: 'line-through', fontSize: 11 }}>{cur} {baseRes?.cake_cost_per_kg.toFixed(2)}</div>}
+                          {cur} {res?.cake_cost_per_kg.toFixed(2) ?? '—'}
+                        </td>
+                        <td>
+                          <div className="td-actions">
+                            <button className="quote-toolbar-btn" onClick={() => setExplainTarget(r)} title={`Explain ${r.name}`} aria-label={`Explain ${r.name}`} style={{ width: 32, height: 32, padding: 0 }}>
+                              <span className="material-symbols-outlined ms-16" aria-hidden>account_tree</span>
+                            </button>
+                            <button className="quote-toolbar-btn" onClick={() => openEdit(r)} title={`Edit ${r.name}`} aria-label={`Edit ${r.name}`} style={{ width: 32, height: 32, padding: 0 }}>
+                              <span className="material-symbols-outlined ms-16" aria-hidden>edit</span>
+                            </button>
+                            <button className="quote-toolbar-btn" onClick={() => duplicate(r)} title={`Duplicate ${r.name}`} aria-label={`Duplicate ${r.name}`} style={{ width: 32, height: 32, padding: 0 }}>
+                              <span className="material-symbols-outlined ms-16" aria-hidden>content_copy</span>
+                            </button>
+                            <button className="quote-toolbar-btn" onClick={() => confirmDelete(r)} title={`Delete ${r.name}`} aria-label={`Delete ${r.name}`} style={{ width: 32, height: 32, padding: 0 }}>
+                              <span className="material-symbols-outlined ms-16" aria-hidden>delete</span>
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Recipe editor modal */}
@@ -230,10 +277,15 @@ export function RecipesPage() {
         <div className="modal-backdrop" onClick={() => setEditing(null)}>
           <div className="modal modal-lg" onClick={e => e.stopPropagation()} style={{ maxWidth: 860 }}>
             <div className="modal-header">
-              <h2 className="modal-title">{isNew ? 'New recipe' : `Edit: ${editing.name}`}</h2>
-              <button className="btn btn-ghost btn-sm" onClick={() => setEditing(null)}>✕</button>
+              <h2 className="modal-title" style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                <span className="material-symbols-outlined ms-18" aria-hidden>{isNew ? 'add' : 'edit'}</span>
+                {isNew ? 'New recipe' : `Edit: ${editing.name}`}
+              </h2>
+              <button className="quote-toolbar-btn" style={{ width: 32, height: 32, padding: 0 }} onClick={() => setEditing(null)} aria-label="Close">
+                <span className="material-symbols-outlined ms-16" aria-hidden>close</span>
+              </button>
             </div>
-            <div className="modal-body" style={{ display: 'grid', gridTemplateColumns: '1fr 260px', gap: 20 }}>
+            <div className="modal-body" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 260px), 1fr))', gap: 20 }}>
               {/* Left: recipe form */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                 <div className="form-row form-row-2">
@@ -251,18 +303,25 @@ export function RecipesPage() {
 
                 {/* Lines */}
                 <div>
-                  <div className="card-header" style={{ marginBottom: 8 }}>
-                    <span className="card-title">Ingredients</span>
-                    <button className="btn btn-secondary btn-sm" onClick={addLine}>+ Add line</button>
+                  <div className="decorations-section-header" style={{ marginBottom: 8 }}>
+                    <div className="decorations-header-left">
+                      <span className="material-symbols-outlined ms-18" aria-hidden>format_list_bulleted</span>
+                      <h3 className="decorations-header-title">Ingredient lines</h3>
+                    </div>
+                    <button className="quote-toolbar-btn" onClick={addLine}>
+                      <span className="material-symbols-outlined ms-16" aria-hidden>add</span>
+                      <span>Add line</span>
+                    </button>
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                     {editing.lines.map((line, li) => {
                       const validUnits = validUnitsForIng(line.ingredient_id);
                       const curUnit = validUnits.includes(line.unit) ? line.unit : validUnits[0];
                       return (
-                        <div key={li} style={{ display: 'grid', gridTemplateColumns: '1fr 80px 80px auto auto', gap: 6, alignItems: 'center' }}>
+                        <div key={li} style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 64px 64px 32px 32px', gap: 6, alignItems: 'center' }}>
                           <select
                             className="select"
+                            style={{ minWidth: 0 }}
                             value={line.ingredient_id ?? ''}
                             onChange={e => {
                               const ingId = e.target.value || null;
@@ -276,18 +335,34 @@ export function RecipesPage() {
                           <NumberInput value={line.quantity} onChange={v => updateLine(li, { quantity: v })} placeholder="qty" />
                           <select
                             className="select"
+                            style={{ minWidth: 0 }}
                             value={curUnit}
                             onChange={e => updateLine(li, { unit: e.target.value as RecipeLine['unit'] })}
                           >
                             {validUnits.map(u => <option key={u} value={u}>{u}</option>)}
                           </select>
                           <button
-                            className={`btn btn-sm ${line.exclude_from_weight ? 'btn-danger' : 'btn-ghost'}`}
+                            className="quote-toolbar-btn"
                             onClick={() => updateLine(li, { exclude_from_weight: !line.exclude_from_weight })}
                             title="Exclude from batch weight"
-                            style={{ fontSize: 11, padding: '4px 6px' }}
-                          >⚖</button>
-                          <button className="btn btn-danger btn-sm btn-icon" onClick={() => removeLine(li)}>✕</button>
+                            aria-label={`${line.exclude_from_weight ? 'Include in' : 'Exclude from'} batch weight`}
+                            aria-pressed={Boolean(line.exclude_from_weight)}
+                            style={{
+                              width: 32,
+                              height: 32,
+                              padding: 0,
+                              ...(line.exclude_from_weight ? {
+                                background: 'var(--error-container)',
+                                color: 'var(--accent-red)',
+                                borderColor: 'var(--accent-red)',
+                              } : {}),
+                            }}
+                          >
+                            <span className="material-symbols-outlined ms-16" aria-hidden>scale</span>
+                          </button>
+                          <button className="quote-toolbar-btn" onClick={() => removeLine(li)} title="Remove line" aria-label="Remove line" style={{ width: 32, height: 32, padding: 0 }}>
+                            <span className="material-symbols-outlined ms-16" aria-hidden>close</span>
+                          </button>
                         </div>
                       );
                     })}
@@ -308,8 +383,13 @@ export function RecipesPage() {
 
               {/* Right: live results */}
               <div>
-                <div className="card" style={{ position: 'sticky', top: 0 }}>
-                  <div className="card-title mb-12">Live results</div>
+                <div className="quote-section-card" style={{ position: 'sticky', top: 0 }}>
+                  <div className="decorations-section-header">
+                    <div className="decorations-header-left">
+                      <span className="material-symbols-outlined ms-18" aria-hidden>analytics</span>
+                      <h3 className="decorations-header-title">Live results</h3>
+                    </div>
+                  </div>
                   {(() => {
                     // Compute preview with current editing recipe
                     const previewData = { ...data, recipes: [...data.recipes.filter(r => r.id !== editing.id), editing] };
@@ -331,8 +411,11 @@ export function RecipesPage() {
               </div>
             </div>
             <div className="modal-footer">
-              <button className="btn btn-ghost" onClick={() => setEditing(null)}>Cancel</button>
-              <button className="btn btn-primary" onClick={save} disabled={!editing.name.trim()}>Save recipe</button>
+              <button className="quote-toolbar-btn" onClick={() => setEditing(null)}>Cancel</button>
+              <button className="quote-toolbar-btn quote-toolbar-btn-primary" onClick={save} disabled={!editing.name.trim()}>
+                <span className="material-symbols-outlined ms-16" aria-hidden>save</span>
+                <span>Save recipe</span>
+              </button>
             </div>
           </div>
         </div>
