@@ -5,6 +5,15 @@ All notable changes to the Bakery Costing App (OvenCost Pro) will be documented 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.13] - 2026-10-10
+
+### Changed
+- Subsetted Material Symbols from 4.0 MB to 73 KB using the 72 icon names audited from the application (about 98% smaller).
+
+### Notes
+- The original font remains in `public/fonts/` as a rollback. The manifest and regeneration command are in `scripts/material-symbols-manifest.txt` and `scripts/subset-material-symbols.sh`.
+- The source font uses the `rlig` feature for icon-name ligatures, so the subset retains `rlig` rather than `liga`.
+
 ## [1.4.12] - 2026-10-10
 
 ### Fixed
