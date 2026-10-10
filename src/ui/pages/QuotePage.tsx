@@ -58,6 +58,17 @@ export function QuotePage() {
     setActiveTiers(prev => Math.max(prev, maxFilled));
   }, [quoteInput.tiers]);
 
+  // Handle ESC on save dialog
+  useEffect(() => {
+    if (showSaveDialog) {
+      const handleKeyDown = (e: KeyboardEvent) => {
+        if (e.key === 'Escape') setShowSaveDialog(false);
+      };
+      window.addEventListener('keydown', handleKeyDown);
+      return () => window.removeEventListener('keydown', handleKeyDown);
+    }
+  }, [showSaveDialog]);
+
   const onInputModified = useCallback(() => {
     if (activeSavedQuote && !activeSavedQuote.isRecalculated) {
       dispatch({ type: 'RECALCULATE_SAVED_QUOTE' });
@@ -135,23 +146,75 @@ export function QuotePage() {
     setShowSaveDialog(false);
   };
 
+  // Add-ons total calculation
+  const decorationsTotal = displayQ
+    ? displayQ.fondant + displayQ.print + displayQ.flowers + displayQ.topper + displayQ.others
+    : 0;
+
+  // Margin progress ratio
+  const marginRatio = displayQ && settings.target_margin > 0
+    ? displayQ.margin_check / settings.target_margin
+    : 0;
+  const isMarginMet = displayQ ? displayQ.margin_check >= settings.target_margin : false;
+
   return (
-    <div>
-      <div className="page-header">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="page-title gradient-text">Cake Quote</h1>
-            <p className="page-subtitle">Configure your tiered cake and get an instant price</p>
+    <div className="quote-page-root">
+      {/* Header with Breadcrumb and Toolbar */}
+      <div className="quote-header">
+        <div className="quote-header-main">
+          <div className="quote-breadcrumbs">
+            <span className="quote-crumb-accent">Quote Studio</span>
+            <span className="quote-crumb-sep">/</span>
+            <span>Bespoke Engineering</span>
+            <span className="quote-crumb-sep">/</span>
+            <span className="quote-crumb-mint">Live Calculation</span>
           </div>
-          {displayQ && (
-            <div className="flex gap-8">
-              <button className="btn btn-ghost btn-sm" onClick={copyText}>📋 Copy</button>
-              <button className="btn btn-ghost btn-sm" onClick={() => window.print()}>🖨 Print</button>
-              <button className="btn btn-secondary btn-sm" onClick={handleOpenSaveDialog}>💾 Save quote</button>
-              <button className="btn btn-secondary btn-sm" onClick={() => dispatch({ type: 'RESET_QUOTE' })}>Reset</button>
-              <button className="btn btn-primary btn-sm" onClick={() => setShowExplain(true)}>🔍 Explain</button>
-            </div>
-          )}
+          <h1 className="quote-title">Tiered Cake Quote Builder</h1>
+        </div>
+
+        <div className="quote-toolbar">
+          <button
+            type="button"
+            className="btn btn-secondary btn-sm"
+            onClick={() => setShowExplain(true)}
+            disabled={!displayQ}
+            aria-label="Explain cost calculation"
+          >
+            Explain
+          </button>
+          <button
+            type="button"
+            className="btn btn-secondary btn-sm"
+            onClick={copyText}
+            disabled={!displayQ}
+            aria-label="Copy quote summary"
+          >
+            Copy
+          </button>
+          <button
+            type="button"
+            className="btn btn-secondary btn-sm"
+            onClick={() => window.print()}
+            aria-label="Print quote"
+          >
+            Print
+          </button>
+          <button
+            type="button"
+            className="btn btn-secondary btn-sm"
+            onClick={() => dispatch({ type: 'RESET_QUOTE' })}
+            aria-label="Reset quote inputs"
+          >
+            Reset
+          </button>
+          <button
+            type="button"
+            className="btn btn-primary btn-sm"
+            onClick={handleOpenSaveDialog}
+            aria-label="Save quote"
+          >
+            Save Quote
+          </button>
         </div>
       </div>
 
@@ -160,11 +223,10 @@ export function QuotePage() {
         <div
           className="saved-quote-banner"
           style={{
-            background: 'rgba(167, 139, 250, 0.12)',
+            background: 'rgba(245, 158, 11, 0.08)',
             border: '1px solid var(--accent)',
             borderRadius: 'var(--r-md)',
             padding: '12px 18px',
-            marginBottom: 16,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
@@ -194,6 +256,7 @@ export function QuotePage() {
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
             {!activeSavedQuote.isRecalculated && (
               <button
+                type="button"
                 className="btn btn-secondary btn-sm"
                 onClick={() => dispatch({ type: 'RECALCULATE_SAVED_QUOTE' })}
               >
@@ -201,6 +264,7 @@ export function QuotePage() {
               </button>
             )}
             <button
+              type="button"
               className="btn btn-ghost btn-sm"
               onClick={() => dispatch({ type: 'CLEAR_ACTIVE_SAVED_QUOTE' })}
               title="Close banner"
@@ -212,74 +276,95 @@ export function QuotePage() {
         </div>
       )}
 
-      <div className="page-body" style={{ display: 'grid', gridTemplateColumns: '1fr 360px', gap: 20, alignItems: 'start' }}>
-        {/* Left: configuration */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          {/* Tiers */}
-          <div className="card">
-            <div className="card-header">
-              <div>
-                <div className="card-title">🎂 Tiers</div>
-                <div className="card-subtitle">Tier 1 is required. Add up to 6 tiers.</div>
-              </div>
-              {activeTiers < 6 && (
-                <button className="btn btn-secondary btn-sm" onClick={() => setActiveTiers(t => Math.min(t + 1, 6))}>
-                  + Add tier
-                </button>
-              )}
+      {/* Main Two-Column Layout */}
+      <div className="quote-layout-grid">
+        {/* Left: Configuration Column */}
+        <div className="quote-config-col">
+          {/* 1. Tier structure section */}
+          <div className="quote-section-card">
+            <div className="quote-section-header">
+              <span className="quote-section-title">Tier Structure</span>
+              <span className="quote-section-sub">
+                {displayQ ? `${displayQ.tiers_used} active tier${displayQ.tiers_used !== 1 ? 's' : ''}` : 'Tier 1 required'}
+              </span>
             </div>
-            <div className="tier-cards">
+
+            <div className="tier-rows-list">
               {Array.from({ length: activeTiers }, (_, idx) => {
                 const tier = quoteInput.tiers[idx];
                 const res = displayQ?.tier_details?.[idx];
                 const isActive = (tier.size_kg ?? 0) > 0;
+                const visibleSizeGuide = data.size_guide.slice(0, 4);
+
                 return (
-                  <div key={idx} className={`tier-card ${isActive ? 'active' : ''}`}>
-                    <div className="tier-card-header">
-                      <span className="tier-label">Tier {idx + 1}{idx === 0 ? ' *' : ''}</span>
+                  <div key={idx} className={`tier-item-row ${isActive ? 'active' : ''}`}>
+                    <div className="tier-item-topbar">
+                      <div className="tier-badge-pill" aria-label={`Tier ${idx + 1}`}>
+                        {idx + 1}
+                      </div>
+
                       {isActive && res && (
-                        <span className="badge badge-accent" style={{ fontSize: 11 }}>
+                        <div className="tier-cost-chip">
                           {fmt(res.flavour_part + res.filling_part, cur)}
-                        </span>
+                        </div>
                       )}
+
                       {idx > 0 && (
-                        <button className="btn btn-ghost btn-sm" onClick={() => {
-                          updateTier(idx, { size_kg: 0, flavour_id: null, filling_id: null });
-                          if (idx === activeTiers - 1) setActiveTiers(t => t - 1);
-                        }} style={{ marginLeft: 'auto', padding: '3px 7px' }}>✕</button>
+                        <button
+                          type="button"
+                          className="tier-remove-btn"
+                          onClick={() => {
+                            updateTier(idx, { size_kg: 0, flavour_id: null, filling_id: null });
+                            if (idx === activeTiers - 1) setActiveTiers(t => t - 1);
+                          }}
+                          aria-label={`Remove tier ${idx + 1}`}
+                          title={`Remove tier ${idx + 1}`}
+                        >
+                          ✕
+                        </button>
                       )}
                     </div>
-                    <div className="form-row form-row-3" style={{ gap: 10 }}>
-                      <div className="form-group">
-                        <label>Size (kg)</label>
+
+                    <div className="tier-controls-grid">
+                      {/* Size selector */}
+                      <div className="tier-size-col">
+                        <label className="extra-field-label">Size (kg)</label>
                         <NumberInput
                           value={tier.size_kg ?? 0}
                           onChange={v => updateTier(idx, { size_kg: v })}
                           step={0.1}
                           placeholder="kg"
+                          aria-label={`Tier ${idx + 1} size in kg`}
                         />
-                        {/* Size guide pills */}
-                        {data.size_guide.length > 0 && (
-                          <div className="size-guide-pills">
-                            {data.size_guide.slice(0, 5).map(sg => (
-                              <button
-                                key={sg.label}
-                                className="size-pill"
-                                onClick={() => updateTier(idx, { size_kg: sg.kg })}
-                                title={`${sg.label} — ${sg.servings} servings`}
-                              >
-                                {sg.label}
-                              </button>
-                            ))}
+                        {visibleSizeGuide.length > 0 && (
+                          <div className="tier-size-pills-row">
+                            {visibleSizeGuide.map(sg => {
+                              const isSelected = tier.size_kg === sg.kg;
+                              return (
+                                <button
+                                  key={sg.label}
+                                  type="button"
+                                  className={`tier-size-pill-btn ${isSelected ? 'selected' : ''}`}
+                                  onClick={() => updateTier(idx, { size_kg: sg.kg })}
+                                  aria-label={`${sg.label} (${sg.servings} servings)`}
+                                  title={`${sg.label} (${sg.servings} servings)`}
+                                >
+                                  {sg.label} [{sg.servings}]
+                                </button>
+                              );
+                            })}
                           </div>
                         )}
                       </div>
-                      <div className="form-group">
-                        <label>Flavour</label>
+
+                      {/* Flavour selector */}
+                      <div className="tier-size-col tier-select-wrap">
+                        <label className="extra-field-label">Flavour</label>
                         <select
                           className="select"
                           value={tier.flavour_id ?? ''}
                           onChange={e => updateTier(idx, { flavour_id: e.target.value || null })}
+                          aria-label={`Tier ${idx + 1} Flavour`}
                         >
                           <option value="">— pick flavour —</option>
                           {flavourOptions.map(f => (
@@ -287,12 +372,15 @@ export function QuotePage() {
                           ))}
                         </select>
                       </div>
-                      <div className="form-group">
-                        <label>Filling</label>
+
+                      {/* Filling selector */}
+                      <div className="tier-size-col tier-select-wrap">
+                        <label className="extra-field-label">Filling</label>
                         <select
                           className="select"
                           value={tier.filling_id ?? ''}
                           onChange={e => updateTier(idx, { filling_id: e.target.value || null })}
+                          aria-label={`Tier ${idx + 1} Filling`}
                         >
                           <option value="">— pick filling —</option>
                           {fillingOptions.map(f => (
@@ -305,193 +393,325 @@ export function QuotePage() {
                 );
               })}
             </div>
+
+            {/* 2. Add tier slot */}
+            {activeTiers < 6 && (
+              <div className="add-tier-slot">
+                <button
+                  type="button"
+                  className="btn-add-tier"
+                  onClick={() => setActiveTiers(t => Math.min(t + 1, 6))}
+                  aria-label="Add another tier"
+                >
+                  + Add Tier {activeTiers + 1}
+                </button>
+              </div>
+            )}
           </div>
 
-          {/* Decoration */}
-          <div className="card">
-            <div className="card-header">
-              <div className="card-title">🎨 Decoration & Extras</div>
+          {/* 3. Decorations & Extras section */}
+          <div className="quote-section-card">
+            <div className="quote-section-header">
+              <span className="quote-section-title">Decorations & Extras</span>
             </div>
-            <div className="form-row form-row-3" style={{ gap: 12 }}>
-              <div className="form-group">
-                <label>Fondant (kg)</label>
-                <NumberInput value={quoteInput.decoration.fondant_kg} onChange={v => updateDecoration('fondant_kg', v)} step={0.1} />
-              </div>
-              <div className="form-group">
-                <label>Edible Prints (count)</label>
-                <NumberInput value={quoteInput.decoration.prints} onChange={v => updateDecoration('prints', v)} />
-              </div>
-              <div className="form-group">
-                <label>Flowers ({cur})</label>
-                <NumberInput value={quoteInput.decoration.flowers} onChange={v => updateDecoration('flowers', v)} />
-              </div>
-              <div className="form-group">
-                <label>Toppers (count)</label>
-                <NumberInput value={quoteInput.decoration.toppers} onChange={v => updateDecoration('toppers', v)} />
-              </div>
-              <div className="form-group">
-                <label>Time (hours)</label>
-                <NumberInput value={quoteInput.decoration.time_hours} onChange={v => updateDecoration('time_hours', v)} step={0.5} />
-                {quoteInput.decoration.time_hours === 0 && (
-                  <span className="input-hint" style={{ color: 'var(--accent-amber)' }}>⚠ 0 hours = free labour</span>
-                )}
-              </div>
-              <div className="form-group">
-                <label>Other costs ({cur})</label>
-                <NumberInput value={quoteInput.decoration.others} onChange={v => updateDecoration('others', v)} />
-              </div>
-              <div className="form-group">
-                <label>Delivery ({cur})</label>
-                <NumberInput value={quoteInput.decoration.delivery} onChange={v => updateDecoration('delivery', v)} />
-                <span className="input-hint">No overhead/profit on delivery</span>
-              </div>
-              <div className="form-group" style={{ gridColumn: '1 / -1' }}>
-                <label>Discount ({cur}) <span style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 400 }}>— comes out of profit only</span></label>
-                <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
-                  <div style={{ flex: '1 1 120px' }}>
-                    <NumberInput
-                      value={quoteInput.decoration.discount ?? 0}
-                      onChange={v => updateDecoration('discount', Math.max(0, v))}
-                      placeholder="0"
-                    />
-                  </div>
-                  {/* Quick-fill buttons — render when displayQ exists */}
-                  {displayQ && (
-                    <>
-                      <button className="btn btn-ghost btn-sm" onClick={() => updateDecoration('discount', 0)}>0</button>
-                      <button className="btn btn-ghost btn-sm" onClick={() => updateDecoration('discount', parseFloat((displayQ.profit * 0.25).toFixed(2)))}>25%</button>
-                      <button className="btn btn-ghost btn-sm" onClick={() => updateDecoration('discount', parseFloat((displayQ.profit * 0.50).toFixed(2)))}>50%</button>
-                      <button className="btn btn-ghost btn-sm" onClick={() => updateDecoration('discount', parseFloat(displayQ.profit.toFixed(2)))} title="Sell at cost">100% (cost)</button>
-                    </>
-                  )}
+
+            <div className="extras-inputs-grid">
+              <div className="extra-field-group">
+                <label className="extra-field-label" htmlFor="input-fondant">Fondant (kg)</label>
+                <div className="extra-input-suffix-wrap">
+                  <NumberInput
+                    id="input-fondant"
+                    value={quoteInput.decoration.fondant_kg}
+                    onChange={v => updateDecoration('fondant_kg', v)}
+                    step={0.1}
+                    aria-label="Fondant in kg"
+                  />
+                  <span className="extra-input-suffix">kg</span>
                 </div>
-                {displayQ && displayQ.discount_capped && (
-                  <span className="input-hint" style={{ color: 'var(--accent-amber)' }}>
-                    ⚠ Capped to available profit ({fmt(displayQ.discount, cur)})
-                  </span>
-                )}
               </div>
+
+              <div className="extra-field-group">
+                <label className="extra-field-label" htmlFor="input-prints">Edible Prints (count)</label>
+                <div className="extra-input-suffix-wrap">
+                  <NumberInput
+                    id="input-prints"
+                    value={quoteInput.decoration.prints}
+                    onChange={v => updateDecoration('prints', v)}
+                    aria-label="Edible prints count"
+                  />
+                  <span className="extra-input-suffix">qty</span>
+                </div>
+              </div>
+
+              <div className="extra-field-group">
+                <label className="extra-field-label" htmlFor="input-flowers">Flowers ({cur})</label>
+                <div className="extra-input-suffix-wrap">
+                  <NumberInput
+                    id="input-flowers"
+                    value={quoteInput.decoration.flowers}
+                    onChange={v => updateDecoration('flowers', v)}
+                    aria-label="Flowers cost"
+                  />
+                  <span className="extra-input-suffix">{cur}</span>
+                </div>
+              </div>
+
+              <div className="extra-field-group">
+                <label className="extra-field-label" htmlFor="input-toppers">Toppers (count)</label>
+                <div className="extra-input-suffix-wrap">
+                  <NumberInput
+                    id="input-toppers"
+                    value={quoteInput.decoration.toppers}
+                    onChange={v => updateDecoration('toppers', v)}
+                    aria-label="Toppers count"
+                  />
+                  <span className="extra-input-suffix">qty</span>
+                </div>
+              </div>
+
+              <div className="extra-field-group">
+                <label className="extra-field-label" htmlFor="input-time">Time (hours)</label>
+                <div className="extra-input-suffix-wrap">
+                  <NumberInput
+                    id="input-time"
+                    value={quoteInput.decoration.time_hours}
+                    onChange={v => updateDecoration('time_hours', v)}
+                    step={0.5}
+                    aria-label="Time in hours"
+                  />
+                  <span className="extra-input-suffix">hrs</span>
+                </div>
+              </div>
+
+              <div className="extra-field-group">
+                <label className="extra-field-label" htmlFor="input-others">Other costs ({cur})</label>
+                <div className="extra-input-suffix-wrap">
+                  <NumberInput
+                    id="input-others"
+                    value={quoteInput.decoration.others}
+                    onChange={v => updateDecoration('others', v)}
+                    aria-label="Other costs"
+                  />
+                  <span className="extra-input-suffix">{cur}</span>
+                </div>
+              </div>
+
+              <div className="extra-field-group">
+                <label className="extra-field-label" htmlFor="input-delivery">Delivery ({cur})</label>
+                <div className="extra-input-suffix-wrap">
+                  <NumberInput
+                    id="input-delivery"
+                    value={quoteInput.decoration.delivery}
+                    onChange={v => updateDecoration('delivery', v)}
+                    aria-label="Delivery cost"
+                  />
+                  <span className="extra-input-suffix">{cur}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* 4. Discount field with preset buttons */}
+            <div className="discount-section-group">
+              <label className="extra-field-label" htmlFor="input-discount">
+                Discount ({cur})
+              </label>
+              <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+                <div style={{ flex: '1 1 140px' }} className="extra-input-suffix-wrap">
+                  <NumberInput
+                    id="input-discount"
+                    value={quoteInput.decoration.discount ?? 0}
+                    onChange={v => updateDecoration('discount', Math.max(0, v))}
+                    placeholder="0"
+                    aria-label="Discount amount"
+                  />
+                  <span className="extra-input-suffix">{cur}</span>
+                </div>
+
+                <div className="discount-presets-row">
+                  <button
+                    type="button"
+                    className="discount-preset-btn"
+                    onClick={() => updateDecoration('discount', 0)}
+                    aria-label="Reset discount to 0"
+                  >
+                    0
+                  </button>
+                  <button
+                    type="button"
+                    className="discount-preset-btn"
+                    onClick={() => {
+                      const p = displayQ?.profit ?? 0;
+                      updateDecoration('discount', parseFloat((p * 0.25).toFixed(2)));
+                    }}
+                    aria-label="Apply 25% discount"
+                  >
+                    25%
+                  </button>
+                  <button
+                    type="button"
+                    className="discount-preset-btn"
+                    onClick={() => {
+                      const p = displayQ?.profit ?? 0;
+                      updateDecoration('discount', parseFloat((p * 0.50).toFixed(2)));
+                    }}
+                    aria-label="Apply 50% discount"
+                  >
+                    50%
+                  </button>
+                  <button
+                    type="button"
+                    className="discount-preset-btn"
+                    onClick={() => {
+                      const p = displayQ?.profit ?? 0;
+                      updateDecoration('discount', parseFloat(p.toFixed(2)));
+                    }}
+                    aria-label="Apply 100% discount"
+                  >
+                    100%
+                  </button>
+                </div>
+              </div>
+
+              {displayQ && displayQ.discount_capped && (
+                <div className="discount-capped-note">
+                  <span>⚠ Capped to available profit</span>
+                </div>
+              )}
             </div>
           </div>
 
-          {/* Warnings */}
+          {/* 5. Warnings list */}
           {displayQ && displayQ.warnings.length > 0 && (
             <WarningsList warnings={displayQ.warnings} limit={5} />
           )}
         </div>
 
-        {/* Right: results */}
-        <div style={{ position: 'sticky', top: 80 }}>
+        {/* Right: Sticky Cost Summary Column */}
+        <div className="quote-summary-col">
           {!displayQ ? (
-            <div className="card">
-              <div className="empty-state">
-                <div className="empty-state-icon">🎂</div>
-                <div className="empty-state-title">Enter Tier 1 size</div>
-                <div className="empty-state-text">Set a weight in Tier 1 to see pricing</div>
+            <div className="summary-card-inner">
+              <div className="empty-state" style={{ padding: '32px 16px', textAlign: 'center' }}>
+                <div style={{ fontSize: 32, marginBottom: 8 }}>🎂</div>
+                <div style={{ fontWeight: 600, fontSize: 15, marginBottom: 4 }}>Configure Tier 1</div>
+                <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
+                  Enter a size for Tier 1 to view live price calculation
+                </div>
               </div>
             </div>
           ) : (
-            <div className="card">
-              <div className="results-big">
-                <div className="text-secondary text-sm mb-4">TOTAL PRICE</div>
-                <div className="money-xl">{fmt(displayQ.total_price, cur)}</div>
+            <div className="summary-card-inner">
+              {/* 1. Total Price Hero */}
+              <div className="summary-price-hero">
+                <div className="summary-price-hero-header">
+                  <span className="summary-price-label">Total Price</span>
+                  <span
+                    className={`status-pill ${isMarginMet ? 'status-pill-ready' : 'status-pill-below'}`}
+                  >
+                    {isMarginMet ? 'Ready' : 'Below Target'}
+                  </span>
+                </div>
+
+                <div className="summary-price-val">
+                  {fmt(displayQ.total_price, cur)}
+                </div>
+
+                {/* 2. Suggested Price */}
                 {displayQ.suggested_price !== undefined && (
-                  <div className="mt-4 suggested-price-line">
-                    <span className="badge badge-amber" style={{ fontSize: 13, padding: '4px 10px' }}>
-                      Suggested: {fmt(displayQ.suggested_price, cur)} (rounded to nearest {settings.price_rounding_step})
+                  <div className="summary-suggested-row">
+                    <span className="summary-suggested-label">Suggested Price</span>
+                    <span className="summary-suggested-val">
+                      {fmt(displayQ.suggested_price, cur)}
                     </span>
                   </div>
                 )}
-                <div className="mt-4 text-sm text-muted">
-                  Margin {(displayQ.margin_check * 100).toFixed(1)}% · {displayQ.tiers_used} tier{displayQ.tiers_used !== 1 ? 's' : ''}
+              </div>
+
+              {/* 3. Cost Attribution Ledger */}
+              <div className="cost-attribution-ledger">
+                <div className="ledger-row">
+                  <div className="ledger-item-desc">
+                    <span className="ledger-dot" style={{ background: 'var(--accent-amber)' }} />
+                    <span>Tier Sponge & Filling</span>
+                  </div>
+                  <span className="ledger-val">{fmt(displayQ.tier_cost, cur)}</span>
+                </div>
+
+                <div className="ledger-row">
+                  <div className="ledger-item-desc">
+                    <span className="ledger-dot" style={{ background: '#f97316' }} />
+                    <span>Decorations & Add-ons</span>
+                  </div>
+                  <span className="ledger-val">{fmt(decorationsTotal, cur)}</span>
+                </div>
+
+                <div className="ledger-row">
+                  <div className="ledger-item-desc">
+                    <span className="ledger-dot" style={{ background: 'var(--accent-mint)' }} />
+                    <span>Production Labour</span>
+                  </div>
+                  <span className="ledger-val">{fmt(displayQ.time, cur)}</span>
+                </div>
+
+                <div className="ledger-row">
+                  <div className="ledger-item-desc">
+                    <span className="ledger-dot" style={{ background: 'var(--text-muted)' }} />
+                    <span>Overhead</span>
+                  </div>
+                  <span className="ledger-val">{fmt(displayQ.overhead, cur)}</span>
+                </div>
+
+                <div className="ledger-row">
+                  <div className="ledger-item-desc">
+                    <span className="ledger-dot" style={{ background: '#38bdf8' }} />
+                    <span>Packaging</span>
+                  </div>
+                  <span className="ledger-val">{fmt(displayQ.packaging, cur)}</span>
+                </div>
+
+                <div className="ledger-row">
+                  <div className="ledger-item-desc">
+                    <span className="ledger-dot" style={{ background: '#a855f7' }} />
+                    <span>Delivery</span>
+                  </div>
+                  <span className="ledger-val">{fmt(displayQ.delivery, cur)}</span>
                 </div>
               </div>
 
-              <div className="result-row">
-                <span className="result-row-label">Tier cost</span>
-                <span className="money">{fmt(displayQ.tier_cost, cur)}</span>
-              </div>
-              <div className="result-row" style={{ paddingLeft: 12, fontSize: 12 }}>
-                <span className="text-muted">Fondant</span>
-                <span className="font-mono text-secondary">{fmt(displayQ.fondant, cur)}</span>
-              </div>
-              <div className="result-row" style={{ paddingLeft: 12, fontSize: 12 }}>
-                <span className="text-muted">Print(s)</span>
-                <span className="font-mono text-secondary">{fmt(displayQ.print, cur)}</span>
-              </div>
-              <div className="result-row" style={{ paddingLeft: 12, fontSize: 12 }}>
-                <span className="text-muted">Flowers</span>
-                <span className="font-mono text-secondary">{fmt(displayQ.flowers, cur)}</span>
-              </div>
-              <div className="result-row" style={{ paddingLeft: 12, fontSize: 12 }}>
-                <span className="text-muted">Toppers</span>
-                <span className="font-mono text-secondary">{fmt(displayQ.topper, cur)}</span>
-              </div>
-              <div className="result-row" style={{ paddingLeft: 12, fontSize: 12 }}>
-                <span className="text-muted">Labour (time)</span>
-                <span className="font-mono text-secondary">{fmt(displayQ.time, cur)}</span>
-              </div>
-              <div className="result-row" style={{ paddingLeft: 12, fontSize: 12 }}>
-                <span className="text-muted">Others</span>
-                <span className="font-mono text-secondary">{fmt(displayQ.others, cur)}</span>
-              </div>
-              <div className="result-row">
-                <span className="result-row-label">Delivery</span>
-                <span className="money">{fmt(displayQ.delivery, cur)}</span>
-              </div>
-              <div className="result-row">
-                <span className="result-row-label">Overhead</span>
-                <span className="money">{fmt(displayQ.overhead, cur)}</span>
-              </div>
-              <div className="result-row">
-                <span className="result-row-label">Packaging</span>
-                <span className="money">{fmt(displayQ.packaging, cur)}</span>
-              </div>
-              <div className="result-row result-row-total" style={{ padding: '12px 0', marginTop: 4, borderTop: '2px solid var(--border)' }}>
-                <span>TOTAL COST</span>
-                <span className="money">{fmt(displayQ.total_cost, cur)}</span>
-              </div>
-              <div className="result-row">
-                <span className="result-row-label">Profit ({(settings.target_margin * 100).toFixed(0)}% margin)</span>
-                <span className="money">{fmt(displayQ.profit, cur)}</span>
-              </div>
-              {displayQ.discount > 0 && (
-                <div className="result-row" style={{ color: 'var(--accent-amber)' }}>
-                  <span className="result-row-label">
-                    Discount
-                    {displayQ.discount_capped && (
-                      <span style={{ fontSize: 11, marginLeft: 6, opacity: 0.8 }}>(capped to profit)</span>
-                    )}
-                  </span>
-                  <span className="money">− {fmt(displayQ.discount, cur)}</span>
+              {/* 4. Profit Gauge */}
+              <div className="profit-gauge-box">
+                <div className="profit-gauge-header">
+                  <span className="profit-gauge-title">Net Yield</span>
+                  <span className="profit-gauge-val">{fmt(displayQ.profit, cur)}</span>
                 </div>
-              )}
-              <div className="result-row" style={{ padding: '12px 0', marginTop: 4, borderTop: '2px solid var(--accent-dim)' }}>
-                <span className="result-row-total" style={{ fontSize: 16 }}>TOTAL PRICE</span>
-                <span className="result-row-price">{fmt(displayQ.total_price, cur)}</span>
-              </div>
-              {displayQ.suggested_price !== undefined && (
-                <div
-                  className="result-row suggested-price-row"
-                  style={{ borderBottom: 'none', paddingBottom: 0, paddingTop: 4 }}
-                >
-                  <span className="text-muted text-sm">
-                    Suggested (nearest {settings.price_rounding_step})
-                  </span>
-                  <span className="badge badge-amber" style={{ fontSize: 12 }}>
-                    {fmt(displayQ.suggested_price, cur)}
-                  </span>
+
+                <div className="profit-progress-track">
+                  <div
+                    className={`profit-progress-bar ${isMarginMet ? 'mint' : 'amber'}`}
+                    style={{ width: `${Math.min(100, Math.max(0, marginRatio * 100))}%` }}
+                  />
                 </div>
-              )}
-              {displayQ.suggested_price !== undefined && (
-                <div style={{ fontSize: 11, color: 'var(--text-muted)', paddingBottom: 8, textAlign: 'right' }}>
-                  Rounding is display-only — never used in calculations.
+
+                <div className="profit-gauge-sub">
+                  <span>Margin: {(displayQ.margin_check * 100).toFixed(1)}%</span>
+                  <span>Target: {(settings.target_margin * 100).toFixed(1)}%</span>
                 </div>
-              )}
-              <div className="result-row" style={{ borderBottom: 'none' }}>
-                <span className="text-muted text-sm">Margin check</span>
-                <span className="badge badge-green">{(displayQ.margin_check * 100).toFixed(2)}%</span>
               </div>
+
+              {/* 5. Total Cost Row */}
+              <div className="summary-total-cost-row">
+                <span>Total Cost</span>
+                <span className="summary-total-cost-val">{fmt(displayQ.total_cost, cur)}</span>
+              </div>
+
+              {/* 6. Inspect Cost Engine Hierarchy Button */}
+              <button
+                type="button"
+                className="btn-inspect-audit"
+                onClick={() => setShowExplain(true)}
+                aria-label="Inspect Cost Engine Hierarchy"
+              >
+                <span>🔍 Inspect Cost Engine Hierarchy</span>
+              </button>
             </div>
           )}
         </div>
@@ -504,7 +724,7 @@ export function QuotePage() {
           style={{
             position: 'fixed',
             inset: 0,
-            background: 'rgba(0, 0, 0, 0.7)',
+            background: 'rgba(0, 0, 0, 0.75)',
             zIndex: 200,
             display: 'flex',
             alignItems: 'center',
@@ -512,15 +732,19 @@ export function QuotePage() {
             padding: 16,
           }}
           onClick={() => setShowSaveDialog(false)}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="save-dialog-title"
         >
           <div
             className="card"
-            style={{ width: '100%', maxWidth: 440, background: 'var(--bg-card)' }}
+            style={{ width: '100%', maxWidth: 440, background: 'var(--bg-surface)', border: '1px solid var(--border)' }}
             onClick={e => e.stopPropagation()}
           >
             <div className="card-header">
-              <div className="card-title">💾 Save Quote</div>
+              <div id="save-dialog-title" className="card-title">💾 Save Quote</div>
               <button
+                type="button"
                 className="btn btn-ghost btn-sm"
                 onClick={() => setShowSaveDialog(false)}
                 aria-label="Close dialog"
@@ -530,8 +754,9 @@ export function QuotePage() {
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginTop: 12 }}>
               <div className="form-group">
-                <label>Quote Name</label>
+                <label htmlFor="save-quote-name">Quote Name</label>
                 <input
+                  id="save-quote-name"
                   type="text"
                   className="input"
                   value={saveName}
@@ -541,8 +766,9 @@ export function QuotePage() {
                 />
               </div>
               <div className="form-group">
-                <label>Notes (optional)</label>
+                <label htmlFor="save-quote-notes">Notes (optional)</label>
                 <textarea
+                  id="save-quote-notes"
                   className="input"
                   rows={3}
                   value={saveNotes}
@@ -551,10 +777,18 @@ export function QuotePage() {
                 />
               </div>
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 8 }}>
-                <button className="btn btn-secondary" onClick={() => setShowSaveDialog(false)}>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => setShowSaveDialog(false)}
+                >
                   Cancel
                 </button>
-                <button className="btn btn-primary" onClick={handleSaveQuote}>
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={handleSaveQuote}
+                >
                   Save Quote
                 </button>
               </div>
@@ -563,6 +797,7 @@ export function QuotePage() {
         </div>
       )}
 
+      {/* Explain Panel */}
       {showExplain && displayQ && (
         <ExplainPanel
           title="Cake Quote"
