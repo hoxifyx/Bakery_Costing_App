@@ -84,22 +84,29 @@ export function FlavoursPage() {
 
   return (
     <div>
-      <div className="page-header">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="page-title">🍓 Flavours & Fillings</h1>
-            <p className="page-subtitle">Define cake flavour costs and filling recipes</p>
+      <div className="quote-header">
+        <div className="quote-header-main">
+          <div className="quote-breadcrumbs">
+            <span className="quote-crumb-accent">Catalog</span>
+            <span className="quote-crumb-sep">/</span>
+            <span className="quote-crumb-tertiary">Flavours &amp; Fillings</span>
           </div>
+          <div className="quote-title-row">
+            <h1 className="quote-title">Flavours &amp; Fillings</h1>
+          </div>
+        </div>
+        <div className="quote-toolbar">
           <button
-            className="btn btn-primary btn-sm"
+            className="quote-toolbar-btn quote-toolbar-btn-primary"
             onClick={tab === 'flavours' ? openNewFlavour : openNewFilling}
           >
-            + Add {tab === 'flavours' ? 'flavour' : 'filling'}
+            <span className="material-symbols-outlined ms-18" aria-hidden>add</span>
+            <span>{tab === 'flavours' ? 'Add flavour' : 'Add filling'}</span>
           </button>
         </div>
       </div>
 
-      <div className="page-body">
+      <div className="quote-page-root">
         <div className="tabs">
           <button className={`tab ${tab === 'flavours' ? 'active' : ''}`} onClick={() => setTab('flavours')}>
             Flavours ({data.flavours.length})
@@ -111,116 +118,172 @@ export function FlavoursPage() {
 
         {tab === 'flavours' && (
           <>
-            {data.flavours.length === 0 ? (
-              <div className="empty-state">
-                <div className="empty-state-icon">🍓</div>
-                <div className="empty-state-title">No flavours yet</div>
-                <button className="btn btn-primary mt-12" onClick={openNewFlavour}>+ Add flavour</button>
+            <div className="quote-section-card">
+              <div className="decorations-section-header">
+                <div className="decorations-header-left">
+                  <span className="material-symbols-outlined ms-20" aria-hidden>bakery_dining</span>
+                  <h2 className="decorations-header-title">Flavour Profiles</h2>
+                </div>
+                <span className="decorations-header-right">{data.flavours.length} flavours</span>
               </div>
-            ) : (
-              <div className="table-wrapper">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Name</th>
-                      <th>Type</th>
-                      <th>Base price/kg</th>
-                      <th>Add-on (w/OH)</th>
-                      <th>Total price/kg</th>
-                      <th>Warnings</th>
-                      <th></th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {[...data.flavours].sort((a, b) => a.name.localeCompare(b.name)).map(f => {
-                      const res = result.flavours[f.id];
-                      const addonWithOH = f.addon_cost_per_kg * (1 + data.settings.overhead_pct);
-                      return (
-                        <tr key={f.id}>
-                          <td>
-                            <div style={{ fontWeight: 600 }}>{f.name}</div>
-                            <div className="text-muted" style={{ fontSize: 11 }}>{f.id}</div>
-                          </td>
-                          <td>
-                            <span className="badge badge-muted">
-                              {f.cost_model.type === 'recipe' ? '🍰 Recipe' : '⚖ Average'}
-                            </span>
-                          </td>
-                          <td className="td-mono">{cur} {res?.base.toFixed(4) ?? '—'}</td>
-                          <td className="td-mono">{cur} {addonWithOH.toFixed(4)}</td>
-                          <td className="td-mono text-green">{cur} {res?.price_per_kg.toFixed(4) ?? '—'}</td>
-                          <td>
-                            {res?.warnings.length ? <span className="badge badge-amber">⚠ {res.warnings.length}</span> : <span className="badge badge-green">✓</span>}
-                          </td>
-                          <td>
-                            <div className="td-actions">
-                              {res && <button className="btn btn-ghost btn-sm" onClick={() => setExplainFlavour(f.id)}>🔍</button>}
-                              <button className="btn btn-ghost btn-sm btn-icon" onClick={() => { setIsNew(false); setEditingFlavour({ ...f }); }}>✏️</button>
-                              <button className="btn btn-danger btn-sm btn-icon" onClick={() => deleteFlavour(f)}>🗑</button>
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            )}
+              {data.flavours.length === 0 ? (
+                <div className="empty-state">
+                  <div className="empty-state-icon">
+                    <span className="material-symbols-outlined ms-32" aria-hidden>bakery_dining</span>
+                  </div>
+                  <div className="empty-state-title">No flavours yet</div>
+                  <div className="empty-state-text">Add a flavour profile to get started</div>
+                  <button className="quote-toolbar-btn quote-toolbar-btn-primary" onClick={openNewFlavour}>
+                    <span className="material-symbols-outlined ms-18" aria-hidden>add</span>
+                    <span>Add flavour</span>
+                  </button>
+                </div>
+              ) : (
+                <div className="table-wrapper">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Name</th>
+                        <th>Type</th>
+                        <th>Base price/kg</th>
+                        <th>Add-on (w/OH)</th>
+                        <th>Total price/kg</th>
+                        <th>Warnings</th>
+                        <th></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {[...data.flavours].sort((a, b) => a.name.localeCompare(b.name)).map(f => {
+                        const res = result.flavours[f.id];
+                        const addonWithOH = f.addon_cost_per_kg * (1 + data.settings.overhead_pct);
+                        return (
+                          <tr key={f.id}>
+                            <td>
+                              <div style={{ fontWeight: 600 }}>{f.name}</div>
+                              <div className="text-muted" style={{ fontSize: 11 }}>{f.id}</div>
+                            </td>
+                            <td>
+                              <span className="badge badge-muted">
+                                <span className="material-symbols-outlined ms-14" aria-hidden>
+                                  {f.cost_model.type === 'recipe' ? 'menu_book' : 'calculate'}
+                                </span>
+                                {f.cost_model.type === 'recipe' ? 'Recipe' : 'Average'}
+                              </span>
+                            </td>
+                            <td className="td-mono">{cur} {res?.base.toFixed(4) ?? '—'}</td>
+                            <td className="td-mono">{cur} {addonWithOH.toFixed(4)}</td>
+                            <td className="td-mono text-green">{cur} {res?.price_per_kg.toFixed(4) ?? '—'}</td>
+                            <td>
+                              {res?.warnings.length
+                                ? <span className="badge badge-amber"><span className="material-symbols-outlined ms-14" aria-hidden>warning</span>{res.warnings.length}</span>
+                                : <span className="badge badge-green"><span className="material-symbols-outlined ms-14" aria-hidden>check_circle</span></span>}
+                            </td>
+                            <td>
+                              <div className="td-actions">
+                                {res && (
+                                  <button className="quote-toolbar-btn" onClick={() => setExplainFlavour(f.id)} title={`Explain ${f.name}`} aria-label={`Explain ${f.name}`} style={{ width: 32, height: 32, padding: 0 }}>
+                                    <span className="material-symbols-outlined ms-16" aria-hidden>account_tree</span>
+                                  </button>
+                                )}
+                                <button className="quote-toolbar-btn" onClick={() => { setIsNew(false); setEditingFlavour({ ...f }); }} title={`Edit ${f.name}`} aria-label={`Edit ${f.name}`} style={{ width: 32, height: 32, padding: 0 }}>
+                                  <span className="material-symbols-outlined ms-16" aria-hidden>edit</span>
+                                </button>
+                                <button className="quote-toolbar-btn" onClick={() => deleteFlavour(f)} title={`Delete ${f.name}`} aria-label={`Delete ${f.name}`} style={{ width: 32, height: 32, padding: 0 }}>
+                                  <span className="material-symbols-outlined ms-16" aria-hidden>delete</span>
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
           </>
         )}
 
         {tab === 'fillings' && (
           <>
-            {data.fillings.length === 0 ? (
-              <div className="empty-state">
-                <div className="empty-state-icon">🍯</div>
-                <div className="empty-state-title">No fillings yet</div>
-                <button className="btn btn-primary mt-12" onClick={openNewFilling}>+ Add filling</button>
+            <div className="quote-section-card">
+              <div className="decorations-section-header">
+                <div className="decorations-header-left">
+                  <span className="material-symbols-outlined ms-20" aria-hidden>liquor</span>
+                  <h2 className="decorations-header-title">Fillings &amp; Curds</h2>
+                </div>
+                <span className="decorations-header-right">{data.fillings.length} fillings</span>
               </div>
-            ) : (
-              <div className="table-wrapper">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Name</th>
-                      <th>Source</th>
-                      <th>Cost per kg of cake</th>
-                      <th>Warnings</th>
-                      <th></th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {[...data.fillings].sort((a, b) => a.name.localeCompare(b.name)).map(f => {
-                      const res = result.fillings[f.id];
-                      return (
-                        <tr key={f.id}>
-                          <td>
-                            <div style={{ fontWeight: 600 }}>{f.name}</div>
-                            <div className="text-muted" style={{ fontSize: 11 }}>{f.id}</div>
-                          </td>
-                          <td>
-                            <span className="badge badge-muted">
-                              {f.source.type === 'recipe' ? '📋 Recipe' : '🧂 Ingredient'}
-                            </span>
-                          </td>
-                          <td className="td-mono text-green">{cur} {res?.cost_per_kg.toFixed(4) ?? '—'}</td>
-                          <td>
-                            {res?.warnings.length ? <span className="badge badge-amber">⚠ {res.warnings.length}</span> : <span className="badge badge-green">✓</span>}
-                          </td>
-                          <td>
-                            <div className="td-actions">
-                              {res && <button className="btn btn-ghost btn-sm" onClick={() => setExplainFilling(f.id)}>🔍</button>}
-                              <button className="btn btn-ghost btn-sm btn-icon" onClick={() => { setIsNew(false); setEditingFilling({ ...f }); }}>✏️</button>
-                              <button className="btn btn-danger btn-sm btn-icon" onClick={() => setDeleteTarget({ id: f.id, name: f.name, type: 'filling' })}>🗑</button>
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            )}
+              {data.fillings.length === 0 ? (
+                <div className="empty-state">
+                  <div className="empty-state-icon">
+                    <span className="material-symbols-outlined ms-32" aria-hidden>liquor</span>
+                  </div>
+                  <div className="empty-state-title">No fillings yet</div>
+                  <div className="empty-state-text">Add a filling to get started</div>
+                  <button className="quote-toolbar-btn quote-toolbar-btn-primary" onClick={openNewFilling}>
+                    <span className="material-symbols-outlined ms-18" aria-hidden>add</span>
+                    <span>Add filling</span>
+                  </button>
+                </div>
+              ) : (
+                <div className="table-wrapper">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Name</th>
+                        <th>Source</th>
+                        <th>Cost per kg of cake</th>
+                        <th>Warnings</th>
+                        <th></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {[...data.fillings].sort((a, b) => a.name.localeCompare(b.name)).map(f => {
+                        const res = result.fillings[f.id];
+                        return (
+                          <tr key={f.id}>
+                            <td>
+                              <div style={{ fontWeight: 600 }}>{f.name}</div>
+                              <div className="text-muted" style={{ fontSize: 11 }}>{f.id}</div>
+                            </td>
+                            <td>
+                              <span className="badge badge-muted">
+                                <span className="material-symbols-outlined ms-14" aria-hidden>
+                                  {f.source.type === 'recipe' ? 'menu_book' : 'grocery'}
+                                </span>
+                                {f.source.type === 'recipe' ? 'Recipe' : 'Ingredient'}
+                              </span>
+                            </td>
+                            <td className="td-mono text-green">{cur} {res?.cost_per_kg.toFixed(4) ?? '—'}</td>
+                            <td>
+                              {res?.warnings.length
+                                ? <span className="badge badge-amber"><span className="material-symbols-outlined ms-14" aria-hidden>warning</span>{res.warnings.length}</span>
+                                : <span className="badge badge-green"><span className="material-symbols-outlined ms-14" aria-hidden>check_circle</span></span>}
+                            </td>
+                            <td>
+                              <div className="td-actions">
+                                {res && (
+                                  <button className="quote-toolbar-btn" onClick={() => setExplainFilling(f.id)} title={`Explain ${f.name}`} aria-label={`Explain ${f.name}`} style={{ width: 32, height: 32, padding: 0 }}>
+                                    <span className="material-symbols-outlined ms-16" aria-hidden>account_tree</span>
+                                  </button>
+                                )}
+                                <button className="quote-toolbar-btn" onClick={() => { setIsNew(false); setEditingFilling({ ...f }); }} title={`Edit ${f.name}`} aria-label={`Edit ${f.name}`} style={{ width: 32, height: 32, padding: 0 }}>
+                                  <span className="material-symbols-outlined ms-16" aria-hidden>edit</span>
+                                </button>
+                                <button className="quote-toolbar-btn" onClick={() => setDeleteTarget({ id: f.id, name: f.name, type: 'filling' })} title={`Delete ${f.name}`} aria-label={`Delete ${f.name}`} style={{ width: 32, height: 32, padding: 0 }}>
+                                  <span className="material-symbols-outlined ms-16" aria-hidden>delete</span>
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
           </>
         )}
       </div>
@@ -230,8 +293,13 @@ export function FlavoursPage() {
         <div className="modal-backdrop" onClick={() => setEditingFlavour(null)}>
           <div className="modal" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <h2 className="modal-title">{isNew ? 'Add flavour' : `Edit: ${editingFlavour.name}`}</h2>
-              <button className="btn btn-ghost btn-sm" onClick={() => setEditingFlavour(null)}>✕</button>
+              <h2 className="modal-title" style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                <span className="material-symbols-outlined ms-18" aria-hidden>{isNew ? 'add' : 'edit'}</span>
+                {isNew ? 'Add flavour' : `Edit: ${editingFlavour.name}`}
+              </h2>
+              <button className="quote-toolbar-btn" style={{ width: 32, height: 32, padding: 0 }} onClick={() => setEditingFlavour(null)} aria-label="Close">
+                <span className="material-symbols-outlined ms-16" aria-hidden>close</span>
+              </button>
             </div>
             <div className="modal-body">
               <div className="form-group">
@@ -338,8 +406,11 @@ export function FlavoursPage() {
               })()}
             </div>
             <div className="modal-footer">
-              <button className="btn btn-ghost" onClick={() => setEditingFlavour(null)}>Cancel</button>
-              <button className="btn btn-primary" onClick={saveFlavour} disabled={!editingFlavour.name.trim()}>Save</button>
+              <button className="quote-toolbar-btn" onClick={() => setEditingFlavour(null)}>Cancel</button>
+              <button className="quote-toolbar-btn quote-toolbar-btn-primary" onClick={saveFlavour} disabled={!editingFlavour.name.trim()}>
+                <span className="material-symbols-outlined ms-16" aria-hidden>save</span>
+                <span>Save</span>
+              </button>
             </div>
           </div>
         </div>
@@ -350,8 +421,13 @@ export function FlavoursPage() {
         <div className="modal-backdrop" onClick={() => setEditingFilling(null)}>
           <div className="modal" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <h2 className="modal-title">{isNew ? 'Add filling' : `Edit: ${editingFilling.name}`}</h2>
-              <button className="btn btn-ghost btn-sm" onClick={() => setEditingFilling(null)}>✕</button>
+              <h2 className="modal-title" style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                <span className="material-symbols-outlined ms-18" aria-hidden>{isNew ? 'add' : 'edit'}</span>
+                {isNew ? 'Add filling' : `Edit: ${editingFilling.name}`}
+              </h2>
+              <button className="quote-toolbar-btn" style={{ width: 32, height: 32, padding: 0 }} onClick={() => setEditingFilling(null)} aria-label="Close">
+                <span className="material-symbols-outlined ms-16" aria-hidden>close</span>
+              </button>
             </div>
             <div className="modal-body">
               <div className="form-group">
@@ -411,8 +487,11 @@ export function FlavoursPage() {
               })()}
             </div>
             <div className="modal-footer">
-              <button className="btn btn-ghost" onClick={() => setEditingFilling(null)}>Cancel</button>
-              <button className="btn btn-primary" onClick={saveFilling} disabled={!editingFilling.name.trim()}>Save</button>
+              <button className="quote-toolbar-btn" onClick={() => setEditingFilling(null)}>Cancel</button>
+              <button className="quote-toolbar-btn quote-toolbar-btn-primary" onClick={saveFilling} disabled={!editingFilling.name.trim()}>
+                <span className="material-symbols-outlined ms-16" aria-hidden>save</span>
+                <span>Save</span>
+              </button>
             </div>
           </div>
         </div>
