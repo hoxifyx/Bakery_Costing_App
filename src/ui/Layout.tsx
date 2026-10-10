@@ -119,33 +119,33 @@ export function Layout({ currentPage, onNavigate, children }: LayoutProps) {
     {
       title: 'Quote',
       items: [
-        { id: 'quote', label: 'Quote', icon: '🎂' },
-        { id: 'saved_quotes', label: 'Saved Quotes', icon: '📑', badge: state.data.saved_quotes.length > 0 ? state.data.saved_quotes.length : undefined },
+        { id: 'quote', label: 'Quote', icon: 'request_quote' },
+        { id: 'saved_quotes', label: 'Saved Quotes', icon: 'folder_open', badge: state.data.saved_quotes.length > 0 ? state.data.saved_quotes.length : undefined },
       ],
     },
     {
       title: 'Catalog',
       items: [
-        { id: 'ingredients', label: 'Ingredients', icon: '🧂' },
-        { id: 'packaging', label: 'Packaging', icon: '📦' },
-        { id: 'recipes', label: 'Recipes', icon: '📋' },
-        { id: 'flavours', label: 'Flavours & Fillings', icon: '🍓' },
-        { id: 'products', label: 'Products', icon: '🍩' },
+        { id: 'ingredients', label: 'Ingredients', icon: 'grocery' },
+        { id: 'packaging', label: 'Packaging', icon: 'inventory_2' },
+        { id: 'recipes', label: 'Recipes', icon: 'menu_book' },
+        { id: 'flavours', label: 'Flavours & Fillings', icon: 'bakery_dining' },
+        { id: 'products', label: 'Products', icon: 'storefront' },
       ],
     },
     {
       title: 'Records',
       items: [
-        { id: 'orders', label: 'Orders', icon: '🛍️' },
-        { id: 'customers', label: 'Customers', icon: '👥' },
+        { id: 'orders', label: 'Orders', icon: 'receipt_long' },
+        { id: 'customers', label: 'Customers', icon: 'group' },
       ],
     },
     {
       title: 'Tools',
       items: [
-        { id: 'settings', label: 'Settings', icon: '⚙️' },
-        { id: 'health', label: 'Data Health', icon: '🏥', badge: warningCount, badgeDanger: warningCount > 0 },
-        { id: 'import_export', label: 'Import / Export', icon: '📤' },
+        { id: 'settings', label: 'Settings', icon: 'settings' },
+        { id: 'health', label: 'Data Health', icon: 'vital_signs', badge: warningCount, badgeDanger: warningCount > 0 },
+        { id: 'import_export', label: 'Import / Export', icon: 'sync_alt' },
       ],
     },
   ];
@@ -162,7 +162,7 @@ export function Layout({ currentPage, onNavigate, children }: LayoutProps) {
       {/* Mobile top bar */}
       <header className="mobile-header">
         <div className="mobile-header-brand">
-          <span className="mobile-header-logo">🎂</span>
+          <span className="mobile-header-logo material-symbols-outlined ms-20" aria-hidden>cake</span>
           <span className="mobile-header-title">OvenCost Pro</span>
         </div>
         <button
@@ -172,7 +172,7 @@ export function Layout({ currentPage, onNavigate, children }: LayoutProps) {
           onClick={() => setMobileMenuOpen(prev => !prev)}
           aria-label="Toggle Navigation"
         >
-          {mobileMenuOpen ? '✕' : '☰'}
+          <span className="material-symbols-outlined ms-20" aria-hidden>{mobileMenuOpen ? 'close' : 'menu'}</span>
         </button>
       </header>
 
@@ -190,7 +190,7 @@ export function Layout({ currentPage, onNavigate, children }: LayoutProps) {
         <div className="sidebar-inner">
           {/* Logo / Brand */}
           <div className="sidebar-logo">
-            <div className="sidebar-logo-icon">🎂</div>
+            <div className="sidebar-logo-icon"><span className="material-symbols-outlined ms-20" aria-hidden>cake</span></div>
             <div className="sidebar-logo-text-wrap">
               <span className="sidebar-logo-text">OvenCost Pro</span>
               <span className="sidebar-logo-sub">Costing Engine</span>
@@ -223,7 +223,7 @@ export function Layout({ currentPage, onNavigate, children }: LayoutProps) {
                             className={`nav-item ${active ? 'active' : ''}`}
                             onClick={() => handleNavClick(item.id)}
                           >
-                            <span className="nav-item-icon">{item.icon}</span>
+                            <span className="nav-item-icon material-symbols-outlined" aria-hidden>{item.icon}</span>
                             <span className="nav-item-label">{item.label}</span>
                             {item.badge !== undefined && item.badge > 0 && (
                               <span className={`nav-badge ${item.badgeDanger ? 'nav-badge-danger' : ''}`}>
@@ -246,7 +246,10 @@ export function Layout({ currentPage, onNavigate, children }: LayoutProps) {
           <div className="save-pill">
             <span className={`save-dot ${state.saving ? 'saving' : ''}`} />
             <span className="save-pill-text">
-              {state.saving ? 'Saving…' : `Saved: ${timeAgoText}`}
+              {state.saving ? 'Saving…' : `Saved: ${timeAgoText} · Local DB`}
+            </span>
+            <span className="material-symbols-outlined ms-16 save-pill-icon" aria-hidden>
+              {state.saving ? 'sync' : 'cloud_done'}
             </span>
           </div>
         </div>

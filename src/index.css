@@ -296,7 +296,7 @@ button { cursor: pointer; }
   left: 0;
   width: var(--sidebar-w);
   height: 100vh;
-  background: var(--bg-surface);
+  background: var(--bg-surface-lowest);
   border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
@@ -439,8 +439,9 @@ button { cursor: pointer; }
 .nav-item.active {
   background: rgba(245, 158, 11, 0.10);
   color: var(--accent);
-  border-left-color: var(--accent);
+  border-left: 2px solid var(--accent);
   font-weight: 600;
+  padding-left: 14px;
 }
 
 .nav-item-icon {
@@ -486,8 +487,14 @@ button { cursor: pointer; }
   gap: 8px;
   padding: 8px 10px;
   border-radius: var(--r-sm);
-  background: var(--bg-elev-2);
+  background: var(--bg-surface-low);
   border: 1px solid var(--border);
+}
+
+.save-pill-icon {
+  color: var(--accent-green);
+  margin-left: auto;
+  flex-shrink: 0;
 }
 
 .save-dot {
