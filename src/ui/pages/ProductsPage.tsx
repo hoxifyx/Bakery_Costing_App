@@ -106,22 +106,29 @@ export function ProductsPage() {
 
   return (
     <div>
-      <div className="page-header">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="page-title">🍩 Products</h1>
-            <p className="page-subtitle">Batch products (donuts, cookies) and assembled products (cupcakes, cake pops)</p>
+      <div className="quote-header">
+        <div className="quote-header-main">
+          <div className="quote-breadcrumbs">
+            <span className="quote-crumb-accent">Catalog</span>
+            <span className="quote-crumb-sep">/</span>
+            <span className="quote-crumb-tertiary">Products</span>
           </div>
+          <div className="quote-title-row">
+            <h1 className="quote-title">Products</h1>
+          </div>
+        </div>
+        <div className="quote-toolbar">
           <button
-            className="btn btn-primary btn-sm"
+            className="quote-toolbar-btn quote-toolbar-btn-primary"
             onClick={tab === 'batch' ? openNewBatch : openNewAssembled}
           >
-            + Add {tab === 'batch' ? 'batch product' : 'assembled product'}
+            <span className="material-symbols-outlined ms-18" aria-hidden>add</span>
+            <span>{tab === 'batch' ? 'Add batch product' : 'Add assembled product'}</span>
           </button>
         </div>
       </div>
 
-      <div className="page-body">
+      <div className="quote-page-root">
         <div className="tabs">
           <button className={`tab ${tab === 'batch' ? 'active' : ''}`} onClick={() => setTab('batch')}>
             Batch products ({data.batch_products.length})
@@ -132,14 +139,28 @@ export function ProductsPage() {
         </div>
 
         {tab === 'batch' && (
-          data.batch_products.length === 0 ? (
-            <div className="empty-state">
-              <div className="empty-state-icon">🍩</div>
-              <div className="empty-state-title">No batch products yet</div>
-              <button className="btn btn-primary mt-12" onClick={openNewBatch}>+ Add batch product</button>
+          <div className="quote-section-card">
+            <div className="decorations-section-header">
+              <div className="decorations-header-left">
+                <span className="material-symbols-outlined ms-20" aria-hidden>cookie</span>
+                <h2 className="decorations-header-title">Batch Products</h2>
+              </div>
+              <span className="decorations-header-right">{data.batch_products.length} products</span>
             </div>
-          ) : (
-            <div className="table-wrapper">
+            {data.batch_products.length === 0 ? (
+              <div className="empty-state">
+                <div className="empty-state-icon">
+                  <span className="material-symbols-outlined ms-32" aria-hidden>cookie</span>
+                </div>
+                <div className="empty-state-title">No batch products yet</div>
+                <div className="empty-state-text">Add a batch product to get started</div>
+                <button className="quote-toolbar-btn quote-toolbar-btn-primary" onClick={openNewBatch}>
+                  <span className="material-symbols-outlined ms-18" aria-hidden>add</span>
+                  <span>Add batch product</span>
+                </button>
+              </div>
+            ) : (
+              <div className="table-wrapper">
               <table>
                 <thead>
                   <tr>
@@ -181,9 +202,15 @@ export function ProductsPage() {
                         </td>
                         <td>
                           <div className="td-actions">
-                            {res && <button className="btn btn-ghost btn-sm" onClick={() => setExplainBatch(p.id)}>🔍</button>}
-                            <button className="btn btn-ghost btn-sm btn-icon" onClick={() => { setIsNew(false); setEditingBatch({ ...p }); }}>✏️</button>
-                            <button className="btn btn-danger btn-sm btn-icon" onClick={() => setDeleteTarget({ id: p.id, name: p.name, type: 'batch' })}>🗑</button>
+                            {res && <button className="quote-toolbar-btn" onClick={() => setExplainBatch(p.id)} title={`Explain ${p.name}`} aria-label={`Explain ${p.name}`} style={{ width: 32, height: 32, padding: 0 }}>
+                              <span className="material-symbols-outlined ms-16" aria-hidden>account_tree</span>
+                            </button>}
+                            <button className="quote-toolbar-btn" onClick={() => { setIsNew(false); setEditingBatch({ ...p }); }} title={`Edit ${p.name}`} aria-label={`Edit ${p.name}`} style={{ width: 32, height: 32, padding: 0 }}>
+                              <span className="material-symbols-outlined ms-16" aria-hidden>edit</span>
+                            </button>
+                            <button className="quote-toolbar-btn" onClick={() => setDeleteTarget({ id: p.id, name: p.name, type: 'batch' })} title={`Delete ${p.name}`} aria-label={`Delete ${p.name}`} style={{ width: 32, height: 32, padding: 0 }}>
+                              <span className="material-symbols-outlined ms-16" aria-hidden>delete</span>
+                            </button>
                           </div>
                         </td>
                       </tr>
@@ -192,18 +219,33 @@ export function ProductsPage() {
                 </tbody>
               </table>
             </div>
-          )
+            )}
+          </div>
         )}
 
         {tab === 'assembled' && (
-          data.assembled_products.length === 0 ? (
-            <div className="empty-state">
-              <div className="empty-state-icon">🧁</div>
-              <div className="empty-state-title">No assembled products yet</div>
-              <button className="btn btn-primary mt-12" onClick={openNewAssembled}>+ Add assembled product</button>
+          <div className="quote-section-card">
+            <div className="decorations-section-header">
+              <div className="decorations-header-left">
+                <span className="material-symbols-outlined ms-20" aria-hidden>bakery_dining</span>
+                <h2 className="decorations-header-title">Assembled Products</h2>
+              </div>
+              <span className="decorations-header-right">{data.assembled_products.length} products</span>
             </div>
-          ) : (
-            <div className="table-wrapper">
+            {data.assembled_products.length === 0 ? (
+              <div className="empty-state">
+                <div className="empty-state-icon">
+                  <span className="material-symbols-outlined ms-32" aria-hidden>bakery_dining</span>
+                </div>
+                <div className="empty-state-title">No assembled products yet</div>
+                <div className="empty-state-text">Add an assembled product to get started</div>
+                <button className="quote-toolbar-btn quote-toolbar-btn-primary" onClick={openNewAssembled}>
+                  <span className="material-symbols-outlined ms-18" aria-hidden>add</span>
+                  <span>Add assembled product</span>
+                </button>
+              </div>
+            ) : (
+              <div className="table-wrapper">
               <table>
                 <thead>
                   <tr>
@@ -230,16 +272,22 @@ export function ProductsPage() {
                         <td className="td-mono">
                           <div className="text-green">{res ? fmt(res.price_each, cur) : '—'}</div>
                           {res?.suggested_price_each !== undefined && (
-                            <div style={{ marginTop: 4, fontSize: 11, color: 'var(--accent-amber)', fontFamily: 'var(--font-sans)', textAlign: 'right' }}>
+                            <div style={{ marginTop: 4, fontSize: 11, color: 'var(--accent-amber)', fontFamily: 'var(--font-body)', textAlign: 'right' }}>
                               Sugg: {fmt(res.suggested_price_each, cur)}
                             </div>
                           )}
                         </td>
                         <td>
                           <div className="td-actions">
-                            {res && <button className="btn btn-ghost btn-sm" onClick={() => setExplainAssembled(p.id)}>🔍</button>}
-                            <button className="btn btn-ghost btn-sm btn-icon" onClick={() => { setIsNew(false); setEditingAssembled({ ...p }); }}>✏️</button>
-                            <button className="btn btn-danger btn-sm btn-icon" onClick={() => setDeleteTarget({ id: p.id, name: p.name, type: 'assembled' })}>🗑</button>
+                            {res && <button className="quote-toolbar-btn" onClick={() => setExplainAssembled(p.id)} title={`Explain ${p.name}`} aria-label={`Explain ${p.name}`} style={{ width: 32, height: 32, padding: 0 }}>
+                              <span className="material-symbols-outlined ms-16" aria-hidden>account_tree</span>
+                            </button>}
+                            <button className="quote-toolbar-btn" onClick={() => { setIsNew(false); setEditingAssembled({ ...p }); }} title={`Edit ${p.name}`} aria-label={`Edit ${p.name}`} style={{ width: 32, height: 32, padding: 0 }}>
+                              <span className="material-symbols-outlined ms-16" aria-hidden>edit</span>
+                            </button>
+                            <button className="quote-toolbar-btn" onClick={() => setDeleteTarget({ id: p.id, name: p.name, type: 'assembled' })} title={`Delete ${p.name}`} aria-label={`Delete ${p.name}`} style={{ width: 32, height: 32, padding: 0 }}>
+                              <span className="material-symbols-outlined ms-16" aria-hidden>delete</span>
+                            </button>
                           </div>
                         </td>
                       </tr>
@@ -248,7 +296,8 @@ export function ProductsPage() {
                 </tbody>
               </table>
             </div>
-          )
+            )}
+          </div>
         )}
       </div>
 
@@ -257,8 +306,13 @@ export function ProductsPage() {
         <div className="modal-backdrop" onClick={() => setEditingBatch(null)}>
           <div className="modal modal-lg" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <h2 className="modal-title">{isNew ? 'New batch product' : `Edit: ${editingBatch.name}`}</h2>
-              <button className="btn btn-ghost btn-sm" onClick={() => setEditingBatch(null)}>✕</button>
+              <h2 className="modal-title" style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                <span className="material-symbols-outlined ms-18" aria-hidden>{isNew ? 'add' : 'edit'}</span>
+                {isNew ? 'New batch product' : `Edit: ${editingBatch.name}`}
+              </h2>
+              <button className="quote-toolbar-btn" style={{ width: 32, height: 32, padding: 0 }} onClick={() => setEditingBatch(null)} aria-label="Close">
+                <span className="material-symbols-outlined ms-16" aria-hidden>close</span>
+              </button>
             </div>
             <div className="modal-body">
               <div className="form-row form-row-2">
@@ -332,19 +386,23 @@ export function ProductsPage() {
 
               {/* Components */}
               <div>
-                <div className="card-header" style={{ marginBottom: 8 }}>
-                  <span className="card-title">Extra components per piece (e.g. macaron filling)</span>
-                  <button className="btn btn-secondary btn-sm" onClick={() => setEditingBatch(p => p && ({ ...p, components: [...p.components, { recipe_id: frostingRecipes[0]?.id ?? '', grams: 15 }] }))}>
+                <div className="decorations-section-header" style={{ marginBottom: 8 }}>
+                  <div className="decorations-header-left">
+                    <span className="material-symbols-outlined ms-18" aria-hidden>playlist_add</span>
+                    <h3 className="decorations-header-title">Extra components per piece</h3>
+                  </div>
+                  <button className="quote-toolbar-btn" onClick={() => setEditingBatch(p => p && ({ ...p, components: [...p.components, { recipe_id: frostingRecipes[0]?.id ?? '', grams: 15 }] }))}>
+                    <span className="material-symbols-outlined ms-16" aria-hidden>add</span>
                     + Component
                   </button>
                 </div>
                 {editingBatch.components.map((comp, ci) => (
-                  <div key={ci} style={{ display: 'grid', gridTemplateColumns: '1fr 100px auto', gap: 6, alignItems: 'center', marginBottom: 6 }}>
+                  <div key={ci} style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 100px 32px', gap: 6, alignItems: 'center', marginBottom: 6 }}>
                     <div style={{ display: 'flex', gap: 6 }}>
                       <select className="select" value={comp.recipe_id} onChange={e => {
                         const comps = editingBatch.components.map((c, i) => i === ci ? { ...c, recipe_id: e.target.value } : c);
                         setEditingBatch(p => p && ({ ...p, components: comps }));
-                      }} style={{ flex: 1 }}>
+                      }} style={{ flex: 1, minWidth: 0 }}>
                         {[...data.recipes].sort((a, b) => a.name.localeCompare(b.name)).map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
                       </select>
                       {comp.recipe_id && (
@@ -361,7 +419,9 @@ export function ProductsPage() {
                       const comps = editingBatch.components.map((c, i) => i === ci ? { ...c, grams: v } : c);
                       setEditingBatch(p => p && ({ ...p, components: comps }));
                     }} placeholder="grams" />
-                    <button className="btn btn-danger btn-sm btn-icon" onClick={() => setEditingBatch(p => p && ({ ...p, components: p.components.filter((_, i) => i !== ci) }))}>✕</button>
+                    <button className="quote-toolbar-btn" onClick={() => setEditingBatch(p => p && ({ ...p, components: p.components.filter((_, i) => i !== ci) }))} title="Remove component" aria-label="Remove component" style={{ width: 32, height: 32, padding: 0 }}>
+                      <span className="material-symbols-outlined ms-16" aria-hidden>close</span>
+                    </button>
                   </div>
                 ))}
               </div>
@@ -378,14 +438,21 @@ export function ProductsPage() {
                     <span>Each excl. box: {fmt(res.each_excluding_box, cur)}</span>
                     <span>Each incl. box: {fmt(res.each_including_box, cur)}</span>
                     <span>Box (full): {fmt(res.box_price, cur)}</span>
-                    {res.warnings.length > 0 && <WarningsList warnings={res.warnings} limit={3} />}
+                    {res.warnings.length > 0 && (
+                      <div style={{ width: '100%', minWidth: 0, overflowWrap: 'anywhere' }}>
+                        <WarningsList warnings={res.warnings} limit={3} />
+                      </div>
+                    )}
                   </div>
                 );
               })()}
             </div>
             <div className="modal-footer">
-              <button className="btn btn-ghost" onClick={() => setEditingBatch(null)}>Cancel</button>
-              <button className="btn btn-primary" onClick={saveBatch} disabled={!editingBatch.name.trim()}>Save</button>
+              <button className="quote-toolbar-btn" onClick={() => setEditingBatch(null)}>Cancel</button>
+              <button className="quote-toolbar-btn quote-toolbar-btn-primary" onClick={saveBatch} disabled={!editingBatch.name.trim()}>
+                <span className="material-symbols-outlined ms-16" aria-hidden>save</span>
+                <span>Save</span>
+              </button>
             </div>
           </div>
         </div>
@@ -396,8 +463,13 @@ export function ProductsPage() {
         <div className="modal-backdrop" onClick={() => setEditingAssembled(null)}>
           <div className="modal modal-lg" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <h2 className="modal-title">{isNew ? 'New assembled product' : `Edit: ${editingAssembled.name}`}</h2>
-              <button className="btn btn-ghost btn-sm" onClick={() => setEditingAssembled(null)}>✕</button>
+              <h2 className="modal-title" style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                <span className="material-symbols-outlined ms-18" aria-hidden>{isNew ? 'add' : 'edit'}</span>
+                {isNew ? 'New assembled product' : `Edit: ${editingAssembled.name}`}
+              </h2>
+              <button className="quote-toolbar-btn" style={{ width: 32, height: 32, padding: 0 }} onClick={() => setEditingAssembled(null)} aria-label="Close">
+                <span className="material-symbols-outlined ms-16" aria-hidden>close</span>
+              </button>
             </div>
             <div className="modal-body">
               <div className="form-group">
@@ -428,31 +500,46 @@ export function ProductsPage() {
 
               {/* Components */}
               <div>
-                <div className="card-header" style={{ marginBottom: 8 }}>
-                  <span className="card-title">Components</span>
-                  <div className="flex gap-4">
-                    <button className="btn btn-secondary btn-sm" onClick={() => addComponent('cake_recipe_grams')}>+ Cake grams</button>
-                    <button className="btn btn-secondary btn-sm" onClick={() => addComponent('recipe_per_gram')}>+ Recipe/gram</button>
-                    <button className="btn btn-secondary btn-sm" onClick={() => addComponent('ingredient_grams')}>+ Ingredient</button>
+                <div className="decorations-section-header" style={{ marginBottom: 8 }}>
+                  <div className="decorations-header-left">
+                    <span className="material-symbols-outlined ms-18" aria-hidden>playlist_add</span>
+                    <h3 className="decorations-header-title">Components</h3>
+                  </div>
+                  <div className="quote-toolbar">
+                    <button className="quote-toolbar-btn" onClick={() => addComponent('cake_recipe_grams')}>
+                      <span className="material-symbols-outlined ms-16" aria-hidden>cake</span>
+                      <span>Cake grams</span>
+                    </button>
+                    <button className="quote-toolbar-btn" onClick={() => addComponent('recipe_per_gram')}>
+                      <span className="material-symbols-outlined ms-16" aria-hidden>bakery_dining</span>
+                      <span>Recipe/gram</span>
+                    </button>
+                    <button className="quote-toolbar-btn" onClick={() => addComponent('ingredient_grams')}>
+                      <span className="material-symbols-outlined ms-16" aria-hidden>grocery</span>
+                      <span>Ingredient</span>
+                    </button>
                   </div>
                 </div>
                 {editingAssembled.components.map((comp, ci) => (
-                  <div key={ci} style={{ display: 'grid', gridTemplateColumns: '140px 1fr 80px auto', gap: 6, alignItems: 'center', marginBottom: 6 }}>
+                  <div key={ci} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 140px), 1fr))', gap: 6, alignItems: 'center', marginBottom: 6 }}>
                     <span className="badge badge-muted" style={{ fontSize: 11 }}>
-                      {comp.type === 'cake_recipe_grams' ? '🎂 Cake' : comp.type === 'recipe_per_gram' ? '🍮 Recipe' : '🧂 Ingredient'}
+                      <span className="material-symbols-outlined ms-14" aria-hidden>
+                        {comp.type === 'cake_recipe_grams' ? 'cake' : comp.type === 'recipe_per_gram' ? 'bakery_dining' : 'grocery'}
+                      </span>
+                      {comp.type === 'cake_recipe_grams' ? 'Cake' : comp.type === 'recipe_per_gram' ? 'Recipe' : 'Ingredient'}
                     </span>
-                    <div style={{ display: 'flex', gap: 6 }}>
+                    <div style={{ display: 'flex', gap: 4, minWidth: 0 }}>
                       <select className="select" value={comp.type === 'ingredient_grams' ? comp.ingredient_id : comp.recipe_id} onChange={e => {
                         if (comp.type === 'ingredient_grams') updateComponent(ci, { ingredient_id: e.target.value } as Partial<AssembledComponent>);
                         else updateComponent(ci, { recipe_id: e.target.value } as Partial<AssembledComponent>);
-                      }} style={{ flex: 1 }}>
+                      }} style={{ flex: 1, minWidth: 0 }}>
                         {comp.type === 'ingredient_grams'
                           ? [...data.ingredients].sort((a, b) => a.name.localeCompare(b.name)).map(i => <option key={i.id} value={i.id}>{i.name}</option>)
                           : (comp.type === 'cake_recipe_grams' ? cakeRecipes : frostingRecipes).map(r => <option key={r.id} value={r.id}>{r.name}</option>)
                         }
                       </select>
                       {comp.type !== 'ingredient_grams' && comp.recipe_id && (
-                        <div style={{ width: 80 }}>
+                        <div style={{ width: 64, flexShrink: 0 }}>
                           <NumberInput
                             value={batchMultipliers[comp.recipe_id] ?? 1}
                             onChange={v => setBatchMultipliers(s => ({ ...s, [comp.recipe_id]: v }))}
@@ -462,7 +549,9 @@ export function ProductsPage() {
                       )}
                     </div>
                     <NumberInput value={comp.grams} onChange={v => updateComponent(ci, { grams: v } as Partial<AssembledComponent>)} placeholder="g" />
-                    <button className="btn btn-danger btn-sm btn-icon" onClick={() => removeComponent(ci)}>✕</button>
+                    <button className="quote-toolbar-btn" onClick={() => removeComponent(ci)} title="Remove component" aria-label="Remove component" style={{ width: 32, height: 32, padding: 0 }}>
+                      <span className="material-symbols-outlined ms-16" aria-hidden>close</span>
+                    </button>
                   </div>
                 ))}
               </div>
@@ -483,14 +572,21 @@ export function ProductsPage() {
                         Suggested: {fmt(res.suggested_price_each, cur)}
                       </span>
                     )}
-                    {res.warnings.length > 0 && <WarningsList warnings={res.warnings} limit={3} />}
+                    {res.warnings.length > 0 && (
+                      <div style={{ width: '100%', minWidth: 0, overflowWrap: 'anywhere' }}>
+                        <WarningsList warnings={res.warnings} limit={3} />
+                      </div>
+                    )}
                   </div>
                 );
               })()}
             </div>
             <div className="modal-footer">
-              <button className="btn btn-ghost" onClick={() => setEditingAssembled(null)}>Cancel</button>
-              <button className="btn btn-primary" onClick={saveAssembled} disabled={!editingAssembled.name.trim()}>Save</button>
+              <button className="quote-toolbar-btn" onClick={() => setEditingAssembled(null)}>Cancel</button>
+              <button className="quote-toolbar-btn quote-toolbar-btn-primary" onClick={saveAssembled} disabled={!editingAssembled.name.trim()}>
+                <span className="material-symbols-outlined ms-16" aria-hidden>save</span>
+                <span>Save</span>
+              </button>
             </div>
           </div>
         </div>
