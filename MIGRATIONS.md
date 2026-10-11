@@ -22,5 +22,6 @@ These app releases do not change the exported data schema and require no data mi
 
 *   **v1.4.12:** Fixed native form validation on two Settings number fields.
 *   **v1.4.13:** Subsetted the Material Symbols font; app data is unchanged.
+*   **v1.4.15:** Design-consistency pass across list pages; app data is unchanged.
 
 The current schema remains `1.2`. UI redesigns, validation fixes, and static-asset changes do not by themselves require a schema-version bump.

@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { useStore } from '../../store/store';
 import type { Flavour, Filling } from '../../engine/types';
 import { compute } from '../../engine/engine';
-import { NumberInput, ConfirmDialog } from '../components/Shared';
+import { NumberInput, SearchBar, ConfirmDialog, fmtMoney } from '../components/Shared';
 import { ExplainPanel } from '../components/ExplainPanel';
 import { generateId } from '../../engine/utils';
 
@@ -12,6 +12,7 @@ export function FlavoursPage() {
   const cur = data.settings.currency_code;
 
   const [tab, setTab] = useState<'flavours' | 'fillings'>('flavours');
+  const [search, setSearch] = useState('');
   const [editingFlavour, setEditingFlavour] = useState<Flavour | null>(null);
   const [editingFilling, setEditingFilling] = useState<Filling | null>(null);
   const [isNew, setIsNew] = useState(false);
@@ -25,6 +26,12 @@ export function FlavoursPage() {
 
   const cakeRecipes = [...data.recipes.filter(r => r.kind === 'cake')].sort((a, b) => a.name.localeCompare(b.name));
   const frostingRecipes = [...data.recipes.filter(r => r.kind === 'frosting_filling')].sort((a, b) => a.name.localeCompare(b.name));
+  const filteredFlavours = [...data.flavours]
+    .filter(f => f.name.toLowerCase().includes(search.toLowerCase()) || f.id.toLowerCase().includes(search.toLowerCase()))
+    .sort((a, b) => a.name.localeCompare(b.name));
+  const filteredFillings = [...data.fillings]
+    .filter(f => f.name.toLowerCase().includes(search.toLowerCase()) || f.id.toLowerCase().includes(search.toLowerCase()))
+    .sort((a, b) => a.name.localeCompare(b.name));
 
   // ---- Flavours ----
   const openNewFlavour = () => {
@@ -42,6 +49,11 @@ export function FlavoursPage() {
     if (isNew) dispatch({ type: 'ADD_FLAVOUR', item: editingFlavour });
     else dispatch({ type: 'UPDATE_FLAVOUR', item: editingFlavour });
     setEditingFlavour(null);
+  };
+
+  const duplicateFlavour = (f: Flavour) => {
+    setIsNew(true);
+    setEditingFlavour({ ...f, id: generateId('flavour'), name: `${f.name} (copy)` });
   };
 
   const getFlavourUsedIn = (id: string) => {
@@ -73,6 +85,11 @@ export function FlavoursPage() {
     if (isNew) dispatch({ type: 'ADD_FILLING', item: editingFilling });
     else dispatch({ type: 'UPDATE_FILLING', item: editingFilling });
     setEditingFilling(null);
+  };
+
+  const duplicateFilling = (f: Filling) => {
+    setIsNew(true);
+    setEditingFilling({ ...f, id: generateId('filling'), name: `${f.name} (copy)` });
   };
 
   const doDelete = () => {
@@ -107,11 +124,11 @@ export function FlavoursPage() {
       </div>
 
       <div className="quote-page-root">
-        <div className="tabs">
-          <button className={`tab ${tab === 'flavours' ? 'active' : ''}`} onClick={() => setTab('flavours')}>
+        <div className="tabs" role="tablist" aria-label="Flavour and filling types">
+          <button type="button" role="tab" aria-selected={tab === 'flavours'} className={`tab ${tab === 'flavours' ? 'active' : ''}`} onClick={() => setTab('flavours')}>
             Flavours ({data.flavours.length})
           </button>
-          <button className={`tab ${tab === 'fillings' ? 'active' : ''}`} onClick={() => setTab('fillings')}>
+          <button type="button" role="tab" aria-selected={tab === 'fillings'} className={`tab ${tab === 'fillings' ? 'active' : ''}`} onClick={() => setTab('fillings')}>
             Fillings ({data.fillings.length})
           </button>
         </div>
@@ -124,15 +141,16 @@ export function FlavoursPage() {
                   <span className="material-symbols-outlined ms-20" aria-hidden>bakery_dining</span>
                   <h2 className="decorations-header-title">Flavour Profiles</h2>
                 </div>
-                <span className="decorations-header-right">{data.flavours.length} flavours</span>
+                <span className="decorations-header-right">{filteredFlavours.length} of {data.flavours.length} flavours</span>
               </div>
-              {data.flavours.length === 0 ? (
+              <SearchBar value={search} onChange={setSearch} placeholder="Search flavours…" maxWidth={420} />
+              {filteredFlavours.length === 0 ? (
                 <div className="empty-state">
                   <div className="empty-state-icon">
                     <span className="material-symbols-outlined ms-32" aria-hidden>bakery_dining</span>
                   </div>
-                  <div className="empty-state-title">No flavours yet</div>
-                  <div className="empty-state-text">Add a flavour profile to get started</div>
+                  <div className="empty-state-title">{search ? 'No flavours found' : 'No flavours yet'}</div>
+                  <div className="empty-state-text">{search ? 'Try a different search term' : 'Add a flavour profile to get started'}</div>
                   <button className="quote-toolbar-btn quote-toolbar-btn-primary" onClick={openNewFlavour}>
                     <span className="material-symbols-outlined ms-18" aria-hidden>add</span>
                     <span>Add flavour</span>
@@ -145,15 +163,15 @@ export function FlavoursPage() {
                       <tr>
                         <th>Name</th>
                         <th>Type</th>
-                        <th>Base price/kg</th>
+                        <th>Base Price / Kg</th>
                         <th>Add-on (w/OH)</th>
-                        <th>Total price/kg</th>
+                        <th>Total Price / Kg</th>
                         <th>Warnings</th>
-                        <th></th>
+                        <th>Actions</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {[...data.flavours].sort((a, b) => a.name.localeCompare(b.name)).map(f => {
+                      {filteredFlavours.map(f => {
                         const res = result.flavours[f.id];
                         const addonWithOH = f.addon_cost_per_kg * (1 + data.settings.overhead_pct);
                         return (
@@ -170,9 +188,9 @@ export function FlavoursPage() {
                                 {f.cost_model.type === 'recipe' ? 'Recipe' : 'Average'}
                               </span>
                             </td>
-                            <td className="td-mono">{cur} {res?.base.toFixed(4) ?? '—'}</td>
-                            <td className="td-mono">{cur} {addonWithOH.toFixed(4)}</td>
-                            <td className="td-mono text-green">{cur} {res?.price_per_kg.toFixed(4) ?? '—'}</td>
+                            <td className="td-mono">{res ? fmtMoney(res.base, cur, 4) : '—'}</td>
+                            <td className="td-mono">{fmtMoney(addonWithOH, cur, 4)}</td>
+                            <td className="td-mono text-green">{res ? fmtMoney(res.price_per_kg, cur, 4) : '—'}</td>
                             <td>
                               {res?.warnings.length
                                 ? <span className="badge badge-amber"><span className="material-symbols-outlined ms-14" aria-hidden>warning</span>{res.warnings.length}</span>
@@ -187,6 +205,9 @@ export function FlavoursPage() {
                                 )}
                                 <button className="quote-toolbar-btn" onClick={() => { setIsNew(false); setEditingFlavour({ ...f }); }} title={`Edit ${f.name}`} aria-label={`Edit ${f.name}`} style={{ width: 32, height: 32, padding: 0 }}>
                                   <span className="material-symbols-outlined ms-16" aria-hidden>edit</span>
+                                </button>
+                                <button className="quote-toolbar-btn" onClick={() => duplicateFlavour(f)} title={`Duplicate ${f.name}`} aria-label={`Duplicate ${f.name}`} style={{ width: 32, height: 32, padding: 0 }}>
+                                  <span className="material-symbols-outlined ms-16" aria-hidden>content_copy</span>
                                 </button>
                                 <button className="quote-toolbar-btn" onClick={() => deleteFlavour(f)} title={`Delete ${f.name}`} aria-label={`Delete ${f.name}`} style={{ width: 32, height: 32, padding: 0 }}>
                                   <span className="material-symbols-outlined ms-16" aria-hidden>delete</span>
@@ -212,15 +233,16 @@ export function FlavoursPage() {
                   <span className="material-symbols-outlined ms-20" aria-hidden>liquor</span>
                   <h2 className="decorations-header-title">Fillings &amp; Curds</h2>
                 </div>
-                <span className="decorations-header-right">{data.fillings.length} fillings</span>
+                <span className="decorations-header-right">{filteredFillings.length} of {data.fillings.length} fillings</span>
               </div>
-              {data.fillings.length === 0 ? (
+              <SearchBar value={search} onChange={setSearch} placeholder="Search fillings…" maxWidth={420} />
+              {filteredFillings.length === 0 ? (
                 <div className="empty-state">
                   <div className="empty-state-icon">
                     <span className="material-symbols-outlined ms-32" aria-hidden>liquor</span>
                   </div>
-                  <div className="empty-state-title">No fillings yet</div>
-                  <div className="empty-state-text">Add a filling to get started</div>
+                  <div className="empty-state-title">{search ? 'No fillings found' : 'No fillings yet'}</div>
+                  <div className="empty-state-text">{search ? 'Try a different search term' : 'Add a filling to get started'}</div>
                   <button className="quote-toolbar-btn quote-toolbar-btn-primary" onClick={openNewFilling}>
                     <span className="material-symbols-outlined ms-18" aria-hidden>add</span>
                     <span>Add filling</span>
@@ -233,13 +255,13 @@ export function FlavoursPage() {
                       <tr>
                         <th>Name</th>
                         <th>Source</th>
-                        <th>Cost per kg of cake</th>
+                        <th>Cost / Kg of Cake</th>
                         <th>Warnings</th>
-                        <th></th>
+                        <th>Actions</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {[...data.fillings].sort((a, b) => a.name.localeCompare(b.name)).map(f => {
+                      {filteredFillings.map(f => {
                         const res = result.fillings[f.id];
                         return (
                           <tr key={f.id}>
@@ -255,7 +277,7 @@ export function FlavoursPage() {
                                 {f.source.type === 'recipe' ? 'Recipe' : 'Ingredient'}
                               </span>
                             </td>
-                            <td className="td-mono text-green">{cur} {res?.cost_per_kg.toFixed(4) ?? '—'}</td>
+                            <td className="td-mono text-green">{res ? fmtMoney(res.cost_per_kg, cur, 4) : '—'}</td>
                             <td>
                               {res?.warnings.length
                                 ? <span className="badge badge-amber"><span className="material-symbols-outlined ms-14" aria-hidden>warning</span>{res.warnings.length}</span>
@@ -270,6 +292,9 @@ export function FlavoursPage() {
                                 )}
                                 <button className="quote-toolbar-btn" onClick={() => { setIsNew(false); setEditingFilling({ ...f }); }} title={`Edit ${f.name}`} aria-label={`Edit ${f.name}`} style={{ width: 32, height: 32, padding: 0 }}>
                                   <span className="material-symbols-outlined ms-16" aria-hidden>edit</span>
+                                </button>
+                                <button className="quote-toolbar-btn" onClick={() => duplicateFilling(f)} title={`Duplicate ${f.name}`} aria-label={`Duplicate ${f.name}`} style={{ width: 32, height: 32, padding: 0 }}>
+                                  <span className="material-symbols-outlined ms-16" aria-hidden>content_copy</span>
                                 </button>
                                 <button className="quote-toolbar-btn" onClick={() => setDeleteTarget({ id: f.id, name: f.name, type: 'filling' })} title={`Delete ${f.name}`} aria-label={`Delete ${f.name}`} style={{ width: 32, height: 32, padding: 0 }}>
                                   <span className="material-symbols-outlined ms-16" aria-hidden>delete</span>
@@ -399,8 +424,8 @@ export function FlavoursPage() {
                 if (!res) return null;
                 return (
                   <div className="success-banner">
-                    Price per kg: {cur} {res.price_per_kg.toFixed(4)}
-                    (base {cur} {res.base.toFixed(4)} + addon {cur} {(editingFlavour.addon_cost_per_kg * (1 + data.settings.overhead_pct)).toFixed(4)})
+                    Price per kg: {fmtMoney(res.price_per_kg, cur, 4)}
+                    (base {fmtMoney(res.base, cur, 4)} + addon {fmtMoney(editingFlavour.addon_cost_per_kg * (1 + data.settings.overhead_pct), cur, 4)})
                   </div>
                 );
               })()}
@@ -480,7 +505,7 @@ export function FlavoursPage() {
                 if (!res) return null;
                 return (
                   <div className="success-banner">
-                    Cost per kg of cake: {cur} {res.cost_per_kg.toFixed(4)}
+                    Cost per kg of cake: {fmtMoney(res.cost_per_kg, cur, 4)}
                     {' '}(at {data.settings.filling_grams_per_kg}g/kg)
                   </div>
                 );

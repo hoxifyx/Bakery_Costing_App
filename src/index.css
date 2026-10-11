@@ -1176,6 +1176,11 @@ tbody tr:hover {
    ============================================================ */
 .search-bar {
   position: relative;
+  width: 100%;
+}
+
+.search-bar-wide {
+  max-width: var(--search-bar-max-width, 420px);
 }
 
 .search-bar-icon {

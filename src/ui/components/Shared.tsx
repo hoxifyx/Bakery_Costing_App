@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type CSSProperties } from 'react';
 
 interface ToggleProps {
   checked: boolean;
@@ -112,11 +112,12 @@ interface SearchBarProps {
   value: string;
   onChange: (v: string) => void;
   placeholder?: string;
+  maxWidth?: number | string;
 }
 
-export function SearchBar({ value, onChange, placeholder = 'Search…' }: SearchBarProps) {
+export function SearchBar({ value, onChange, placeholder = 'Search…', maxWidth = '100%' }: SearchBarProps) {
   return (
-    <div className="search-bar" style={{ maxWidth: 280 }}>
+    <div className="search-bar search-bar-wide" style={{ '--search-bar-max-width': typeof maxWidth === 'number' ? `${maxWidth}px` : maxWidth } as CSSProperties}>
       <span className="search-bar-icon material-symbols-outlined ms-14" aria-hidden>search</span>
       <input
         className="input"
@@ -124,7 +125,12 @@ export function SearchBar({ value, onChange, placeholder = 'Search…' }: Search
         value={value}
         onChange={e => onChange(e.target.value)}
         placeholder={placeholder}
+        aria-label={placeholder}
       />
     </div>
   );
+}
+
+export function fmtMoney(n: number, cur: string, decimals = 2): string {
+  return `${cur} ${n.toFixed(decimals)}`;
 }

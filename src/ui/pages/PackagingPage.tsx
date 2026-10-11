@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useStore } from '../../store/store';
 import type { PackagingItem } from '../../engine/types';
-import { NumberInput, SearchBar, ConfirmDialog } from '../components/Shared';
+import { NumberInput, SearchBar, ConfirmDialog, fmtMoney } from '../components/Shared';
 import { exportPackagingCSV } from '../../io/io';
 import { generateId } from '../../engine/utils';
 
@@ -101,19 +101,19 @@ export function PackagingPage() {
               <h2 className="decorations-header-title">Packaging Catalog</h2>
             </div>
             <span className="decorations-header-right">
-              {filtered.length} of {data.packaging_items.length} items
+              {filtered.length} of {data.packaging_items.length} packaging items
             </span>
           </div>
 
-          <SearchBar value={search} onChange={setSearch} placeholder="Search packaging…" />
+          <SearchBar value={search} onChange={setSearch} placeholder="Search packaging…" maxWidth={420} />
 
           {filtered.length === 0 ? (
             <div className="empty-state">
               <div className="empty-state-icon">
                 <span className="material-symbols-outlined ms-32" aria-hidden>inventory_2</span>
               </div>
-              <div className="empty-state-title">No packaging items yet</div>
-              <div className="empty-state-text">Add boxes, boards, prints, or wraps to get started</div>
+              <div className="empty-state-title">{search ? 'No packaging found' : 'No packaging items yet'}</div>
+              <div className="empty-state-text">{search ? 'Try a different search term' : 'Add boxes, boards, prints, or wraps to get started'}</div>
               <button className="quote-toolbar-btn quote-toolbar-btn-primary" onClick={openNew}>
                 <span className="material-symbols-outlined ms-18" aria-hidden>add</span>
                 <span>Add packaging</span>
@@ -126,9 +126,9 @@ export function PackagingPage() {
                   <tr>
                     <th>Name</th>
                     <th>Price</th>
-                    <th>Used in</th>
+                    <th>Used In</th>
                     <th>Notes</th>
-                    <th></th>
+                    <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -138,7 +138,7 @@ export function PackagingPage() {
                         <div style={{ fontWeight: 600 }}>{p.name}</div>
                         <div className="text-muted" style={{ fontSize: 11 }}>{p.id}</div>
                       </td>
-                      <td className="td-mono text-green">{cur} {p.price.toFixed(2)}</td>
+                      <td className="td-mono text-green">{fmtMoney(p.price, cur)}</td>
                       <td className="text-secondary text-sm">{getUsedIn(p.id, data).length || '—'}</td>
                       <td className="text-muted text-sm truncate" style={{ maxWidth: 200 }}>{p.notes || '—'}</td>
                       <td>

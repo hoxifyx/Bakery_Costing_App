@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useStore } from '../../store/store';
 import type { Ingredient, PriceHistoryEntry } from '../../engine/types';
-import { NumberInput, SearchBar, ConfirmDialog } from '../components/Shared';
+import { NumberInput, SearchBar, ConfirmDialog, fmtMoney } from '../components/Shared';
 import { exportIngredientsCSV, importIngredientsCSV } from '../../io/io';
 import { generateId } from '../../engine/utils';
 
@@ -131,8 +131,8 @@ export function IngredientsPage() {
         </div>
         <div className="quote-toolbar">
           <button className="quote-toolbar-btn" onClick={() => setCsvMode(m => !m)}>
-            <span className="material-symbols-outlined ms-16" aria-hidden>upload_file</span>
-            <span>CSV</span>
+            <span className="material-symbols-outlined ms-16" aria-hidden>download</span>
+            <span>Export CSV</span>
           </button>
           <button className="quote-toolbar-btn quote-toolbar-btn-primary" onClick={openNew}>
             <span className="material-symbols-outlined ms-18" aria-hidden>add</span>
@@ -173,47 +173,43 @@ export function IngredientsPage() {
       )}
 
       <div className="quote-page-root">
-        <div style={{ marginBottom: 16 }}>
-          <SearchBar value={search} onChange={setSearch} placeholder="Search ingredients…" />
-        </div>
-
-        {filtered.length === 0 ? (
-          <div className="empty-state">
-            <div className="empty-state-icon">
-              <span className="material-symbols-outlined ms-32" aria-hidden>grocery</span>
+        <div className="quote-section-card">
+          <div className="decorations-section-header">
+            <div className="decorations-header-left">
+              <span className="material-symbols-outlined ms-20" aria-hidden>grocery</span>
+              <h2 className="decorations-header-title">Ingredient Catalog</h2>
             </div>
-            <div className="empty-state-title">No ingredients yet</div>
-            <div className="empty-state-text">Add your first ingredient to get started</div>
-            <button className="quote-toolbar-btn quote-toolbar-btn-primary" onClick={openNew}>
-              <span className="material-symbols-outlined ms-18" aria-hidden>add</span>
-              <span>Add ingredient</span>
-            </button>
+            <span className="decorations-header-right">{filtered.length} of {data.ingredients.length} ingredients</span>
           </div>
-        ) : (
-          <div className="quote-section-card">
-            <div className="decorations-section-header">
-              <div className="decorations-header-left">
-                <span className="material-symbols-outlined ms-20" aria-hidden>grocery</span>
-                <h2 className="decorations-header-title">Ingredient Catalog</h2>
+          <SearchBar value={search} onChange={setSearch} placeholder="Search ingredients…" maxWidth={420} />
+
+          {filtered.length === 0 ? (
+            <div className="empty-state">
+              <div className="empty-state-icon">
+                <span className="material-symbols-outlined ms-32" aria-hidden>grocery</span>
               </div>
-              <span className="decorations-header-right">
-                {filtered.length} of {data.ingredients.length} items
-              </span>
+              <div className="empty-state-title">{search ? 'No ingredients found' : 'No ingredients yet'}</div>
+              <div className="empty-state-text">{search ? 'Try a different search term' : 'Add your first ingredient to get started'}</div>
+              <button className="quote-toolbar-btn quote-toolbar-btn-primary" onClick={openNew}>
+                <span className="material-symbols-outlined ms-18" aria-hidden>add</span>
+                <span>Add ingredient</span>
+              </button>
             </div>
+          ) : (
             <div className="table-wrapper">
               <table>
                 <thead>
                   <tr>
                     <th>Name</th>
                     <th>Type</th>
-                    <th>Pack qty</th>
-                    <th>Pack price</th>
-                    <th>Per kg / piece</th>
-                    <th>Piece weight</th>
+                    <th>Pack Qty</th>
+                    <th>Pack Price</th>
+                    <th>Per Kg / Piece</th>
+                    <th>Piece Weight</th>
                     <th>g/tsp</th>
-                    <th>Used in</th>
+                    <th>Used In</th>
                     <th>Status</th>
-                    <th></th>
+                    <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -230,8 +226,8 @@ export function IngredientsPage() {
                         </td>
                         <td><span className="badge badge-muted">{ing.unit_type}</span></td>
                         <td className="td-mono">{ing.pack_quantity}</td>
-                        <td className="td-mono">{cur} {ing.pack_price.toFixed(2)}</td>
-                        <td className="td-mono text-green">{cur} {perKg.toFixed(2)}</td>
+                        <td className="td-mono">{fmtMoney(ing.pack_price, cur)}</td>
+                        <td className="td-mono text-green">{fmtMoney(perKg, cur, 4)}</td>
                         <td className="td-mono">{ing.piece_weight_g ? `${ing.piece_weight_g}g` : '—'}</td>
                         <td className="td-mono">{ing.grams_per_tsp ?? '—'}</td>
                         <td className="text-secondary text-sm">{usedIn || '—'}</td>
@@ -260,10 +256,10 @@ export function IngredientsPage() {
                     );
                   })}
                 </tbody>
-              </table>
-            </div>
+            </table>
           </div>
         )}
+        </div>
       </div>
 
       {/* Edit modal */}
@@ -323,11 +319,13 @@ export function IngredientsPage() {
               </div>
               {editing.pack_quantity > 0 && editing.pack_price > 0 && (
                 <div className="success-banner">
-                  Price per {editing.unit_type === 'g' ? 'kg' : 'piece'}: {cur} {
+                  Price per {editing.unit_type === 'g' ? 'kg' : 'piece'}: {fmtMoney(
                     editing.unit_type === 'g'
-                      ? (editing.pack_price / editing.pack_quantity * 1000).toFixed(2)
-                      : (editing.pack_price / editing.pack_quantity).toFixed(2)
-                  }
+                      ? editing.pack_price / editing.pack_quantity * 1000
+                      : editing.pack_price / editing.pack_quantity,
+                    cur,
+                    4,
+                  )}
                 </div>
               )}
             </div>
@@ -378,9 +376,9 @@ export function IngredientsPage() {
                       <thead>
                         <tr>
                           <th>Date</th>
-                          <th>Pack qty</th>
-                          <th>Pack price</th>
-                          <th>Per {historyTarget.unit_type === 'g' ? 'kg' : 'piece'}</th>
+                          <th>Pack Qty</th>
+                          <th>Pack Price</th>
+                          <th>Per {historyTarget.unit_type === 'g' ? 'Kg' : 'Piece'}</th>
                           <th>Note</th>
                         </tr>
                       </thead>
@@ -393,8 +391,8 @@ export function IngredientsPage() {
                             <tr key={i}>
                               <td className="td-mono">{h.date}</td>
                               <td className="td-mono">{h.pack_quantity}</td>
-                              <td className="td-mono">{cur} {h.pack_price.toFixed(2)}</td>
-                              <td className="td-mono text-green">{cur} {perUnit.toFixed(2)}</td>
+                              <td className="td-mono">{fmtMoney(h.pack_price, cur)}</td>
+                              <td className="td-mono text-green">{fmtMoney(perUnit, cur, 4)}</td>
                               <td style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{h.note || '—'}</td>
                             </tr>
                           );
@@ -407,7 +405,7 @@ export function IngredientsPage() {
             </div>
             <div className="modal-footer">
               <div style={{ fontSize: 12, color: 'var(--text-muted)', flex: 1 }}>
-                Current: {cur} {historyTarget.pack_price.toFixed(2)} / {historyTarget.pack_quantity} {historyTarget.unit_type === 'g' ? 'g' : 'pcs'}
+                Current: {fmtMoney(historyTarget.pack_price, cur)} / {historyTarget.pack_quantity} {historyTarget.unit_type === 'g' ? 'g' : 'pcs'}
               </div>
               <button className="quote-toolbar-btn" onClick={() => setHistoryTarget(null)}>Close</button>
             </div>
@@ -446,7 +444,7 @@ function PriceSparkline({ history, unitType, cur }: { history: PriceHistoryEntry
         })}
       </svg>
       <div style={{ textAlign: 'right', fontSize: 12, color: 'var(--accent)', fontWeight: 600 }}>
-        Current: {cur} {last.toFixed(2)}
+        Current: {fmtMoney(last, cur, 4)}
       </div>
     </div>
   );

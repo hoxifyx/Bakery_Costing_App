@@ -5,6 +5,24 @@ All notable changes to the Bakery Costing App (OvenCost Pro) will be documented 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.15] — 2026-10-11
+
+### Changed
+- **Design consistency pass across list pages.** Unified the layout, search, and table presentation of Ingredients, Packaging, Recipes, Flavours & Fillings, Products, Customers, Orders, and Saved Quotes.
+- Moved search into the catalog card on every list page (previously some pages had search in a separate card, some had none).
+- Added search to Flavours, Fillings, Batch Products, Assembled Products, Orders, and Saved Quotes.
+- Converted the Recipes kind filter from chip buttons to the same tab styling used by Products and Flavours.
+- Standardised table headers to Title Case across all list pages.
+- Standardised table row actions (history / explain / edit / duplicate / delete) and added a duplicate action to Flavours, Fillings, Batch Products, and Assembled Products.
+
+### Fixed
+- **Empty-state copy** on Customers and Orders now distinguishes "no records yet" from "no matches for your search". Previously a search with zero matches showed the no-records copy.
+
+### Notes
+- Search queries persist when switching between the Flavours / Fillings tabs and between the Batch / Assembled Products tabs. This is intentional.
+- Money display precision is now consistent: headline values use 2 decimals, unit rates (per gram, per kg, per piece) use 4 decimals. No calculation results changed.
+- No data-model, engine, IO, store, or cloud changes. Schema remains 1.2; no migration required.
+
 ## [1.4.14] — 2026-10-11
 
 ### Changed

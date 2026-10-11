@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { useStore } from '../../store/store';
 import type { Order, OrderStatus } from '../../engine/types';
 import { generateId } from '../../engine/utils';
-import { ConfirmDialog } from '../components/Shared';
+import { ConfirmDialog, SearchBar } from '../components/Shared';
 
 interface OrdersPageProps {
   onNavigate: (page: string) => void;
@@ -14,25 +14,36 @@ export function OrdersPage({ onNavigate }: OrdersPageProps) {
 
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterCustomer, setFilterCustomer] = useState<string>('all');
+  const [search, setSearch] = useState('');
 
   const [editing, setEditing] = useState<Order | null>(null);
   const [isNew, setIsNew] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Order | null>(null);
 
   const filtered = useMemo(() => {
-    let res = orders;
+    let res = [...orders];
     if (filterStatus !== 'all') {
       res = res.filter(o => o.status === filterStatus);
     }
     if (filterCustomer !== 'all') {
       res = res.filter(o => o.customer_id === filterCustomer);
     }
+    if (search.trim()) {
+      const query = search.trim().toLowerCase();
+      res = res.filter(o => {
+        const customerName = customers.find(c => c.id === o.customer_id)?.name ?? '';
+        const quoteName = saved_quotes.find(q => q.id === o.quote_id)?.name ?? '';
+        return customerName.toLowerCase().includes(query) ||
+          quoteName.toLowerCase().includes(query) ||
+          (o.notes ?? '').toLowerCase().includes(query);
+      });
+    }
     return res.sort((a, b) => {
       const aDate = a.order_date || '';
       const bDate = b.order_date || '';
       return bDate.localeCompare(aDate); // descending by order date
     });
-  }, [orders, filterStatus, filterCustomer]);
+  }, [orders, customers, saved_quotes, filterStatus, filterCustomer, search]);
 
   const openNew = () => {
     setIsNew(true);
@@ -93,12 +104,13 @@ export function OrdersPage({ onNavigate }: OrdersPageProps) {
         <div className="quote-section-card">
           <div className="decorations-section-header">
             <div className="decorations-header-left">
-              <span className="material-symbols-outlined ms-20" aria-hidden>tune</span>
-              <h2 className="decorations-header-title">Filter Orders</h2>
+              <span className="material-symbols-outlined ms-20" aria-hidden>receipt_long</span>
+              <h2 className="decorations-header-title">Order Ledger</h2>
             </div>
-            <span className="decorations-header-right">{filtered.length} shown</span>
+            <span className="decorations-header-right">{filtered.length} of {orders.length} orders</span>
           </div>
-          <div className="form-row form-row-2" style={{ marginBottom: 0 }}>
+          <SearchBar value={search} onChange={setSearch} placeholder="Search customers, quotes, or notes…" maxWidth={420} />
+          <div className="form-row form-row-2" style={{ marginBottom: 16 }}>
             <div className="form-group" style={{ marginBottom: 0 }}>
               <label>Status Filter</label>
               <select className="select" style={{ width: '100%' }} value={filterStatus} onChange={e => setFilterStatus(e.target.value)}>
@@ -119,23 +131,19 @@ export function OrdersPage({ onNavigate }: OrdersPageProps) {
               </select>
             </div>
           </div>
-        </div>
-
-        <div className="quote-section-card">
-          <div className="decorations-section-header">
-            <div className="decorations-header-left">
-              <span className="material-symbols-outlined ms-20" aria-hidden>receipt_long</span>
-              <h2 className="decorations-header-title">Order Ledger</h2>
-            </div>
-            <span className="decorations-header-right">{filtered.length} of {orders.length} orders</span>
-          </div>
           {filtered.length === 0 ? (
             <div className="empty-state">
               <div className="empty-state-icon">
                 <span className="material-symbols-outlined ms-32" aria-hidden>receipt_long</span>
               </div>
-              <div className="empty-state-title">No orders found</div>
-              <div className="empty-state-text">Adjust filters or create your first order</div>
+              <div className="empty-state-title">
+                {search || filterStatus !== 'all' || filterCustomer !== 'all' ? 'No orders found' : 'No orders yet'}
+              </div>
+              <div className="empty-state-text">
+                {search || filterStatus !== 'all' || filterCustomer !== 'all'
+                  ? 'Adjust your search or filters'
+                  : 'Create your first order to get started'}
+              </div>
               <button className="quote-toolbar-btn quote-toolbar-btn-primary" onClick={openNew}>
                 <span className="material-symbols-outlined ms-18" aria-hidden>add</span>
                 <span>Create order</span>
@@ -151,7 +159,7 @@ export function OrdersPage({ onNavigate }: OrdersPageProps) {
                     <th>Dates</th>
                     <th>Status</th>
                     <th>Notes</th>
-                    <th style={{ width: 100 }}></th>
+                    <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>

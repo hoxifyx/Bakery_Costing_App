@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { useStore } from '../../store/store';
 import type { Recipe, RecipeLine } from '../../engine/types';
 import { compute } from '../../engine/engine';
-import { NumberInput, SearchBar, ConfirmDialog } from '../components/Shared';
+import { NumberInput, SearchBar, ConfirmDialog, fmtMoney } from '../components/Shared';
 import { ExplainPanel } from '../components/ExplainPanel';
 import { WarningsList } from '../components/WarningsList';
 import { generateId } from '../../engine/utils';
@@ -42,7 +42,7 @@ export function RecipesPage() {
   const result = useMemo(() => compute(data, null, scales), [data, scales]);
 
   const filtered = useMemo(() => data.recipes.filter(r => {
-    const matchSearch = r.name.toLowerCase().includes(search.toLowerCase()) || r.id.includes(search.toLowerCase());
+    const matchSearch = r.name.toLowerCase().includes(search.toLowerCase()) || r.id.toLowerCase().includes(search.toLowerCase());
     const matchKind = kindFilter === 'all' || r.kind === kindFilter;
     return matchSearch && matchKind;
   }).sort((a, b) => a.name.localeCompare(b.name)), [data.recipes, search, kindFilter]);
@@ -148,39 +148,37 @@ export function RecipesPage() {
       </div>
 
       <div className="quote-page-root">
-        <div className="quote-section-card">
-          <SearchBar value={search} onChange={setSearch} placeholder="Search recipes…" />
-          <div className="quote-toolbar">
-            {['all', ...Object.keys(KIND_LABELS)].map(k => (
-              <button
-                key={k}
-                className={`quote-toolbar-btn ${kindFilter === k ? 'quote-toolbar-btn-primary' : ''}`}
-                onClick={() => setKindFilter(k)}
-              >
-                {k === 'all' ? 'All' : KIND_LABELS[k]}
-              </button>
-            ))}
-          </div>
+        <div className="tabs" role="tablist" aria-label="Filter recipes by kind">
+          {['all', ...Object.keys(KIND_LABELS)].map(k => (
+            <button
+              key={k}
+              type="button"
+              role="tab"
+              aria-selected={kindFilter === k}
+              className={`tab ${kindFilter === k ? 'active' : ''}`}
+              onClick={() => setKindFilter(k)}
+            >
+              {k === 'all' ? 'All' : KIND_LABELS[k]}
+            </button>
+          ))}
         </div>
-
         <div className="quote-section-card">
           <div className="decorations-section-header">
             <div className="decorations-header-left">
               <span className="material-symbols-outlined ms-20" aria-hidden>menu_book</span>
               <h2 className="decorations-header-title">Recipe Catalog</h2>
             </div>
-            <span className="decorations-header-right">
-              {filtered.length} of {data.recipes.length} recipes
-            </span>
+            <span className="decorations-header-right">{filtered.length} of {data.recipes.length} recipes</span>
           </div>
+          <SearchBar value={search} onChange={setSearch} placeholder="Search recipes…" maxWidth={420} />
 
           {filtered.length === 0 ? (
             <div className="empty-state">
               <div className="empty-state-icon">
                 <span className="material-symbols-outlined ms-32" aria-hidden>menu_book</span>
               </div>
-              <div className="empty-state-title">No recipes yet</div>
-              <div className="empty-state-text">Add your first recipe to get started</div>
+              <div className="empty-state-title">{search || kindFilter !== 'all' ? 'No recipes found' : 'No recipes yet'}</div>
+              <div className="empty-state-text">{search || kindFilter !== 'all' ? 'Try a different search or kind filter' : 'Add your first recipe to get started'}</div>
               <button className="quote-toolbar-btn quote-toolbar-btn-primary" onClick={openNew}>
                 <span className="material-symbols-outlined ms-18" aria-hidden>add</span>
                 <span>Add recipe</span>
@@ -195,12 +193,12 @@ export function RecipesPage() {
                     <th>Kind</th>
                     <th>Lines</th>
                     <th>Scale</th>
-                    <th>Raw cost</th>
+                    <th>Raw Cost</th>
                     <th>CWO</th>
                     <th>Weight</th>
-                    <th>Per gram</th>
-                    <th>Cake /kg</th>
-                    <th></th>
+                    <th>Per Gram</th>
+                    <th>Cake / Kg</th>
+                    <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -227,24 +225,24 @@ export function RecipesPage() {
                           </div>
                         </td>
                         <td className="td-mono">
-                          {scale !== 1 && <div className="text-muted" style={{ textDecoration: 'line-through', fontSize: 11 }}>{cur} {baseRes?.raw.toFixed(2)}</div>}
-                          {cur} {res?.raw.toFixed(2) ?? '—'}
+                          {scale !== 1 && <div className="text-muted" style={{ textDecoration: 'line-through', fontSize: 11 }}>{baseRes ? fmtMoney(baseRes.raw, cur) : '—'}</div>}
+                          {res ? fmtMoney(res.raw, cur) : '—'}
                         </td>
                         <td className="td-mono text-green">
-                          {scale !== 1 && <div className="text-muted" style={{ textDecoration: 'line-through', fontSize: 11 }}>{cur} {baseRes?.cwo.toFixed(2)}</div>}
-                          {cur} {res?.cwo.toFixed(2) ?? '—'}
+                          {scale !== 1 && <div className="text-muted" style={{ textDecoration: 'line-through', fontSize: 11 }}>{baseRes ? fmtMoney(baseRes.cwo, cur) : '—'}</div>}
+                          {res ? fmtMoney(res.cwo, cur) : '—'}
                         </td>
                         <td className="td-mono">
                           {scale !== 1 && <div className="text-muted" style={{ textDecoration: 'line-through', fontSize: 11 }}>{baseRes?.weight.toFixed(0)}g</div>}
                           {res?.weight.toFixed(0) ?? '—'}g
                         </td>
                         <td className="td-mono">
-                          {scale !== 1 && <div className="text-muted" style={{ textDecoration: 'line-through', fontSize: 11 }}>{cur} {baseRes?.per_gram_cwo.toFixed(4)}</div>}
-                          {cur} {res?.per_gram_cwo.toFixed(4) ?? '—'}
+                          {scale !== 1 && <div className="text-muted" style={{ textDecoration: 'line-through', fontSize: 11 }}>{baseRes ? fmtMoney(baseRes.per_gram_cwo, cur, 4) : '—'}</div>}
+                          {res ? fmtMoney(res.per_gram_cwo, cur, 4) : '—'}
                         </td>
                         <td className="td-mono text-green">
-                          {scale !== 1 && <div className="text-muted" style={{ textDecoration: 'line-through', fontSize: 11 }}>{cur} {baseRes?.cake_cost_per_kg.toFixed(2)}</div>}
-                          {cur} {res?.cake_cost_per_kg.toFixed(2) ?? '—'}
+                          {scale !== 1 && <div className="text-muted" style={{ textDecoration: 'line-through', fontSize: 11 }}>{baseRes ? fmtMoney(baseRes.cake_cost_per_kg, cur, 4) : '—'}</div>}
+                          {res ? fmtMoney(res.cake_cost_per_kg, cur, 4) : '—'}
                         </td>
                         <td>
                           <div className="td-actions">
@@ -397,12 +395,12 @@ export function RecipesPage() {
                     if (!res) return <div className="text-muted text-sm">Add lines to see results</div>;
                     return (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 8, fontSize: 13 }}>
-                        <div className="result-row"><span className="text-secondary">Raw cost</span><span className="td-mono">{cur} {res.raw.toFixed(2)}</span></div>
-                        <div className="result-row"><span className="text-secondary">CWO (+{(data.settings.overhead_pct * 100).toFixed(0)}%)</span><span className="td-mono text-green">{cur} {res.cwo.toFixed(2)}</span></div>
+                        <div className="result-row"><span className="text-secondary">Raw cost</span><span className="td-mono">{fmtMoney(res.raw, cur)}</span></div>
+                        <div className="result-row"><span className="text-secondary">CWO (+{(data.settings.overhead_pct * 100).toFixed(0)}%)</span><span className="td-mono text-green">{fmtMoney(res.cwo, cur)}</span></div>
                         <div className="result-row"><span className="text-secondary">Batch weight</span><span className="td-mono">{res.weight.toFixed(0)}g</span></div>
-                        <div className="result-row"><span className="text-secondary">Per gram</span><span className="td-mono">{cur} {res.per_gram_cwo.toFixed(5)}</span></div>
-                        {editing.kind === 'cake' && <div className="result-row"><span className="text-secondary">Cake cost/kg</span><span className="td-mono text-green">{cur} {res.cake_cost_per_kg.toFixed(2)}</span></div>}
-                        {editing.kind === 'frosting_filling' && <div className="result-row"><span className="text-secondary">Frosting/kg cake</span><span className="td-mono text-green">{cur} {res.frosting_cost_per_kg_cake.toFixed(2)}</span></div>}
+                        <div className="result-row"><span className="text-secondary">Per gram</span><span className="td-mono">{fmtMoney(res.per_gram_cwo, cur, 4)}</span></div>
+                        {editing.kind === 'cake' && <div className="result-row"><span className="text-secondary">Cake cost/kg</span><span className="td-mono text-green">{fmtMoney(res.cake_cost_per_kg, cur, 4)}</span></div>}
+                        {editing.kind === 'frosting_filling' && <div className="result-row"><span className="text-secondary">Frosting/kg cake</span><span className="td-mono text-green">{fmtMoney(res.frosting_cost_per_kg_cake, cur, 4)}</span></div>}
                         {res.warnings.length > 0 && <WarningsList warnings={res.warnings} limit={3} />}
                       </div>
                     );

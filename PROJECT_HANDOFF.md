@@ -2,7 +2,7 @@
 
 ## What This Is
 <!-- BEGIN AGENT:what_this_is -->
-OvenCost Pro is a local-first bakery costing and pricing app. The current release is v1.4.13; see CHANGELOG.md for shipped changes. The phased plan and build prompt are original product documents, and their unimplemented planned phases are not a release-status checklist.
+OvenCost Pro is a local-first bakery costing and pricing app. The current release is v1.4.15; see CHANGELOG.md for shipped changes. The phased plan and build prompt are original product documents, and their unimplemented planned phases are not a release-status checklist.
 <!-- END AGENT:what_this_is -->
 
 ## Quick Start
@@ -59,7 +59,7 @@ npm test
 
 ## Warnings
 <!-- BEGIN SCRIPT:warnings -->
-At v1.4.13, the automated suite has 47 passing tests. The production build emits a known `INEFFECTIVE_DYNAMIC_IMPORT` warning for `src/cloud/drive.ts`; lint emits existing warnings in `tests/cloud.test.ts`, `src/store/store.tsx`, and `src/ui/pages/QuotePage.tsx`. Runtime data warnings are surfaced in-app on the **Data Health** page.
+At v1.4.15, the automated suite has 47 passing tests. The production build emits a known `INEFFECTIVE_DYNAMIC_IMPORT` warning for `src/cloud/drive.ts`; lint emits existing warnings in `tests/cloud.test.ts`, `src/store/store.tsx`, and `src/ui/pages/QuotePage.tsx`. Runtime data warnings are surfaced in-app on the **Data Health** page.
 <!-- END SCRIPT:warnings -->
 
 ## What's Excluded and Why
@@ -102,17 +102,22 @@ No suspicious content detected.
 4.  **UI**: Create a new page under `src/ui/pages/`, register it in `App.tsx`, and add a navigation link in `Layout.tsx`.
 <!-- END AGENT:extend -->
 
-## Bundle-specific notes
+## How to Reconstruct
+<!-- BEGIN SCRIPT:reconstruct -->
+To verify:
+    python3 verify_bundle.py PROJECT_BUNDLE.json
 
-The source repository does not include project-bundle reconstruction utilities. If a separate bundle archive is supplied with its own verification and extraction scripts, follow that archive's instructions; otherwise, use Git to clone or copy the repository.
+To extract:
+    python3 extract_bundle.py PROJECT_BUNDLE.json <output_dir>
+<!-- END SCRIPT:reconstruct -->
 
 ## Owner Notes
 <!-- BEGIN OWNER_NOTES -->
-The shipped release is v1.4.13. Recent releases include the page redesigns, the v1.4.12 Settings native-validation fix, and the v1.4.13 Material Symbols font subset. The latest verified test suite contains 47 passing tests.
-
-The application data schema remains version 1.2. The v1.4.12 and v1.4.13 changes did not require data migrations; see `MIGRATIONS.md`.
-
-The original `OvenCost Pro — Phased Upgrade Plan.md` describes proposed product phases, including phases not implemented. Consult the actual source and `CHANGELOG.md` before treating any plan item as current behavior.
+The v1.4.15 release is a UI-only design-consistency pass across the eight list
+pages. The engine, IO, store, and data model are unchanged; schema remains 1.2
+and no migration is required. Search state persistence across tabs in
+Flavours/Fillings and Products is intentional. Saved quotes retain their
+snapshot-based price display.
 <!-- END OWNER_NOTES -->
 
 ## When Not to Use This Bundle

@@ -1,14 +1,10 @@
 import { useState } from 'react';
 import { useStore } from '../../store/store';
 import type { SavedQuote } from '../../engine/types';
-import { ConfirmDialog } from '../components/Shared';
+import { ConfirmDialog, SearchBar, fmtMoney } from '../components/Shared';
 
 interface SavedQuotesPageProps {
   onNavigate: (page: string) => void;
-}
-
-function fmt(n: number, cur: string): string {
-  return `${cur} ${n.toFixed(2)}`;
 }
 
 export function SavedQuotesPage({ onNavigate }: SavedQuotesPageProps) {
@@ -17,10 +13,15 @@ export function SavedQuotesPage({ onNavigate }: SavedQuotesPageProps) {
   const cur = settings.currency_code;
 
   const [deleteTarget, setDeleteTarget] = useState<SavedQuote | null>(null);
+  const [search, setSearch] = useState('');
 
   // Sort descending by created_at date
   const sortedQuotes = [...saved_quotes].sort((a, b) => {
     return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+  });
+  const filteredQuotes = sortedQuotes.filter(q => {
+    const query = search.trim().toLowerCase();
+    return !query || q.name.toLowerCase().includes(query) || (q.notes ?? '').toLowerCase().includes(query);
   });
 
   const handleOpen = (quote: SavedQuote, recalculate = false) => {
@@ -37,7 +38,7 @@ export function SavedQuotesPage({ onNavigate }: SavedQuotesPageProps) {
   const getPrice = (q: SavedQuote): string => {
     const snap = q.result_snapshot as any;
     if (snap && typeof snap.total_price === 'number') {
-      return fmt(snap.total_price, cur);
+      return fmtMoney(snap.total_price, cur);
     }
     return '—';
   };
@@ -77,46 +78,47 @@ export function SavedQuotesPage({ onNavigate }: SavedQuotesPageProps) {
       </div>
 
       <div className="quote-page-root">
-        {sortedQuotes.length === 0 ? (
-          <div className="quote-section-card">
+        <div className="quote-section-card">
+          <div className="decorations-section-header">
+            <div className="decorations-header-left">
+              <span className="material-symbols-outlined ms-20" aria-hidden>folder_open</span>
+              <h2 className="decorations-header-title">Saved Quote Archive</h2>
+            </div>
+            <span className="decorations-header-right">{filteredQuotes.length} of {saved_quotes.length} quotes</span>
+          </div>
+          <SearchBar value={search} onChange={setSearch} placeholder="Search quote names or notes…" maxWidth={420} />
+          {filteredQuotes.length === 0 ? (
             <div className="empty-state">
               <div className="empty-state-icon">
                 <span className="material-symbols-outlined ms-32" aria-hidden>folder_open</span>
               </div>
-              <div className="empty-state-title">No saved quotes yet</div>
+              <div className="empty-state-title">{search ? 'No quotes found' : 'No saved quotes yet'}</div>
               <div className="empty-state-text">
-                Configure a cake on the Quote page and click "Save quote" to snapshot it and revisit or recalculate later.
+                {search
+                  ? 'Try a different search term'
+                  : 'Configure a cake on the Quote page and click "Save quote" to snapshot it and revisit or recalculate later.'}
               </div>
               <button className="quote-toolbar-btn quote-toolbar-btn-primary" onClick={() => onNavigate('quote')}>
                 <span className="material-symbols-outlined ms-18" aria-hidden>add</span>
                 <span>Create Cake Quote</span>
               </button>
             </div>
-          </div>
-        ) : (
-          <div className="quote-section-card">
-            <div className="decorations-section-header">
-              <div className="decorations-header-left">
-                <span className="material-symbols-outlined ms-20" aria-hidden>folder_open</span>
-                <h2 className="decorations-header-title">Saved Quote Archive</h2>
-              </div>
-              <span className="decorations-header-right">{sortedQuotes.length} quotes</span>
-            </div>
-
-            <div className="saved-quotes-table-container">
-              <div className="table-wrapper">
-                <table>
+          ) : (
+            <>
+              <div className="saved-quotes-table-container">
+                <div className="table-wrapper">
+                  <table>
                   <thead>
                     <tr>
-                      <th>Quote Name</th>
+                      <th>Name</th>
                       <th>Date Saved</th>
                       <th>Tiers</th>
                       <th style={{ textAlign: 'right' }}>Saved Price</th>
-                      <th style={{ textAlign: 'right' }}>Actions</th>
+                      <th>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {sortedQuotes.map(sq => (
+                    {filteredQuotes.map(sq => (
                       <tr key={sq.id}>
                         <td>
                           <button
@@ -162,12 +164,12 @@ export function SavedQuotesPage({ onNavigate }: SavedQuotesPageProps) {
                       </tr>
                     ))}
                   </tbody>
-                </table>
+                  </table>
+                </div>
               </div>
-            </div>
 
-            <div className="saved-quotes-cards-container" style={{ gap: 12 }}>
-              {sortedQuotes.map(sq => (
+              <div className="saved-quotes-cards-container" style={{ gap: 12 }}>
+                {filteredQuotes.map(sq => (
                 <div key={sq.id} className="saved-quote-card quote-section-card" style={{ gap: 12 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
                     <div style={{ minWidth: 0 }}>
@@ -215,11 +217,11 @@ export function SavedQuotesPage({ onNavigate }: SavedQuotesPageProps) {
                     </button>
                   </div>
                 </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            </>)}
           </div>
-        )}
-      </div>
+        </div>
 
       {deleteTarget && (
         <ConfirmDialog

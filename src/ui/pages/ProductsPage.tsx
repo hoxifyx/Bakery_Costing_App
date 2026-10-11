@@ -2,12 +2,10 @@ import { useState, useMemo } from 'react';
 import { useStore } from '../../store/store';
 import type { BatchProduct, AssembledProduct, AssembledComponent } from '../../engine/types';
 import { compute } from '../../engine/engine';
-import { NumberInput, ConfirmDialog, Toggle } from '../components/Shared';
+import { NumberInput, SearchBar, ConfirmDialog, Toggle, fmtMoney } from '../components/Shared';
 import { ExplainPanel } from '../components/ExplainPanel';
 import { WarningsList } from '../components/WarningsList';
 import { generateId } from '../../engine/utils';
-
-function fmt(n: number, cur: string) { return `${cur} ${n.toFixed(2)}`; }
 
 export function ProductsPage() {
   const { state, dispatch } = useStore();
@@ -15,6 +13,7 @@ export function ProductsPage() {
   const cur = data.settings.currency_code;
 
   const [tab, setTab] = useState<'batch' | 'assembled'>('batch');
+  const [search, setSearch] = useState('');
   const [editingBatch, setEditingBatch] = useState<BatchProduct | null>(null);
   const [editingAssembled, setEditingAssembled] = useState<AssembledProduct | null>(null);
   const [isNew, setIsNew] = useState(false);
@@ -25,6 +24,12 @@ export function ProductsPage() {
   const [batchMultipliers, setBatchMultipliers] = useState<Record<string, number>>({});
 
   const result = useMemo(() => compute(data, null, batchMultipliers), [data, batchMultipliers]);
+  const filteredBatchProducts = [...data.batch_products]
+    .filter(p => p.name.toLowerCase().includes(search.toLowerCase()) || p.id.toLowerCase().includes(search.toLowerCase()))
+    .sort((a, b) => a.name.localeCompare(b.name));
+  const filteredAssembledProducts = [...data.assembled_products]
+    .filter(p => p.name.toLowerCase().includes(search.toLowerCase()) || p.id.toLowerCase().includes(search.toLowerCase()))
+    .sort((a, b) => a.name.localeCompare(b.name));
 
   const batchRecipes = [...data.recipes.filter(r => r.kind === 'batch_product')].sort((a, b) => a.name.localeCompare(b.name));
   const frostingRecipes = [...data.recipes.filter(r => r.kind === 'frosting_filling')].sort((a, b) => a.name.localeCompare(b.name));
@@ -54,6 +59,11 @@ export function ProductsPage() {
     setEditingBatch(null);
   };
 
+  const duplicateBatch = (p: BatchProduct) => {
+    setIsNew(true);
+    setEditingBatch({ ...p, id: generateId('batch'), name: `${p.name} (copy)`, components: p.components.map(c => ({ ...c })) });
+  };
+
   // Assembled product CRUD
   const openNewAssembled = () => {
     setIsNew(true);
@@ -73,6 +83,11 @@ export function ProductsPage() {
     if (isNew) dispatch({ type: 'ADD_ASSEMBLED_PRODUCT', item: editingAssembled });
     else dispatch({ type: 'UPDATE_ASSEMBLED_PRODUCT', item: editingAssembled });
     setEditingAssembled(null);
+  };
+
+  const duplicateAssembled = (p: AssembledProduct) => {
+    setIsNew(true);
+    setEditingAssembled({ ...p, id: generateId('assembled'), name: `${p.name} (copy)`, components: p.components.map(c => ({ ...c })) });
   };
 
   const doDelete = () => {
@@ -129,11 +144,11 @@ export function ProductsPage() {
       </div>
 
       <div className="quote-page-root">
-        <div className="tabs">
-          <button className={`tab ${tab === 'batch' ? 'active' : ''}`} onClick={() => setTab('batch')}>
+        <div className="tabs" role="tablist" aria-label="Product types">
+          <button type="button" role="tab" aria-selected={tab === 'batch'} className={`tab ${tab === 'batch' ? 'active' : ''}`} onClick={() => setTab('batch')}>
             Batch products ({data.batch_products.length})
           </button>
-          <button className={`tab ${tab === 'assembled' ? 'active' : ''}`} onClick={() => setTab('assembled')}>
+          <button type="button" role="tab" aria-selected={tab === 'assembled'} className={`tab ${tab === 'assembled' ? 'active' : ''}`} onClick={() => setTab('assembled')}>
             Assembled products ({data.assembled_products.length})
           </button>
         </div>
@@ -145,15 +160,16 @@ export function ProductsPage() {
                 <span className="material-symbols-outlined ms-20" aria-hidden>cookie</span>
                 <h2 className="decorations-header-title">Batch Products</h2>
               </div>
-              <span className="decorations-header-right">{data.batch_products.length} products</span>
+              <span className="decorations-header-right">{filteredBatchProducts.length} of {data.batch_products.length} products</span>
             </div>
-            {data.batch_products.length === 0 ? (
+            <SearchBar value={search} onChange={setSearch} placeholder="Search batch products…" maxWidth={420} />
+            {filteredBatchProducts.length === 0 ? (
               <div className="empty-state">
                 <div className="empty-state-icon">
                   <span className="material-symbols-outlined ms-32" aria-hidden>cookie</span>
                 </div>
-                <div className="empty-state-title">No batch products yet</div>
-                <div className="empty-state-text">Add a batch product to get started</div>
+                <div className="empty-state-title">{search ? 'No batch products found' : 'No batch products yet'}</div>
+                <div className="empty-state-text">{search ? 'Try a different search term' : 'Add a batch product to get started'}</div>
                 <button className="quote-toolbar-btn quote-toolbar-btn-primary" onClick={openNewBatch}>
                   <span className="material-symbols-outlined ms-18" aria-hidden>add</span>
                   <span>Add batch product</span>
@@ -166,16 +182,16 @@ export function ProductsPage() {
                   <tr>
                     <th>Name</th>
                     <th>Pieces</th>
-                    <th>Unit cost</th>
-                    <th>Each (excl box)</th>
-                    <th>Each (incl box)</th>
-                    <th>Box price</th>
+                    <th>Unit Cost</th>
+                    <th>Each (Excl Box)</th>
+                    <th>Each (Incl Box)</th>
+                    <th>Box Price</th>
                     <th>Headline</th>
-                    <th></th>
+                    <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {[...data.batch_products].sort((a, b) => a.name.localeCompare(b.name)).map(p => {
+                  {filteredBatchProducts.map(p => {
                     const res = result.batch_products[p.id];
                     return (
                       <tr key={p.id}>
@@ -184,18 +200,18 @@ export function ProductsPage() {
                           <div className="text-muted" style={{ fontSize: 11 }}>{p.id}</div>
                         </td>
                         <td className="td-mono">{res?.pieces.toFixed(2) ?? '—'}</td>
-                        <td className="td-mono">{res ? fmt(res.unit_cost, cur) : '—'}</td>
-                        <td className="td-mono">{res ? fmt(res.each_excluding_box, cur) : '—'}</td>
-                        <td className="td-mono">{res ? fmt(res.each_including_box, cur) : '—'}</td>
-                        <td className="td-mono text-green">{res ? fmt(res.box_price, cur) : '—'}</td>
+                        <td className="td-mono">{res ? fmtMoney(res.unit_cost, cur, 4) : '—'}</td>
+                        <td className="td-mono">{res ? fmtMoney(res.each_excluding_box, cur, 4) : '—'}</td>
+                        <td className="td-mono">{res ? fmtMoney(res.each_including_box, cur, 4) : '—'}</td>
+                        <td className="td-mono text-green">{res ? fmtMoney(res.box_price, cur) : '—'}</td>
                         <td>
                           <div style={{ display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'flex-start' }}>
                             <span className="badge badge-accent">
-                              {res ? fmt(res.headline_each, cur) : '—'}
+                              {res ? fmtMoney(res.headline_each, cur) : '—'}
                             </span>
                             {res?.suggested_headline_each !== undefined && (
                               <span style={{ fontSize: 11, color: 'var(--accent-amber)', whiteSpace: 'nowrap' }}>
-                                Sugg: {fmt(res.suggested_headline_each, cur)}
+                                Sugg: {fmtMoney(res.suggested_headline_each, cur)}
                               </span>
                             )}
                           </div>
@@ -207,6 +223,9 @@ export function ProductsPage() {
                             </button>}
                             <button className="quote-toolbar-btn" onClick={() => { setIsNew(false); setEditingBatch({ ...p }); }} title={`Edit ${p.name}`} aria-label={`Edit ${p.name}`} style={{ width: 32, height: 32, padding: 0 }}>
                               <span className="material-symbols-outlined ms-16" aria-hidden>edit</span>
+                            </button>
+                            <button className="quote-toolbar-btn" onClick={() => duplicateBatch(p)} title={`Duplicate ${p.name}`} aria-label={`Duplicate ${p.name}`} style={{ width: 32, height: 32, padding: 0 }}>
+                              <span className="material-symbols-outlined ms-16" aria-hidden>content_copy</span>
                             </button>
                             <button className="quote-toolbar-btn" onClick={() => setDeleteTarget({ id: p.id, name: p.name, type: 'batch' })} title={`Delete ${p.name}`} aria-label={`Delete ${p.name}`} style={{ width: 32, height: 32, padding: 0 }}>
                               <span className="material-symbols-outlined ms-16" aria-hidden>delete</span>
@@ -230,15 +249,16 @@ export function ProductsPage() {
                 <span className="material-symbols-outlined ms-20" aria-hidden>bakery_dining</span>
                 <h2 className="decorations-header-title">Assembled Products</h2>
               </div>
-              <span className="decorations-header-right">{data.assembled_products.length} products</span>
+              <span className="decorations-header-right">{filteredAssembledProducts.length} of {data.assembled_products.length} products</span>
             </div>
-            {data.assembled_products.length === 0 ? (
+            <SearchBar value={search} onChange={setSearch} placeholder="Search assembled products…" maxWidth={420} />
+            {filteredAssembledProducts.length === 0 ? (
               <div className="empty-state">
                 <div className="empty-state-icon">
                   <span className="material-symbols-outlined ms-32" aria-hidden>bakery_dining</span>
                 </div>
-                <div className="empty-state-title">No assembled products yet</div>
-                <div className="empty-state-text">Add an assembled product to get started</div>
+                <div className="empty-state-title">{search ? 'No assembled products found' : 'No assembled products yet'}</div>
+                <div className="empty-state-text">{search ? 'Try a different search term' : 'Add an assembled product to get started'}</div>
                 <button className="quote-toolbar-btn quote-toolbar-btn-primary" onClick={openNewAssembled}>
                   <span className="material-symbols-outlined ms-18" aria-hidden>add</span>
                   <span>Add assembled product</span>
@@ -250,15 +270,15 @@ export function ProductsPage() {
                 <thead>
                   <tr>
                     <th>Name</th>
-                    <th>Pieces/batch</th>
-                    <th>Unit cost</th>
-                    <th>Labour/piece</th>
-                    <th>Price each</th>
-                    <th></th>
+                    <th>Pieces/Batch</th>
+                    <th>Unit Cost</th>
+                    <th>Labour/Piece</th>
+                    <th>Price Each</th>
+                    <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {[...data.assembled_products].sort((a, b) => a.name.localeCompare(b.name)).map(p => {
+                  {filteredAssembledProducts.map(p => {
                     const res = result.assembled_products[p.id];
                     return (
                       <tr key={p.id}>
@@ -267,13 +287,13 @@ export function ProductsPage() {
                           <div className="text-muted" style={{ fontSize: 11 }}>{p.id}</div>
                         </td>
                         <td className="td-mono">{p.pieces_per_batch}</td>
-                        <td className="td-mono">{res ? fmt(res.unit_cost, cur) : '—'}</td>
-                        <td className="td-mono">{res ? fmt(res.labour_piece, cur) : '—'}</td>
+                        <td className="td-mono">{res ? fmtMoney(res.unit_cost, cur, 4) : '—'}</td>
+                        <td className="td-mono">{res ? fmtMoney(res.labour_piece, cur, 4) : '—'}</td>
                         <td className="td-mono">
-                          <div className="text-green">{res ? fmt(res.price_each, cur) : '—'}</div>
+                          <div className="text-green">{res ? fmtMoney(res.price_each, cur) : '—'}</div>
                           {res?.suggested_price_each !== undefined && (
                             <div style={{ marginTop: 4, fontSize: 11, color: 'var(--accent-amber)', fontFamily: 'var(--font-body)', textAlign: 'right' }}>
-                              Sugg: {fmt(res.suggested_price_each, cur)}
+                              Sugg: {fmtMoney(res.suggested_price_each, cur)}
                             </div>
                           )}
                         </td>
@@ -284,6 +304,9 @@ export function ProductsPage() {
                             </button>}
                             <button className="quote-toolbar-btn" onClick={() => { setIsNew(false); setEditingAssembled({ ...p }); }} title={`Edit ${p.name}`} aria-label={`Edit ${p.name}`} style={{ width: 32, height: 32, padding: 0 }}>
                               <span className="material-symbols-outlined ms-16" aria-hidden>edit</span>
+                            </button>
+                            <button className="quote-toolbar-btn" onClick={() => duplicateAssembled(p)} title={`Duplicate ${p.name}`} aria-label={`Duplicate ${p.name}`} style={{ width: 32, height: 32, padding: 0 }}>
+                              <span className="material-symbols-outlined ms-16" aria-hidden>content_copy</span>
                             </button>
                             <button className="quote-toolbar-btn" onClick={() => setDeleteTarget({ id: p.id, name: p.name, type: 'assembled' })} title={`Delete ${p.name}`} aria-label={`Delete ${p.name}`} style={{ width: 32, height: 32, padding: 0 }}>
                               <span className="material-symbols-outlined ms-16" aria-hidden>delete</span>
@@ -434,10 +457,10 @@ export function ProductsPage() {
                 return (
                   <div className="success-banner" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: 2 }}>
                     <b>Pieces: {res.pieces.toFixed(2)}</b>
-                    <span>Unit cost: {fmt(res.unit_cost, cur)}</span>
-                    <span>Each excl. box: {fmt(res.each_excluding_box, cur)}</span>
-                    <span>Each incl. box: {fmt(res.each_including_box, cur)}</span>
-                    <span>Box (full): {fmt(res.box_price, cur)}</span>
+                    <span>Unit cost: {fmtMoney(res.unit_cost, cur, 4)}</span>
+                    <span>Each excl. box: {fmtMoney(res.each_excluding_box, cur, 4)}</span>
+                    <span>Each incl. box: {fmtMoney(res.each_including_box, cur, 4)}</span>
+                    <span>Box (full): {fmtMoney(res.box_price, cur)}</span>
                     {res.warnings.length > 0 && (
                       <div style={{ width: '100%', minWidth: 0, overflowWrap: 'anywhere' }}>
                         <WarningsList warnings={res.warnings} limit={3} />
@@ -563,13 +586,13 @@ export function ProductsPage() {
                 if (!res) return null;
                 return (
                   <div className="success-banner" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: 2 }}>
-                    <span>Unit cost: {fmt(res.unit_cost, cur)}</span>
-                    <span>Labour/piece: {fmt(res.labour_piece, cur)}</span>
-                    <span>Box/piece: {fmt(res.box_piece, cur)}</span>
-                    <b>Price each: {fmt(res.price_each, cur)}</b>
+                    <span>Unit cost: {fmtMoney(res.unit_cost, cur, 4)}</span>
+                    <span>Labour/piece: {fmtMoney(res.labour_piece, cur, 4)}</span>
+                    <span>Box/piece: {fmtMoney(res.box_piece, cur, 4)}</span>
+                    <b>Price each: {fmtMoney(res.price_each, cur)}</b>
                     {res.suggested_price_each !== undefined && (
                       <span style={{ fontSize: 12, color: 'var(--accent-amber)' }}>
-                        Suggested: {fmt(res.suggested_price_each, cur)}
+                        Suggested: {fmtMoney(res.suggested_price_each, cur)}
                       </span>
                     )}
                     {res.warnings.length > 0 && (

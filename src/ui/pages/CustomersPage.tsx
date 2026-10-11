@@ -67,7 +67,7 @@ export function CustomersPage() {
         </div>
         <div className="quote-toolbar">
           <button className="quote-toolbar-btn quote-toolbar-btn-primary" onClick={openNew}>
-            <span className="material-symbols-outlined ms-18" aria-hidden>person_add</span>
+            <span className="material-symbols-outlined ms-18" aria-hidden>add</span>
             <span>New Customer</span>
           </button>
         </div>
@@ -77,33 +77,23 @@ export function CustomersPage() {
         <div className="quote-section-card">
           <div className="decorations-section-header">
             <div className="decorations-header-left">
-              <span className="material-symbols-outlined ms-20" aria-hidden>person_search</span>
-              <h2 className="decorations-header-title">Find Customers</h2>
-            </div>
-            <span className="decorations-header-right">{filtered.length} of {customers.length} customers</span>
-          </div>
-          <SearchBar value={search} onChange={setSearch} placeholder="Search by name, email, or phone…" />
-        </div>
-
-        <div className="quote-section-card">
-          <div className="decorations-section-header">
-            <div className="decorations-header-left">
               <span className="material-symbols-outlined ms-20" aria-hidden>group</span>
               <h2 className="decorations-header-title">Customer Directory</h2>
             </div>
-            <span className="decorations-header-right">{filtered.length} of {customers.length}</span>
+            <span className="decorations-header-right">{filtered.length} of {customers.length} customers</span>
           </div>
+          <SearchBar value={search} onChange={setSearch} placeholder="Search by name, email, or phone…" maxWidth={420} />
           {filtered.length === 0 ? (
             <div className="empty-state">
               <div className="empty-state-icon">
                 <span className="material-symbols-outlined ms-32" aria-hidden>group</span>
               </div>
-              <div className="empty-state-title">No customers found</div>
+              <div className="empty-state-title">{search ? 'No customers found' : 'No customers yet'}</div>
               <div className="empty-state-text">
                 {search ? 'Try a different search term' : 'Add your first customer to get started'}
               </div>
               <button className="quote-toolbar-btn quote-toolbar-btn-primary" onClick={openNew}>
-                <span className="material-symbols-outlined ms-18" aria-hidden>person_add</span>
+                <span className="material-symbols-outlined ms-18" aria-hidden>add</span>
                 <span>Add customer</span>
               </button>
             </div>
@@ -116,7 +106,7 @@ export function CustomersPage() {
                     <th>Contact</th>
                     <th>Address</th>
                     <th>Notes</th>
-                    <th style={{ width: 80 }}></th>
+                    <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
