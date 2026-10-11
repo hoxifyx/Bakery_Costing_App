@@ -311,7 +311,7 @@ export function QuotePage() {
                 const tier = quoteInput.tiers[idx];
                 const res = displayQ?.tier_details?.[idx];
                 const isActive = (tier.size_kg ?? 0) > 0;
-                const visibleSizeGuide = data.size_guide.slice(0, 4);
+                const sizeGuide = data.size_guide;
 
                 return (
                   <div key={idx} className={`tier-item-row ${isActive ? 'active' : ''}`}>
@@ -364,9 +364,9 @@ export function QuotePage() {
                           placeholder="kg"
                           aria-label={`Tier ${idx + 1} size in kg`}
                         />
-                        {visibleSizeGuide.length > 0 && (
+                        {sizeGuide.length > 0 && (
                           <div className="tier-size-pills-box">
-                            {visibleSizeGuide.map(sg => {
+                            {sizeGuide.map(sg => {
                               const isSelected = tier.size_kg === sg.kg;
                               return (
                                 <button

@@ -5,6 +5,16 @@ All notable changes to the Bakery Costing App (OvenCost Pro) will be documented 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.16] — 2026-10-11
+
+### Fixed
+- **Quote page on iPad landscape:** The two-column layout (Tier Structure + sticky summary) was activating at 1024px, which is too narrow once the 250px sidebar is accounted for. The summary column was cramped and the flavour/filling dropdowns were truncated. The two-column layout and sticky summary now activate at 1280px; iPad landscape uses the single-column stacked layout.
+- **Size guide pills in the Tier Structure card:** The quick-pick size pills were hardcoded to the first four entries of the size guide, and on narrower widths the pills overflowed the tier card boundary. All size guide entries are now shown, and the pill row wraps inside its container instead of overflowing.
+
+### Notes
+- UI-only; engine, IO, store, and schema unchanged (still 1.2). No migration required.
+
+
 ## [1.4.15] — 2026-10-11
 
 ### Changed

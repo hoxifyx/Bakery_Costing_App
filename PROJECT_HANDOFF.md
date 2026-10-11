@@ -2,7 +2,7 @@
 
 ## What This Is
 <!-- BEGIN AGENT:what_this_is -->
-OvenCost Pro is a local-first bakery costing and pricing app. The current release is v1.4.15; see CHANGELOG.md for shipped changes. The phased plan and build prompt are original product documents, and their unimplemented planned phases are not a release-status checklist.
+OvenCost Pro is a local-first bakery costing and pricing app. The current release is v1.4.16; see CHANGELOG.md for shipped changes. The phased plan and build prompt are original product documents, and their unimplemented planned phases are not a release-status checklist.
 <!-- END AGENT:what_this_is -->
 
 ## Quick Start
@@ -59,7 +59,7 @@ npm test
 
 ## Warnings
 <!-- BEGIN SCRIPT:warnings -->
-At v1.4.15, the automated suite has 47 passing tests. The production build emits a known `INEFFECTIVE_DYNAMIC_IMPORT` warning for `src/cloud/drive.ts`; lint emits existing warnings in `tests/cloud.test.ts`, `src/store/store.tsx`, and `src/ui/pages/QuotePage.tsx`. Runtime data warnings are surfaced in-app on the **Data Health** page.
+At v1.4.16, the automated suite has 47 passing tests. The production build emits a known `INEFFECTIVE_DYNAMIC_IMPORT` warning for `src/cloud/drive.ts`; lint emits existing warnings in `tests/cloud.test.ts`, `src/store/store.tsx`, and `src/ui/pages/QuotePage.tsx`. Runtime data warnings are surfaced in-app on the **Data Health** page.
 <!-- END SCRIPT:warnings -->
 
 ## What's Excluded and Why

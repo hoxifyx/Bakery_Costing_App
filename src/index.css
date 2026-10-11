@@ -1658,7 +1658,7 @@ tbody tr:hover {
   align-items: start;
 }
 
-@media (min-width: 1024px) {
+@media (min-width: 1280px) {
   .quote-layout-grid {
     grid-template-columns: minmax(0, 8fr) minmax(0, 4fr);
   }
@@ -1782,12 +1782,15 @@ tbody tr:hover {
   border-radius: var(--r-md);
   border: 1px solid var(--border);
   display: flex;
+  flex-wrap: wrap;
   gap: 4px;
+  max-width: 100%;
 }
 
 .tier-size-pill-btn {
-  flex: 1;
-  padding: 5px 6px;
+  flex: 0 1 auto;
+  min-width: max-content;
+  padding: 5px 10px;
   border-radius: var(--r-sm);
   background: var(--bg-surface-container-high);
   color: var(--text-secondary);
@@ -2111,7 +2114,7 @@ tbody tr:hover {
   min-width: 0;
 }
 
-@media (min-width: 1024px) {
+@media (min-width: 1280px) {
   .quote-summary-col {
     position: sticky;
     top: calc(var(--header-h) + 16px);
