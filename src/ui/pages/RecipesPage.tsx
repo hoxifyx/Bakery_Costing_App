@@ -374,6 +374,18 @@ export function RecipesPage() {
                 </div>
 
                 <div className="form-group">
+                  <label>Labour hours per batch</label>
+                  <NumberInput
+                    value={editing.labour_hours ?? 0}
+                    onChange={v => setEditing(r => r && ({ ...r, labour_hours: v }))}
+                    step={0.25}
+                  />
+                  <span className="input-hint">
+                    Hands-on time to make one batch (informational only — labour is charged on the Quote page)
+                  </span>
+                </div>
+
+                <div className="form-group">
                   <label>Notes</label>
                   <input className="input" value={editing.notes ?? ''} onChange={e => setEditing(r => r && ({ ...r, notes: e.target.value }))} />
                 </div>

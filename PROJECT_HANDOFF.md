@@ -2,7 +2,7 @@
 
 ## What This Is
 <!-- BEGIN AGENT:what_this_is -->
-OvenCost Pro is a local-first bakery costing and pricing app. The current release is v1.4.16; see CHANGELOG.md for shipped changes. The phased plan and build prompt are original product documents, and their unimplemented planned phases are not a release-status checklist.
+OvenCost Pro is a local-first bakery costing and pricing app. The current release is v1.4.17; see CHANGELOG.md for shipped changes. The phased plan and build prompt are original product documents, and their unimplemented planned phases are not a release-status checklist.
 <!-- END AGENT:what_this_is -->
 
 ## Quick Start
@@ -59,7 +59,7 @@ npm test
 
 ## Warnings
 <!-- BEGIN SCRIPT:warnings -->
-At v1.4.16, the automated suite has 47 passing tests. The production build emits a known `INEFFECTIVE_DYNAMIC_IMPORT` warning for `src/cloud/drive.ts`; lint emits existing warnings in `tests/cloud.test.ts`, `src/store/store.tsx`, and `src/ui/pages/QuotePage.tsx`. Runtime data warnings are surfaced in-app on the **Data Health** page.
+At v1.4.17, the automated suite has 49 passing tests. The production build emits a known `INEFFECTIVE_DYNAMIC_IMPORT` warning for `src/cloud/drive.ts`; lint emits existing warnings in `tests/cloud.test.ts`, `src/store/store.tsx`, and `src/ui/pages/QuotePage.tsx`. Runtime data warnings are surfaced in-app on the **Data Health** page.
 <!-- END SCRIPT:warnings -->
 
 ## What's Excluded and Why
@@ -118,6 +118,11 @@ pages. The engine, IO, store, and data model are unchanged; schema remains 1.2
 and no migration is required. Search state persistence across tabs in
 Flavours/Fillings and Products is intentional. Saved quotes retain their
 snapshot-based price display.
+
+The v1.4.17 release added an optional `labour_hours` field to Recipe for
+informational bookkeeping and bumped the schema to `1.3`. Old exports import
+cleanly; recipes without the field are treated as 0 for display. No engine
+calculation or warning behaviour changed, and no runtime migration is required.
 <!-- END OWNER_NOTES -->
 
 ## When Not to Use This Bundle

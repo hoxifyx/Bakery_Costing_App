@@ -68,6 +68,7 @@ export interface Recipe {
   kind: RecipeKind;
   lines: RecipeLine[];
   weight_adjustment_g: number;
+  labour_hours?: number; // hands-on labour hours per batch; default 0; informational only
   notes?: string;
 }
 

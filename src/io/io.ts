@@ -23,7 +23,7 @@ import type {
 } from '../engine/types';
 import { DEFAULT_SETTINGS, DEFAULT_SIZE_GUIDE } from '../engine/types';
 
-const CURRENT_SCHEMA_VERSION = '1.2';
+const CURRENT_SCHEMA_VERSION = '1.3';
 const FORMAT_FIELD = 'bakery-costing-data';
 const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20 MB
 
@@ -197,6 +197,9 @@ function validateRecipe(raw: unknown, idx: number, errors: ImportError[]): Recip
     kind: kind as Recipe['kind'],
     lines,
     weight_adjustment_g: typeof r.weight_adjustment_g === 'number' ? r.weight_adjustment_g : 0,
+    labour_hours: typeof r.labour_hours === 'number' && isFinite(r.labour_hours) && r.labour_hours >= 0
+      ? r.labour_hours
+      : undefined,
     notes: typeof r.notes === 'string' ? r.notes : undefined,
   };
 }

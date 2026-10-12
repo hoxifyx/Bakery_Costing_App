@@ -2,9 +2,15 @@
 
 This file documents schema changes and how to migrate data from older versions.
 
-## Current Schema Version: 1.2
+## Current Schema Version: 1.3
 
 The schema version is checked on import in `src/io/io.ts`. Files with a newer major schema version are rejected; older major versions are accepted with the compatibility behavior described below. Missing settings fields are filled from `DEFAULT_SETTINGS`. Omitted entity arrays are not automatically cleared by a selective import.
+
+### `1.3` (Recipe labour)
+*   **Added:** optional `labour_hours` field to `Recipe`.
+*   **Compatibility:** older exports without the field import cleanly; recipes
+    with no `labour_hours` are treated as 0 for display purposes. No engine
+    behaviour changes.
 
 ### `1.2` (Phase 4 & 5)
 *   **Added:** `customers` array to `AppData`.
@@ -25,4 +31,6 @@ These app releases do not change the exported data schema and require no data mi
 *   **v1.4.15:** Design-consistency pass across list pages; app data is unchanged.
 *   **v1.4.16:** Quote-page breakpoint and size-guide pill fixes; app data is unchanged.
 
-The current schema remains `1.2`. UI redesigns, validation fixes, and static-asset changes do not by themselves require a schema-version bump.
+**v1.4.17** is an exception: it bumps the schema to `1.3` (see above).
+
+The current schema is `1.3`. UI redesigns, validation fixes, and static-asset changes do not by themselves require a schema-version bump.

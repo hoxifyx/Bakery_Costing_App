@@ -5,6 +5,14 @@ All notable changes to the Bakery Costing App (OvenCost Pro) will be documented 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.17] — 2026-10-12
+
+### Added
+- **Recipe labour hours:** Bakers can record optional hands-on labour hours per recipe batch. This is informational only and does not affect costing calculations or warnings.
+
+### Notes
+- Schema version bumped from 1.2 to 1.3. Older exports without `labour_hours` continue to import cleanly.
+
 ## [1.4.16] — 2026-10-11
 
 ### Fixed
