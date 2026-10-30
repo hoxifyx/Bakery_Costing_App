@@ -1,4 +1,4 @@
-export { compute, roundPrice } from './engine';
+export { compute, computeProductQuote, roundPrice } from './engine';
 export type {
   AppData,
   Settings,
@@ -18,6 +18,10 @@ export type {
   QuoteInput,
   TierInput,
   DecorationInput,
+  ProductQuoteLine,
+  ProductQuoteInput,
+  ProductQuoteLineResult,
+  ProductQuoteResult,
   SizeGuideEntry,
   SavedQuote,
   EngineResult,

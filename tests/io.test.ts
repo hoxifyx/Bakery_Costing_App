@@ -16,9 +16,11 @@ describe('Recipe labour hours import and export', () => {
 
     const exported = JSON.parse(exportAllData(data)) as {
       schema_version: string;
+      app_version: string;
       recipes: Array<{ labour_hours?: number }>;
     };
-    expect(exported.schema_version).toBe('1.3');
+    expect(exported.schema_version).toBe('1.4');
+    expect(exported.app_version).toBe('1.5.0');
     expect(exported.recipes[0].labour_hours).toBe(0.5);
 
     const preview = parseImportFile(JSON.stringify(exported), EMPTY_APP_DATA);

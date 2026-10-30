@@ -5,6 +5,19 @@ All notable changes to the Bakery Costing App (OvenCost Pro) will be documented 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.0] — 2026-10-30
+
+### Added
+- **Product pricing upgrades:** Batch and assembled products now support per-product overhead, margin, labour rate, extra piece costs, custom selling prices, and live profit/margin tracking.
+- **Product quote workflow:** Added a product-quote calculator and saved-quote support for product bundles, with export/import compatibility and quote-kind handling.
+- **Recipe pickers:** Product recipe selectors list every recipe, not only matching kinds, while leaving catalog filtering unchanged.
+
+### Changed
+- Schema version bumped from 1.3 to 1.4. Older exports remain compatible.
+
+### Validation
+- 49 automated tests pass. Lint completes with existing warnings; the production build succeeds with the known dynamic-import and bundle-size warnings.
+
 ## [1.4.17] — 2026-10-12
 
 ### Added

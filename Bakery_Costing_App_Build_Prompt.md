@@ -1085,7 +1085,7 @@ Same fixture and quote, but `overhead_pct = 0.30`, `target_margin = 0.35`, `labo
 
 ## 10. EXTENSIONS (Phased Upgrade Plan)
 The following extensions were implemented as part of the Phased Upgrade Plan.
-Final schema version: `1.2`.
+Final schema version at the time this original specification was last maintained: `1.2`.
 
 - **Phase 1**: Core Architecture & Dependency Setup (Validation only).
 - **Phase 2**: Price Rounding (`settings.price_rounding_step`).
@@ -1097,8 +1097,8 @@ Final schema version: `1.2`.
 
 Phases 7, 8, and 10-18 were intentionally skipped by the user.
 
-### Current release status (2026-10-11)
+### Current release status (updated 2026-10-30)
 
-This prompt remains the original product specification; it is not a complete inventory of later UI and release work. The shipped app is at **v1.4.13** (see `CHANGELOG.md`), with the redesigned pages, the Settings native-validation fix, and a subsetted Material Symbols font.
+This prompt remains the original product specification; it is not a complete inventory of later UI and release work. The shipped app is at **v1.5.0** (see `CHANGELOG.md`), with product-level pricing overrides, product quotes, and the earlier release-series UI and font updates.
 
-The current export schema remains `1.2`. The v1.4.12 and v1.4.13 release changes do not alter the data model or require a migration; see `MIGRATIONS.md`. The latest recorded automated test suite contains 47 passing tests. Check the current source and tests for exact implementation details rather than assuming every original specification item was implemented.
+The current export schema is `1.4`; see `MIGRATIONS.md` for the additive schema history and compatibility behavior. The automated test suite has 49 passing tests. Check the current source and tests for exact implementation details rather than assuming every original specification item was implemented.

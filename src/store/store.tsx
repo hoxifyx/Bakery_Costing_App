@@ -14,6 +14,7 @@ import type {
   BatchProduct,
   AssembledProduct,
   QuoteInput,
+  ProductQuoteInput,
   SizeGuideEntry,
   SavedQuote,
   Customer,
@@ -102,6 +103,7 @@ export interface StoreState {
   data: AppData;
   undoSnapshot: AppData | null;  // snapshot before last import
   quoteInput: QuoteInput;
+  productQuoteInput: ProductQuoteInput;
   activeSavedQuote: ActiveSavedQuoteInfo | null;
   loading: boolean;
   saving: boolean;
@@ -116,6 +118,12 @@ export interface StoreState {
     error: string | null;
   };
 }
+
+export const DEFAULT_PRODUCT_QUOTE_INPUT: ProductQuoteInput = {
+  lines: [],
+  delivery: 0,
+  discount: 0,
+};
 
 const DEFAULT_QUOTE_INPUT: QuoteInput = {
   tiers: [
@@ -170,6 +178,8 @@ type Action =
   | { type: 'DELETE_ASSEMBLED_PRODUCT'; id: Id }
   | { type: 'SET_QUOTE_INPUT'; input: QuoteInput }
   | { type: 'RESET_QUOTE' }
+  | { type: 'SET_PRODUCT_QUOTE_INPUT'; input: ProductQuoteInput }
+  | { type: 'RESET_PRODUCT_QUOTE' }
   | { type: 'IMPORT_DATA'; data: Partial<AppData>; mode: 'replace' | 'merge' | 'replace_selected' }
   | { type: 'UNDO_IMPORT' }
   | { type: 'ADD_SAVED_QUOTE'; item: SavedQuote }
@@ -271,12 +281,17 @@ function reducer(state: StoreState, action: Action): StoreState {
       return { ...state, quoteInput: action.input };
     case 'RESET_QUOTE':
       return { ...state, quoteInput: DEFAULT_QUOTE_INPUT, activeSavedQuote: null };
+    case 'SET_PRODUCT_QUOTE_INPUT':
+      return { ...state, productQuoteInput: action.input };
+    case 'RESET_PRODUCT_QUOTE':
+      return { ...state, productQuoteInput: DEFAULT_PRODUCT_QUOTE_INPUT, activeSavedQuote: null };
     case 'CLEAR_ACTIVE_SAVED_QUOTE':
       return { ...state, activeSavedQuote: null };
     case 'LOAD_SAVED_QUOTE':
       return {
         ...state,
-        quoteInput: action.quote.input,
+        quoteInput: action.quote.input ?? DEFAULT_QUOTE_INPUT,
+        productQuoteInput: action.quote.product_quote_input ?? DEFAULT_PRODUCT_QUOTE_INPUT,
         activeSavedQuote: {
           id: action.quote.id,
           name: action.quote.name,
@@ -401,6 +416,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     data: { ...EMPTY_APP_DATA },
     undoSnapshot: null,
     quoteInput: DEFAULT_QUOTE_INPUT,
+    productQuoteInput: DEFAULT_PRODUCT_QUOTE_INPUT,
     activeSavedQuote: null,
     loading: true,
     saving: false,

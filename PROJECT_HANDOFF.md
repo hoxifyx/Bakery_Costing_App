@@ -2,7 +2,7 @@
 
 ## What This Is
 <!-- BEGIN AGENT:what_this_is -->
-OvenCost Pro is a local-first bakery costing and pricing app. The current release is v1.4.17; see CHANGELOG.md for shipped changes. The phased plan and build prompt are original product documents, and their unimplemented planned phases are not a release-status checklist.
+OvenCost Pro is a local-first bakery costing and pricing app. The current release is v1.5.0 with export schema 1.4; see `CHANGELOG.md` and `MIGRATIONS.md` for release and data-format history. The phased plan and build prompt are original product documents, and their unimplemented planned phases are not a release-status checklist.
 <!-- END AGENT:what_this_is -->
 
 ## Quick Start
@@ -59,7 +59,7 @@ npm test
 
 ## Warnings
 <!-- BEGIN SCRIPT:warnings -->
-At v1.4.17, the automated suite has 49 passing tests. The production build emits a known `INEFFECTIVE_DYNAMIC_IMPORT` warning for `src/cloud/drive.ts`; lint emits existing warnings in `tests/cloud.test.ts`, `src/store/store.tsx`, and `src/ui/pages/QuotePage.tsx`. Runtime data warnings are surfaced in-app on the **Data Health** page.
+At v1.5.0, all 49 automated tests pass. The production build succeeds with a known `INEFFECTIVE_DYNAMIC_IMPORT` warning for `src/cloud/drive.ts` and a bundle-size advisory. Lint completes with existing warnings in `tests/cloud.test.ts`, `src/store/store.tsx`, `src/ui/components/Shared.tsx`, and `src/ui/pages/QuotePage.tsx`. Runtime data warnings are surfaced in-app on the **Data Health** page.
 <!-- END SCRIPT:warnings -->
 
 ## What's Excluded and Why
@@ -123,6 +123,11 @@ The v1.4.17 release added an optional `labour_hours` field to Recipe for
 informational bookkeeping and bumped the schema to `1.3`. Old exports import
 cleanly; recipes without the field are treated as 0 for display. No engine
 calculation or warning behaviour changed, and no runtime migration is required.
+
+The v1.5.0 release added product-level pricing overrides and product quotes,
+including saved product-quote snapshots. The schema is now `1.4`; older exports
+without the optional product fields remain valid and continue to use global
+pricing defaults. Product quotes and cake quotes share the saved-quote archive.
 <!-- END OWNER_NOTES -->
 
 ## When Not to Use This Bundle

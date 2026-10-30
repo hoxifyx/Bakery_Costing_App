@@ -23,7 +23,8 @@ import type {
 } from '../engine/types';
 import { DEFAULT_SETTINGS, DEFAULT_SIZE_GUIDE } from '../engine/types';
 
-const CURRENT_SCHEMA_VERSION = '1.3';
+export const CURRENT_SCHEMA_VERSION = '1.4';
+export const CURRENT_APP_VERSION = '1.5.0';
 const FORMAT_FIELD = 'bakery-costing-data';
 const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20 MB
 
@@ -254,6 +255,51 @@ function validateBatchProduct(raw: unknown, idx: number, errors: ImportError[]):
   const p = `batch_products[${idx}]`;
   const id = r.id;
   if (!validateId(id, `${p}.id`, errors)) return null;
+
+  let overhead_pct: number | null | undefined;
+  if (r.overhead_pct !== undefined && r.overhead_pct !== null) {
+    overhead_pct = requireNumber(r.overhead_pct, `${p}.overhead_pct`, errors);
+  } else if (r.overhead_pct === null) {
+    overhead_pct = null;
+  }
+
+  let target_margin: number | null | undefined;
+  if (r.target_margin !== undefined && r.target_margin !== null) {
+    const tm = requireNumber(r.target_margin, `${p}.target_margin`, errors);
+    if (tm >= 1) {
+      errors.push({ path: `${p}.target_margin`, message: 'target_margin must be < 1' });
+    }
+    target_margin = tm;
+  } else if (r.target_margin === null) {
+    target_margin = null;
+  }
+
+  let labour_rate_per_hour: number | null | undefined;
+  if (r.labour_rate_per_hour !== undefined && r.labour_rate_per_hour !== null) {
+    labour_rate_per_hour = requireNumber(r.labour_rate_per_hour, `${p}.labour_rate_per_hour`, errors);
+  } else if (r.labour_rate_per_hour === null) {
+    labour_rate_per_hour = null;
+  }
+
+  let other_cost_per_piece: number | undefined;
+  if (r.other_cost_per_piece !== undefined && r.other_cost_per_piece !== null) {
+    other_cost_per_piece = requireNumber(r.other_cost_per_piece, `${p}.other_cost_per_piece`, errors);
+  }
+
+  let my_price_each: number | null | undefined;
+  if (r.my_price_each !== undefined && r.my_price_each !== null) {
+    my_price_each = requireNumber(r.my_price_each, `${p}.my_price_each`, errors);
+  } else if (r.my_price_each === null) {
+    my_price_each = null;
+  }
+
+  let my_price_box: number | null | undefined;
+  if (r.my_price_box !== undefined && r.my_price_box !== null) {
+    my_price_box = requireNumber(r.my_price_box, `${p}.my_price_box`, errors);
+  } else if (r.my_price_box === null) {
+    my_price_box = null;
+  }
+
   return {
     id: id as string,
     name: requireString(r.name ?? (id as string), `${p}.name`, errors),
@@ -269,6 +315,12 @@ function validateBatchProduct(raw: unknown, idx: number, errors: ImportError[]):
     box_id: typeof r.box_id === 'string' ? r.box_id : null,
     pieces_per_box: requireNumber(r.pieces_per_box, `${p}.pieces_per_box`, errors),
     show_each_including_box: r.show_each_including_box === true,
+    overhead_pct,
+    target_margin,
+    labour_rate_per_hour,
+    other_cost_per_piece,
+    my_price_each,
+    my_price_box,
   };
 }
 
@@ -277,6 +329,44 @@ function validateAssembledProduct(raw: unknown, idx: number, errors: ImportError
   const p = `assembled_products[${idx}]`;
   const id = r.id;
   if (!validateId(id, `${p}.id`, errors)) return null;
+
+  let overhead_pct: number | null | undefined;
+  if (r.overhead_pct !== undefined && r.overhead_pct !== null) {
+    overhead_pct = requireNumber(r.overhead_pct, `${p}.overhead_pct`, errors);
+  } else if (r.overhead_pct === null) {
+    overhead_pct = null;
+  }
+
+  let target_margin: number | null | undefined;
+  if (r.target_margin !== undefined && r.target_margin !== null) {
+    const tm = requireNumber(r.target_margin, `${p}.target_margin`, errors);
+    if (tm >= 1) {
+      errors.push({ path: `${p}.target_margin`, message: 'target_margin must be < 1' });
+    }
+    target_margin = tm;
+  } else if (r.target_margin === null) {
+    target_margin = null;
+  }
+
+  let labour_rate_per_hour: number | null | undefined;
+  if (r.labour_rate_per_hour !== undefined && r.labour_rate_per_hour !== null) {
+    labour_rate_per_hour = requireNumber(r.labour_rate_per_hour, `${p}.labour_rate_per_hour`, errors);
+  } else if (r.labour_rate_per_hour === null) {
+    labour_rate_per_hour = null;
+  }
+
+  let other_cost_per_piece: number | undefined;
+  if (r.other_cost_per_piece !== undefined && r.other_cost_per_piece !== null) {
+    other_cost_per_piece = requireNumber(r.other_cost_per_piece, `${p}.other_cost_per_piece`, errors);
+  }
+
+  let my_price_each: number | null | undefined;
+  if (r.my_price_each !== undefined && r.my_price_each !== null) {
+    my_price_each = requireNumber(r.my_price_each, `${p}.my_price_each`, errors);
+  } else if (r.my_price_each === null) {
+    my_price_each = null;
+  }
+
   const components = Array.isArray(r.components) ? r.components.map((c: Record<string, unknown>, ci: number) => {
     if (c.type === 'cake_recipe_grams') return { type: 'cake_recipe_grams' as const, recipe_id: String(c.recipe_id), grams: requireNumber(c.grams, `${p}.components[${ci}].grams`, errors) };
     if (c.type === 'recipe_per_gram') return { type: 'recipe_per_gram' as const, recipe_id: String(c.recipe_id), grams: requireNumber(c.grams, `${p}.components[${ci}].grams`, errors) };
@@ -284,6 +374,7 @@ function validateAssembledProduct(raw: unknown, idx: number, errors: ImportError
     errors.push({ path: `${p}.components[${ci}].type`, message: 'Invalid component type' });
     return { type: 'cake_recipe_grams' as const, recipe_id: '', grams: 0 };
   }) : [];
+
   return {
     id: id as string,
     name: requireString(r.name ?? (id as string), `${p}.name`, errors),
@@ -292,6 +383,11 @@ function validateAssembledProduct(raw: unknown, idx: number, errors: ImportError
     pieces_per_batch: requireNumber(r.pieces_per_batch, `${p}.pieces_per_batch`, errors),
     box_id: typeof r.box_id === 'string' ? r.box_id : null,
     pieces_per_box: requireNumber(r.pieces_per_box, `${p}.pieces_per_box`, errors),
+    overhead_pct,
+    target_margin,
+    labour_rate_per_hour,
+    other_cost_per_piece,
+    my_price_each,
   };
 }
 
@@ -300,6 +396,8 @@ function validateSavedQuote(raw: unknown, idx: number, errors: ImportError[]): S
   const p = `saved_quotes[${idx}]`;
   const id = r.id;
   if (!validateId(id, `${p}.id`, errors)) return null;
+
+  const kind = r.kind === 'products' ? 'products' : 'cake';
 
   const rawInput = (r.input ?? {}) as Record<string, unknown>;
   const tiers = Array.isArray(rawInput.tiers)
@@ -327,12 +425,33 @@ function validateSavedQuote(raw: unknown, idx: number, errors: ImportError[]): S
     decoration.discount = typeof rawDeco.discount === 'number' && isFinite(rawDeco.discount) ? Math.max(0, rawDeco.discount) : 0;
   }
 
+  let product_quote_input: any = undefined;
+  if (r.product_quote_input && typeof r.product_quote_input === 'object') {
+    const pqi = r.product_quote_input as Record<string, unknown>;
+    const lines = Array.isArray(pqi.lines)
+      ? pqi.lines.map((l: any, li: number) => ({
+          product_kind: l?.product_kind === 'assembled' ? ('assembled' as const) : ('batch' as const),
+          product_id: String(l?.product_id ?? ''),
+          quantity: requireNumber(l?.quantity, `${p}.product_quote_input.lines[${li}].quantity`, errors),
+          unit: l?.unit === 'box' ? ('box' as const) : ('piece' as const),
+          price_override: typeof l?.price_override === 'number' ? l.price_override : null,
+        }))
+      : [];
+    product_quote_input = {
+      lines,
+      delivery: requireNumber(pqi.delivery ?? 0, `${p}.product_quote_input.delivery`, errors),
+      discount: typeof pqi.discount === 'number' ? pqi.discount : 0,
+    };
+  }
+
   return {
     id: id as string,
     name: requireString(r.name ?? `Quote ${idx + 1}`, `${p}.name`, errors),
     created_at: typeof r.created_at === 'string' ? r.created_at : new Date().toISOString(),
     updated_at: typeof r.updated_at === 'string' ? r.updated_at : undefined,
+    kind,
     input: { tiers, decoration },
+    product_quote_input,
     result_snapshot: r.result_snapshot ?? null,
     notes: typeof r.notes === 'string' ? r.notes : undefined,
   };
@@ -593,7 +712,7 @@ function emptyPreviewCounts() {
 // Export
 // ---------------------------------------------------------------------------
 
-export function exportAllData(data: AppData, appVersion = '1.0.0'): string {
+export function exportAllData(data: AppData, appVersion = CURRENT_APP_VERSION): string {
   const payload = {
     format: FORMAT_FIELD,
     schema_version: CURRENT_SCHEMA_VERSION,

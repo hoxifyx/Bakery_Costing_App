@@ -9,7 +9,9 @@ import {
   exportIngredientsCSV,
   exportPackagingCSV,
   importIngredientsCSV,
-  MAX_IMPORT_SIZE
+  MAX_IMPORT_SIZE,
+  CURRENT_APP_VERSION,
+  CURRENT_SCHEMA_VERSION
 } from '../../io/io';
 import { createBackup, restoreBackup, getBackupHistory, deleteBackup, signIn, signOut } from '../../cloud/backupManager';
 import type { ImportPreview } from '../../io/io';
@@ -67,9 +69,9 @@ export function ImportExportPage() {
     }
     const envelope = {
       format: 'bakery-costing-data',
-      schema_version: '1.0',
+      schema_version: CURRENT_SCHEMA_VERSION,
       exported_at: new Date().toISOString(),
-      app_version: '1.0.0',
+      app_version: CURRENT_APP_VERSION,
       ...partial,
     };
     const jsonStr = JSON.stringify(envelope, null, 2);

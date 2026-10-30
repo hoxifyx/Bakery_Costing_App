@@ -2,12 +2,13 @@
 
 OvenCost Pro is an offline-first costing and pricing app for bakeries, cake studios, and confectioners. Build ingredient and packaging catalogs, calculate recipe and product costs, prepare multi-tier cake quotes, and track customers and orders. Application data is stored locally in the browser.
 
-The latest release is **v1.4.17**. See [CHANGELOG.md](./CHANGELOG.md) for release history.
+The latest release is **v1.5.0**. See [CHANGELOG.md](./CHANGELOG.md) for release history.
 
 ## Features
 
 - **Cake quotes:** Price cakes of up to six tiers, including recipes, fillings, decorations, labour, packaging, delivery, overhead, and target margin.
-- **Catalog and costing:** Manage ingredients, packaging, recipes, flavours, fillings, batch products, and assembled products.
+- **Product quotes:** Price batch and assembled products by quantity or box, with optional line overrides, delivery, discount, and saved product quote snapshots.
+- **Catalog and costing:** Manage ingredients, packaging, recipes, flavours, fillings, batch products, and assembled products with per-product pricing overrides and live profit/margin tracking.
 - **Recipe scaling and price suggestions:** Preview scaled recipe costs and optional rounded suggested prices without changing exact calculation results.
 - **Size guide:** Maintain the pan-size and serving guide used to help fill quote weights.
 - **Customers and orders:** Keep customer records and track order dates, due dates, and payment status.
@@ -20,7 +21,7 @@ The latest release is **v1.4.17**. See [CHANGELOG.md](./CHANGELOG.md) for releas
 
 ### Requirements
 
-- Node.js 18 or later
+- Node.js `^20.19.0` or `>=22.12.0` (required by Vite 8)
 - npm 9 or later
 
 ### Development

@@ -44,12 +44,19 @@ export function SavedQuotesPage({ onNavigate }: SavedQuotesPageProps) {
   };
 
   const getTiersSummary = (q: SavedQuote): string => {
+    if (q.kind === 'products') {
+      const lines = q.product_quote_input?.lines ?? [];
+      if (!lines.length) return '0 product lines';
+      return `${lines.length} line${lines.length > 1 ? 's' : ''}`;
+    }
     const activeTiers = (q.input?.tiers || []).filter(t => (t.size_kg ?? 0) > 0);
     const count = activeTiers.length;
     if (count === 0) return '0 tiers';
     const totalKg = activeTiers.reduce((acc, t) => acc + (t.size_kg || 0), 0);
     return `${count} tier${count > 1 ? 's' : ''} (${totalKg.toFixed(1)} kg)`;
   };
+
+  const getKindBadge = (q: SavedQuote): string => q.kind === 'products' ? 'Product Quote' : 'Cake Quote';
 
   return (
     <>
@@ -129,6 +136,7 @@ export function SavedQuotesPage({ onNavigate }: SavedQuotesPageProps) {
                           >
                             {sq.name}
                           </button>
+                          <div className="badge badge-muted" style={{ fontSize: 10, marginTop: 4, display: 'inline-block' }}>{getKindBadge(sq)}</div>
                           {sq.notes && (
                             <div className="text-muted" style={{ fontSize: 12, marginTop: 2 }}>
                               {sq.notes}
@@ -181,6 +189,7 @@ export function SavedQuotesPage({ onNavigate }: SavedQuotesPageProps) {
                       >
                         {sq.name}
                       </button>
+                      <div className="badge badge-muted" style={{ fontSize: 10, marginTop: 4, display: 'inline-block' }}>{getKindBadge(sq)}</div>
                       <div className="text-secondary" style={{ fontSize: 12, marginTop: 2 }}>
                         {new Date(sq.created_at).toLocaleDateString(undefined, {
                           year: 'numeric',

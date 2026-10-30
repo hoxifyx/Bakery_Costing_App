@@ -23,6 +23,9 @@ import type {
   BatchProductResult,
   AssembledProductResult,
   QuoteResult,
+  ProductQuoteInput,
+  ProductQuoteResult,
+  ProductQuoteLineResult,
   Warning,
   WarningCode,
   AuditStep,
@@ -324,7 +327,6 @@ function computeFilling(
 // ---------------------------------------------------------------------------
 // §4.8 Batch product
 // ---------------------------------------------------------------------------
-
 function computeBatchProduct(
   product: BatchProduct,
   recipeResults: Map<Id, RecipeResult>,
@@ -333,9 +335,10 @@ function computeBatchProduct(
   settings: Settings,
   warnings: Warning[]
 ): BatchProductResult {
-  const OH = D(settings.overhead_pct);
-  const M = D(settings.target_margin);
-  const LAB = D(settings.labour_rate_per_hour);
+  const OH = D(product.overhead_pct ?? settings.overhead_pct);
+  const M = D(product.target_margin ?? settings.target_margin);
+  const LAB = D(product.labour_rate_per_hour ?? settings.labour_rate_per_hour);
+  const otherCost = D(product.other_cost_per_piece ?? 0);
   const prodWarnings: Warning[] = [];
   const audit: AuditStep[] = [];
 
@@ -380,21 +383,26 @@ function computeBatchProduct(
   }
 
   const unitCost = baseUnitCost.add(componentsCost);
+  const costEachExclBox = unitCost.add(otherCost);
 
   const boxItem = product.box_id ? packMap.get(product.box_id) : null;
   const boxPrice = boxItem ? D(boxItem.price) : D(0);
   const ppb = D(product.pieces_per_box > 0 ? product.pieces_per_box : 1);
 
+  const costEachInclBox = costEachExclBox.add(boxPrice.div(ppb));
+
   const eachInclBox = D(1).minus(M).gt(0)
-    ? unitCost.add(boxPrice.div(ppb)).div(D(1).minus(M))
+    ? costEachInclBox.div(D(1).minus(M))
     : D(0);
   const eachExclBox = D(1).minus(M).gt(0)
-    ? unitCost.div(D(1).minus(M))
+    ? costEachExclBox.div(D(1).minus(M))
     : D(0);
   const boxPriceResult = D(1).minus(M).gt(0)
-    ? unitCost.mul(ppb).add(boxPrice).div(D(1).minus(M))
+    ? costEachExclBox.mul(ppb).add(boxPrice).div(D(1).minus(M))
     : D(0);
   const headlineEach = product.show_each_including_box ? eachInclBox : eachExclBox;
+  const costEach = product.show_each_including_box ? costEachInclBox : costEachExclBox;
+  const costBox = costEachExclBox.mul(ppb).add(boxPrice);
 
   const rawCostPerPiece = pieces.gt(0) ? rawCost.div(pieces) : D(0);
 
@@ -403,9 +411,11 @@ function computeBatchProduct(
     step('Base unit cost', '(raw_cost + labour) × (1+OH) / pieces', baseUnitCost),
     step('Components cost/piece', 'Σ per_gram_cwo × grams', componentsCost),
     step('Unit cost', 'base_unit_cost + components_cost', unitCost),
-    step('Each incl. box', '(unit_cost + box/ppb) / (1-M)', eachInclBox),
-    step('Each excl. box', 'unit_cost / (1-M)', eachExclBox),
-    step('Box price (full box)', '(unit_cost × ppb + box) / (1-M)', boxPriceResult),
+    step('Cost each excl. box', 'unit_cost + other_cost_per_piece', costEachExclBox),
+    step('Cost each incl. box', 'cost_each_excl_box + box_price / pieces_per_box', costEachInclBox),
+    step('Each incl. box', 'cost_each_incl_box / (1-M)', eachInclBox),
+    step('Each excl. box', 'cost_each_excl_box / (1-M)', eachExclBox),
+    step('Box price (full box)', '(cost_each_excl_box × ppb + box) / (1-M)', boxPriceResult),
   );
 
   const roundingStep = settings.price_rounding_step;
@@ -417,24 +427,68 @@ function computeBatchProduct(
     audit.push(step('Suggested headline each (display only)', `round(${toNum(headlineEach).toFixed(2)}, nearest ${roundingStep})`, suggestedHeadline));
   }
 
+  // Live profit & margin for my_price_each and my_price_box
+  let profitEach: Decimal | undefined;
+  let marginEach: Decimal | undefined;
+  if (product.my_price_each !== undefined && product.my_price_each !== null) {
+    const myPrice = D(product.my_price_each);
+    profitEach = myPrice.minus(costEach);
+    marginEach = myPrice.gt(0) ? profitEach.div(myPrice) : D(0);
+
+    if (myPrice.lt(costEach)) {
+      warn(prodWarnings, 'W_PRICE_BELOW_COST', `Product "${product.id}" price (${toNum(myPrice).toFixed(2)}) is below cost (${toNum(costEach).toFixed(2)})`, `batch_product[${product.id}].my_price_each`);
+    } else if (marginEach.lt(M)) {
+      warn(prodWarnings, 'W_PRICE_BELOW_TARGET', `Product "${product.id}" margin (${toNum(marginEach.mul(100)).toFixed(1)}%) is below target (${toNum(M.mul(100)).toFixed(1)}%)`, `batch_product[${product.id}].my_price_each`);
+    }
+  }
+
+  let profitBox: Decimal | undefined;
+  let marginBox: Decimal | undefined;
+  if (product.my_price_box !== undefined && product.my_price_box !== null) {
+    const myPriceB = D(product.my_price_box);
+    profitBox = myPriceB.minus(costBox);
+    marginBox = myPriceB.gt(0) ? profitBox.div(myPriceB) : D(0);
+
+    if (myPriceB.lt(costBox)) {
+      warn(prodWarnings, 'W_PRICE_BELOW_COST', `Product "${product.id}" box price (${toNum(myPriceB).toFixed(2)}) is below cost (${toNum(costBox).toFixed(2)})`, `batch_product[${product.id}].my_price_box`);
+    } else if (marginBox.lt(M)) {
+      warn(prodWarnings, 'W_PRICE_BELOW_TARGET', `Product "${product.id}" box margin (${toNum(marginBox.mul(100)).toFixed(1)}%) is below target (${toNum(M.mul(100)).toFixed(1)}%)`, `batch_product[${product.id}].my_price_box`);
+    }
+  }
+
+  const priceInUseEach = product.my_price_each !== undefined && product.my_price_each !== null
+    ? D(product.my_price_each)
+    : headlineEach;
+
   warnings.push(...prodWarnings);
 
   return {
     pieces: toNum(pieces),
     raw_cost_per_piece: toNum(rawCostPerPiece),
     unit_cost: toNum(unitCost),
+    cost_each_excl_box: toNum(costEachExclBox),
+    cost_each_incl_box: toNum(costEachInclBox),
+    cost_each: toNum(costEach),
+    cost_box: toNum(costBox),
     each_including_box: toNum(eachInclBox),
     each_excluding_box: toNum(eachExclBox),
     box_price: toNum(boxPriceResult),
     headline_each: toNum(headlineEach),
     suggested_headline_each: suggestedHeadline,
+    my_price_each: product.my_price_each,
+    my_price_box: product.my_price_box,
+    profit_each: profitEach !== undefined ? toNum(profitEach) : undefined,
+    margin_each: marginEach !== undefined ? toNum(marginEach) : undefined,
+    profit_box: profitBox !== undefined ? toNum(profitBox) : undefined,
+    margin_box: marginBox !== undefined ? toNum(marginBox) : undefined,
+    price_in_use_each: toNum(priceInUseEach),
     warnings: prodWarnings,
     audit,
   };
 }
 
 // ---------------------------------------------------------------------------
-// §4.9 Assembled product
+// §4.9 Assembled products
 // ---------------------------------------------------------------------------
 
 function computeAssembledProduct(
@@ -445,9 +499,10 @@ function computeAssembledProduct(
   settings: Settings,
   warnings: Warning[]
 ): AssembledProductResult {
-  const OH = D(settings.overhead_pct);
-  const M = D(settings.target_margin);
-  const LAB = D(settings.labour_rate_per_hour);
+  const OH = D(product.overhead_pct ?? settings.overhead_pct);
+  const M = D(product.target_margin ?? settings.target_margin);
+  const LAB = D(product.labour_rate_per_hour ?? settings.labour_rate_per_hour);
+  const otherCost = D(product.other_cost_per_piece ?? 0);
   const prodWarnings: Warning[] = [];
   const audit: AuditStep[] = [];
 
@@ -490,15 +545,19 @@ function computeAssembledProduct(
   const ppb = D(product.pieces_per_box > 0 ? product.pieces_per_box : 1);
   const boxPiece = boxPrice.div(ppb);
 
+  const costEach = unitCost.add(labourPiece).add(otherCost).add(boxPiece);
+
   const priceEach = D(1).minus(M).gt(0)
-    ? unitCost.add(labourPiece).add(boxPiece).div(D(1).minus(M))
+    ? costEach.div(D(1).minus(M))
     : D(0);
 
   audit.push(
     step('Unit cost (components)', 'Σ component_cost(c)', unitCost),
     step('Labour per piece', 'labour_hours × LAB × (1+OH) / pieces_per_batch', labourPiece),
     step('Box per piece', 'box_price / pieces_per_box', boxPiece),
-    step('Price each', '(unit_cost + labour + box) / (1-M)', priceEach),
+    step('Other cost per piece', 'user amount', otherCost),
+    step('Cost each', 'unit_cost + labour_piece + other_cost_per_piece + box_price / pieces_per_box', costEach),
+    step('Price each', 'cost_each / (1-M)', priceEach),
   );
 
   const roundingStep = settings.price_rounding_step;
@@ -510,14 +569,38 @@ function computeAssembledProduct(
     audit.push(step('Suggested price each (display only)', `round(${toNum(priceEach).toFixed(2)}, nearest ${roundingStep})`, suggestedPriceEach));
   }
 
+  // Live profit & margin for my_price_each
+  let profitEach: Decimal | undefined;
+  let marginEach: Decimal | undefined;
+  if (product.my_price_each !== undefined && product.my_price_each !== null) {
+    const myPrice = D(product.my_price_each);
+    profitEach = myPrice.minus(costEach);
+    marginEach = myPrice.gt(0) ? profitEach.div(myPrice) : D(0);
+
+    if (myPrice.lt(costEach)) {
+      warn(prodWarnings, 'W_PRICE_BELOW_COST', `Product "${product.id}" price (${toNum(myPrice).toFixed(2)}) is below cost (${toNum(costEach).toFixed(2)})`, `assembled[${product.id}].my_price_each`);
+    } else if (marginEach.lt(M)) {
+      warn(prodWarnings, 'W_PRICE_BELOW_TARGET', `Product "${product.id}" margin (${toNum(marginEach.mul(100)).toFixed(1)}%) is below target (${toNum(M.mul(100)).toFixed(1)}%)`, `assembled[${product.id}].my_price_each`);
+    }
+  }
+
+  const priceInUseEach = product.my_price_each !== undefined && product.my_price_each !== null
+    ? D(product.my_price_each)
+    : priceEach;
+
   warnings.push(...prodWarnings);
 
   return {
     unit_cost: toNum(unitCost),
     labour_piece: toNum(labourPiece),
     box_piece: toNum(boxPiece),
+    cost_each: toNum(costEach),
     price_each: toNum(priceEach),
     suggested_price_each: suggestedPriceEach,
+    my_price_each: product.my_price_each,
+    profit_each: profitEach !== undefined ? toNum(profitEach) : undefined,
+    margin_each: marginEach !== undefined ? toNum(marginEach) : undefined,
+    price_in_use_each: toNum(priceInUseEach),
     warnings: prodWarnings,
     audit,
   };
@@ -831,5 +914,165 @@ export function compute(data: AppData, quoteInput?: QuoteInput | null, recipeMul
     assembled_products: Object.fromEntries(assembledProductResults),
     quote,
     all_warnings: allWarnings,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// §4.10 Product Quote (R4)
+// ---------------------------------------------------------------------------
+
+export function computeProductQuote(
+  data: AppData,
+  input: ProductQuoteInput,
+  recipeMultipliers?: Record<Id, number>
+): ProductQuoteResult {
+  const engineRes = compute(data, null, recipeMultipliers);
+  const { batch_products, assembled_products } = engineRes;
+  const warnings: Warning[] = [];
+  const audit: AuditStep[] = [];
+
+  const lineResults: ProductQuoteLineResult[] = [];
+  let subtotal = D(0);
+  let costTotal = D(0);
+
+  input.lines.forEach((line, idx) => {
+    const pPath = `lines[${idx}]`;
+    const qty = D(line.quantity ?? 0);
+
+    if (qty.lte(0)) {
+      warn(warnings, 'W_ZERO_QUANTITY', `Line ${idx + 1} has zero or negative quantity`, `${pPath}.quantity`);
+    }
+
+    let unitPrice = D(0);
+    let unitCost = D(0);
+
+    if (line.product_kind === 'batch') {
+      const bRes = batch_products[line.product_id];
+      if (!bRes) {
+        warn(warnings, 'W_UNKNOWN_PRODUCT', `Batch product "${line.product_id}" not found`, `${pPath}.product_id`);
+      } else {
+        if (line.unit === 'box') {
+          unitCost = D(bRes.cost_box);
+          const defaultPrice = bRes.my_price_box !== undefined && bRes.my_price_box !== null
+            ? D(bRes.my_price_box)
+            : D(bRes.box_price);
+          unitPrice = line.price_override !== undefined && line.price_override !== null
+            ? D(line.price_override)
+            : defaultPrice;
+        } else {
+          unitCost = D(bRes.cost_each);
+          const defaultPrice = bRes.my_price_each !== undefined && bRes.my_price_each !== null
+            ? D(bRes.my_price_each)
+            : D(bRes.headline_each);
+          unitPrice = line.price_override !== undefined && line.price_override !== null
+            ? D(line.price_override)
+            : defaultPrice;
+        }
+      }
+    } else {
+      const aRes = assembled_products[line.product_id];
+      if (!aRes) {
+        warn(warnings, 'W_UNKNOWN_PRODUCT', `Assembled product "${line.product_id}" not found`, `${pPath}.product_id`);
+      } else {
+        unitCost = D(aRes.cost_each);
+        const defaultPrice = aRes.my_price_each !== undefined && aRes.my_price_each !== null
+          ? D(aRes.my_price_each)
+          : D(aRes.price_each);
+        unitPrice = line.price_override !== undefined && line.price_override !== null
+          ? D(line.price_override)
+          : defaultPrice;
+      }
+    }
+
+    if (unitPrice.lt(unitCost)) {
+      warn(warnings, 'W_PRICE_BELOW_COST', `Line ${idx + 1} unit price (${toNum(unitPrice).toFixed(2)}) is below unit cost (${toNum(unitCost).toFixed(2)})`, `${pPath}.price`);
+    }
+
+    const lineTotal = qty.mul(unitPrice);
+    const lineCost = qty.mul(unitCost);
+
+    subtotal = subtotal.add(lineTotal);
+    costTotal = costTotal.add(lineCost);
+
+    lineResults.push({
+      product_kind: line.product_kind,
+      product_id: line.product_id,
+      quantity: line.quantity,
+      unit: line.unit,
+      price_override: line.price_override,
+      unit_price: toNum(unitPrice),
+      unit_cost: toNum(unitCost),
+      line_total: toNum(lineTotal),
+      line_cost: toNum(lineCost),
+    });
+
+    audit.push(
+      step(
+        `Line ${idx + 1}: ${line.product_id} (${line.quantity} ${line.unit}s)`,
+        `qty × unit_price = ${toNum(qty)} × ${toNum(unitPrice).toFixed(2)}`,
+        lineTotal
+      )
+    );
+  });
+
+  const delivery = D(Math.max(0, input.delivery ?? 0));
+  // Available profit before discount = subtotal - costTotal
+  const availableProfit = Decimal.max(0, subtotal.minus(costTotal));
+
+  // Discount rule: capped to available profit (mirroring cake quote)
+  const rawDiscount = D(Math.max(0, input.discount ?? 0));
+  const effectiveDiscount = rawDiscount.gt(availableProfit) ? availableProfit : rawDiscount;
+  const discountCapped = rawDiscount.gt(availableProfit) && rawDiscount.gt(0);
+
+  if (discountCapped) {
+    warn(
+      warnings,
+      'W_DISCOUNT_CAPPED',
+      `Discount was capped from ${rawDiscount.toFixed(2)} to ${effectiveDiscount.toFixed(2)} (available profit)`,
+      'discount'
+    );
+  }
+
+  const totalPrice = subtotal.minus(effectiveDiscount).add(delivery);
+  // Profit = subtotal - discount - costTotal (delivery is pass-through)
+  const profit = subtotal.minus(effectiveDiscount).minus(costTotal);
+
+  const priceExclDelivery = subtotal.minus(effectiveDiscount);
+  const effectiveMargin = priceExclDelivery.gt(0)
+    ? profit.div(priceExclDelivery)
+    : D(0);
+
+  audit.push(
+    step('Subtotal', 'Σ line_total', subtotal),
+    step('Cost total', 'Σ line_cost', costTotal),
+    step('Delivery', 'user amount (pass-through)', delivery),
+    step('Discount', `capped to profit (input: ${toNum(rawDiscount).toFixed(2)})`, effectiveDiscount),
+    step('Total price', 'subtotal - discount + delivery', totalPrice),
+    step('Profit', 'subtotal - discount - cost_total', profit),
+    step('Effective margin', 'profit / (subtotal - discount)', effectiveMargin)
+  );
+
+  const roundingStep = data.settings.price_rounding_step;
+  const suggestedPrice = roundingStep && roundingStep > 0
+    ? roundPrice(totalPrice, roundingStep)
+    : undefined;
+
+  if (suggestedPrice !== undefined) {
+    audit.push(step('Suggested price (display only)', `round(${toNum(totalPrice).toFixed(2)}, nearest ${roundingStep})`, suggestedPrice));
+  }
+
+  return {
+    lines: lineResults,
+    subtotal: toNum(subtotal),
+    cost_total: toNum(costTotal),
+    delivery: toNum(delivery),
+    profit: toNum(profit),
+    discount: toNum(effectiveDiscount),
+    discount_capped: discountCapped,
+    total_price: toNum(totalPrice),
+    effective_margin: toNum(effectiveMargin),
+    suggested_price: suggestedPrice,
+    warnings,
+    audit,
   };
 }

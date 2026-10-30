@@ -66,6 +66,10 @@ export function DataHealthPage({ onNavigate }: DataHealthPageProps) {
     W_DISCOUNT_CAPPED: 'Discount Capped to Available Profit',
     W_ORDER_WITHOUT_QUOTE: 'Orders Without a Linked Quote',
     W_ORDER_PAST_DUE: 'Orders Past Due Date',
+    W_PRICE_BELOW_COST: 'Selling Price Below Product Cost',
+    W_PRICE_BELOW_TARGET: 'Margin Below Target Margin',
+    W_UNKNOWN_PRODUCT: 'Quote with Unknown Product Reference',
+    W_ZERO_QUANTITY: 'Quote Line with Zero Quantity',
   };
 
   const getPageForItem = (warning: typeof all_warnings[0]): string => {
@@ -73,11 +77,12 @@ export function DataHealthPage({ onNavigate }: DataHealthPageProps) {
     if (warning.code === 'W_UNPRICED_INGREDIENT') return 'ingredients';
     if (p.startsWith('recipes') || p.startsWith('recipe[')) return 'recipes';
     if (p.startsWith('flavours') || p.startsWith('fillings')) return 'flavours';
-    if (p.startsWith('batch_products') || p.startsWith('assembled_products') || p.startsWith('products')) return 'products';
+    if (p.startsWith('batch_products') || p.startsWith('assembled_products') || p.startsWith('products') || p.startsWith('batch_product[')) return 'products';
     if (p.startsWith('settings')) return 'settings';
     if (p.startsWith('ingredients')) return 'ingredients';
     if (p.startsWith('packaging')) return 'packaging';
     if (p.startsWith('order')) return 'orders';
+    if (p.startsWith('lines[') || p.startsWith('product_quote')) return 'product_quote';
     return 'quote';
   };
 

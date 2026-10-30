@@ -2,9 +2,14 @@
 
 This file documents schema changes and how to migrate data from older versions.
 
-## Current Schema Version: 1.3
+## Current Schema Version: 1.4
 
-The schema version is checked on import in `src/io/io.ts`. Files with a newer major schema version are rejected; older major versions are accepted with the compatibility behavior described below. Missing settings fields are filled from `DEFAULT_SETTINGS`. Omitted entity arrays are not automatically cleared by a selective import.
+The schema version is checked on import in `src/io/io.ts`. Files with a newer major schema version are rejected; versions with the same or an older major version are accepted and validated using the compatibility behavior described below. Missing settings fields are filled from `DEFAULT_SETTINGS`. Omitted entity arrays are not automatically cleared by a selective import.
+
+### `1.4` (Product pricing overrides and product quotes)
+*   **Added:** optional per-product pricing overrides on `BatchProduct` and `AssembledProduct` for `overhead_pct`, `target_margin`, `labour_rate_per_hour`, `other_cost_per_piece`, and `my_price_*` values.
+*   **Added:** optional `product_quote_input` for saved product quotes, plus `kind?: 'cake' | 'products'` support on `SavedQuote`.
+*   **Compatibility:** older exports without these fields continue to import cleanly and fall back to global settings. Existing quote behaviour remains unchanged when all new values are blank.
 
 ### `1.3` (Recipe labour)
 *   **Added:** optional `labour_hours` field to `Recipe`.
@@ -24,13 +29,13 @@ The schema version is checked on import in `src/io/io.ts`. Files with a newer ma
 
 ## Application releases without schema changes
 
-These app releases do not change the exported data schema and require no data migration:
+These app releases did not change the exported data schema and require no data migration:
 
 *   **v1.4.12:** Fixed native form validation on two Settings number fields.
 *   **v1.4.13:** Subsetted the Material Symbols font; app data is unchanged.
 *   **v1.4.15:** Design-consistency pass across list pages; app data is unchanged.
 *   **v1.4.16:** Quote-page breakpoint and size-guide pill fixes; app data is unchanged.
 
-**v1.4.17** is an exception: it bumps the schema to `1.3` (see above).
+**v1.5.0** adds the product-pricing and product-quote schema fields described above.
 
-The current schema is `1.3`. UI redesigns, validation fixes, and static-asset changes do not by themselves require a schema-version bump.
+The current schema is `1.4`. UI redesigns, validation fixes, and static-asset changes do not by themselves require a schema-version bump.

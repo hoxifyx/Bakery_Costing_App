@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { StoreProvider, useStore } from './store/store';
 import { Layout } from './ui/Layout';
 import { QuotePage } from './ui/pages/QuotePage';
+import { ProductQuotePage } from './ui/pages/ProductQuotePage';
 import { IngredientsPage } from './ui/pages/IngredientsPage';
 import { PackagingPage } from './ui/pages/PackagingPage';
 import { RecipesPage } from './ui/pages/RecipesPage';
@@ -40,6 +41,8 @@ function AppContent() {
     switch (currentPage) {
       case 'quote':
         return <QuotePage />;
+      case 'product_quote':
+        return <ProductQuotePage />;
       case 'saved_quotes':
         return <SavedQuotesPage onNavigate={setCurrentPage} />;
       case 'customers':

@@ -105,6 +105,12 @@ export interface BatchProduct {
   box_id: Id | null;
   pieces_per_box: number;
   show_each_including_box: boolean;
+  overhead_pct?: number | null;
+  target_margin?: number | null;
+  labour_rate_per_hour?: number | null;
+  other_cost_per_piece?: number;
+  my_price_each?: number | null;
+  my_price_box?: number | null;
 }
 
 export type AssembledComponent =
@@ -120,6 +126,11 @@ export interface AssembledProduct {
   pieces_per_batch: number;
   box_id: Id | null;
   pieces_per_box: number;
+  overhead_pct?: number | null;
+  target_margin?: number | null;
+  labour_rate_per_hour?: number | null;
+  other_cost_per_piece?: number;
+  my_price_each?: number | null;
 }
 
 export interface TierInput {
@@ -144,6 +155,47 @@ export interface QuoteInput {
   decoration: DecorationInput;
 }
 
+export interface ProductQuoteLine {
+  product_kind: 'batch' | 'assembled';
+  product_id: string;
+  quantity: number;                 // pieces, or boxes when unit = 'box'
+  unit: 'piece' | 'box';            // 'box' only for batch products
+  price_override?: number | null;   // per unit, this line only
+}
+
+export interface ProductQuoteInput {
+  lines: ProductQuoteLine[];
+  delivery: number;
+  discount?: number;
+}
+
+export interface ProductQuoteLineResult {
+  product_kind: 'batch' | 'assembled';
+  product_id: string;
+  quantity: number;
+  unit: 'piece' | 'box';
+  price_override?: number | null;
+  unit_price: number;
+  unit_cost: number;
+  line_total: number;
+  line_cost: number;
+}
+
+export interface ProductQuoteResult {
+  lines: ProductQuoteLineResult[];
+  subtotal: number;
+  cost_total: number;
+  delivery: number;
+  profit: number;
+  discount: number;
+  discount_capped: boolean;
+  total_price: number;
+  effective_margin: number;
+  suggested_price?: number;
+  warnings: Warning[];
+  audit: AuditStep[];
+}
+
 export interface SizeGuideEntry {
   label: string;
   kg: number;
@@ -155,7 +207,9 @@ export interface SavedQuote {
   name: string;
   created_at: string;
   updated_at?: string;
+  kind?: 'cake' | 'products';
   input: QuoteInput;
+  product_quote_input?: ProductQuoteInput;
   result_snapshot: unknown;
   notes?: string;
 }
@@ -200,7 +254,11 @@ export type WarningCode =
   | 'W_ROLE_NOT_SET'
   | 'W_DISCOUNT_CAPPED'
   | 'W_ORDER_WITHOUT_QUOTE'
-  | 'W_ORDER_PAST_DUE';
+  | 'W_ORDER_PAST_DUE'
+  | 'W_PRICE_BELOW_COST'
+  | 'W_PRICE_BELOW_TARGET'
+  | 'W_UNKNOWN_PRODUCT'
+  | 'W_ZERO_QUANTITY';
 
 export interface Warning {
   code: WarningCode;
@@ -243,11 +301,22 @@ export interface BatchProductResult {
   pieces: number;
   raw_cost_per_piece: number;
   unit_cost: number;
+  cost_each_excl_box: number;
+  cost_each_incl_box: number;
+  cost_each: number;
+  cost_box: number;
   each_including_box: number;
   each_excluding_box: number;
   box_price: number;
   headline_each: number;
   suggested_headline_each?: number;
+  my_price_each?: number | null;
+  my_price_box?: number | null;
+  profit_each?: number;
+  margin_each?: number;
+  profit_box?: number;
+  margin_box?: number;
+  price_in_use_each: number;
   warnings: Warning[];
   audit: AuditStep[];
 }
@@ -256,8 +325,13 @@ export interface AssembledProductResult {
   unit_cost: number;
   labour_piece: number;
   box_piece: number;
+  cost_each: number;
   price_each: number;
   suggested_price_each?: number;
+  my_price_each?: number | null;
+  profit_each?: number;
+  margin_each?: number;
+  price_in_use_each: number;
   warnings: Warning[];
   audit: AuditStep[];
 }

@@ -20,6 +20,8 @@ export function ProductsPage() {
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string; type: 'batch' | 'assembled' } | null>(null);
   const [explainBatch, setExplainBatch] = useState<string | null>(null);
   const [explainAssembled, setExplainAssembled] = useState<string | null>(null);
+  const [showBatchOverrides, setShowBatchOverrides] = useState(false);
+  const [showAssembledOverrides, setShowAssembledOverrides] = useState(false);
 
   const [batchMultipliers, setBatchMultipliers] = useState<Record<string, number>>({});
 
@@ -31,9 +33,8 @@ export function ProductsPage() {
     .filter(p => p.name.toLowerCase().includes(search.toLowerCase()) || p.id.toLowerCase().includes(search.toLowerCase()))
     .sort((a, b) => a.name.localeCompare(b.name));
 
-  const batchRecipes = [...data.recipes.filter(r => r.kind === 'batch_product')].sort((a, b) => a.name.localeCompare(b.name));
-  const frostingRecipes = [...data.recipes.filter(r => r.kind === 'frosting_filling')].sort((a, b) => a.name.localeCompare(b.name));
-  const cakeRecipes = [...data.recipes.filter(r => r.kind === 'cake')].sort((a, b) => a.name.localeCompare(b.name));
+  const allRecipesSorted = [...data.recipes].sort((a, b) => a.name.localeCompare(b.name));
+  const frostingRecipes = allRecipesSorted.filter(r => r.kind === 'frosting_filling');
 
   // Batch product CRUD
   const openNewBatch = () => {
@@ -41,7 +42,7 @@ export function ProductsPage() {
     setEditingBatch({
       id: generateId('batch'),
       name: '',
-      recipe_id: batchRecipes[0]?.id ?? '',
+      recipe_id: allRecipesSorted[0]?.id ?? '',
       pieces_mode: 'by_weight',
       piece_weight_g: 50,
       labour_hours_per_batch: 0,
@@ -49,6 +50,12 @@ export function ProductsPage() {
       box_id: null,
       pieces_per_box: 12,
       show_each_including_box: true,
+      overhead_pct: null,
+      target_margin: null,
+      labour_rate_per_hour: null,
+      other_cost_per_piece: 0,
+      my_price_each: null,
+      my_price_box: null,
     });
   };
 
@@ -75,6 +82,11 @@ export function ProductsPage() {
       pieces_per_batch: 12,
       box_id: null,
       pieces_per_box: 12,
+      overhead_pct: null,
+      target_margin: null,
+      labour_rate_per_hour: null,
+      other_cost_per_piece: 0,
+      my_price_each: null,
     });
   };
 
@@ -101,8 +113,8 @@ export function ProductsPage() {
   const addComponent = (type: AssembledComponent['type']) => {
     if (!editingAssembled) return;
     let comp: AssembledComponent;
-    if (type === 'cake_recipe_grams') comp = { type, recipe_id: cakeRecipes[0]?.id ?? '', grams: 60 };
-    else if (type === 'recipe_per_gram') comp = { type, recipe_id: frostingRecipes[0]?.id ?? '', grams: 30 };
+    if (type === 'cake_recipe_grams') comp = { type, recipe_id: allRecipesSorted[0]?.id ?? '', grams: 60 };
+    else if (type === 'recipe_per_gram') comp = { type, recipe_id: allRecipesSorted[0]?.id ?? '', grams: 30 };
     else comp = { type: 'ingredient_grams', ingredient_id: data.ingredients[0]?.id ?? '', grams: 10 };
     setEditingAssembled(p => p && ({ ...p, components: [...p.components, comp] }));
   };
@@ -187,12 +199,22 @@ export function ProductsPage() {
                     <th>Each (Incl Box)</th>
                     <th>Box Price</th>
                     <th>Headline</th>
+                    <th>My Price</th>
+                    <th>Profit Each</th>
+                    <th>Margin</th>
                     <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredBatchProducts.map(p => {
                     const res = result.batch_products[p.id];
+                    const targetMargin = p.target_margin ?? data.settings.target_margin;
+                    const marginEach = res?.margin_each;
+                    const profitEach = res?.profit_each;
+                    const hasMyPrice = p.my_price_each !== undefined && p.my_price_each !== null;
+                    const isBelowCost = hasMyPrice && profitEach !== undefined && profitEach < 0;
+                    const isBelowTarget = hasMyPrice && !isBelowCost && marginEach !== undefined && marginEach < targetMargin;
+
                     return (
                       <tr key={p.id}>
                         <td>
@@ -215,6 +237,33 @@ export function ProductsPage() {
                               </span>
                             )}
                           </div>
+                        </td>
+                        <td className="td-mono">
+                          {hasMyPrice && res?.my_price_each !== undefined && res.my_price_each !== null ? (
+                            <span className={isBelowCost ? 'badge badge-red' : isBelowTarget ? 'badge badge-amber' : 'badge badge-green'}>
+                              {fmtMoney(res.my_price_each, cur)}
+                            </span>
+                          ) : (
+                            <span className="text-muted">—</span>
+                          )}
+                        </td>
+                        <td className="td-mono">
+                          {hasMyPrice && profitEach !== undefined ? (
+                            <span className={isBelowCost ? 'text-red' : 'text-green'}>
+                              {fmtMoney(profitEach, cur)}
+                            </span>
+                          ) : (
+                            <span className="text-muted">—</span>
+                          )}
+                        </td>
+                        <td>
+                          {hasMyPrice && marginEach !== undefined ? (
+                            <span className={isBelowCost ? 'badge badge-red' : isBelowTarget ? 'badge badge-amber' : 'badge badge-green'}>
+                              {(marginEach * 100).toFixed(1)}%
+                            </span>
+                          ) : (
+                            <span className="text-muted">—</span>
+                          )}
                         </td>
                         <td>
                           <div className="td-actions">
@@ -274,12 +323,22 @@ export function ProductsPage() {
                     <th>Unit Cost</th>
                     <th>Labour/Piece</th>
                     <th>Price Each</th>
+                    <th>My Price</th>
+                    <th>Profit Each</th>
+                    <th>Margin</th>
                     <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredAssembledProducts.map(p => {
                     const res = result.assembled_products[p.id];
+                    const targetMargin = p.target_margin ?? data.settings.target_margin;
+                    const marginEach = res?.margin_each;
+                    const profitEach = res?.profit_each;
+                    const hasMyPrice = p.my_price_each !== undefined && p.my_price_each !== null;
+                    const isBelowCost = hasMyPrice && profitEach !== undefined && profitEach < 0;
+                    const isBelowTarget = hasMyPrice && !isBelowCost && marginEach !== undefined && marginEach < targetMargin;
+
                     return (
                       <tr key={p.id}>
                         <td>
@@ -295,6 +354,33 @@ export function ProductsPage() {
                             <div style={{ marginTop: 4, fontSize: 11, color: 'var(--accent-amber)', fontFamily: 'var(--font-body)', textAlign: 'right' }}>
                               Sugg: {fmtMoney(res.suggested_price_each, cur)}
                             </div>
+                          )}
+                        </td>
+                        <td className="td-mono">
+                          {hasMyPrice && res?.my_price_each !== undefined && res.my_price_each !== null ? (
+                            <span className={isBelowCost ? 'badge badge-red' : isBelowTarget ? 'badge badge-amber' : 'badge badge-green'}>
+                              {fmtMoney(res.my_price_each, cur)}
+                            </span>
+                          ) : (
+                            <span className="text-muted">—</span>
+                          )}
+                        </td>
+                        <td className="td-mono">
+                          {hasMyPrice && profitEach !== undefined ? (
+                            <span className={isBelowCost ? 'text-red' : 'text-green'}>
+                              {fmtMoney(profitEach, cur)}
+                            </span>
+                          ) : (
+                            <span className="text-muted">—</span>
+                          )}
+                        </td>
+                        <td>
+                          {hasMyPrice && marginEach !== undefined ? (
+                            <span className={isBelowCost ? 'badge badge-red' : isBelowTarget ? 'badge badge-amber' : 'badge badge-green'}>
+                              {(marginEach * 100).toFixed(1)}%
+                            </span>
+                          ) : (
+                            <span className="text-muted">—</span>
                           )}
                         </td>
                         <td>
@@ -347,7 +433,11 @@ export function ProductsPage() {
                   <label>Recipe</label>
                   <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
                     <select className="select" value={editingBatch.recipe_id} onChange={e => setEditingBatch(p => p && ({ ...p, recipe_id: e.target.value }))} style={{ flex: 1 }}>
-                      {batchRecipes.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
+                      {allRecipesSorted.map(r => (
+                        <option key={r.id} value={r.id}>
+                          {r.name} ({r.kind})
+                        </option>
+                      ))}
                     </select>
                     {editingBatch.recipe_id && (
                       <div style={{ width: 80 }}>
@@ -426,7 +516,11 @@ export function ProductsPage() {
                         const comps = editingBatch.components.map((c, i) => i === ci ? { ...c, recipe_id: e.target.value } : c);
                         setEditingBatch(p => p && ({ ...p, components: comps }));
                       }} style={{ flex: 1, minWidth: 0 }}>
-                        {[...data.recipes].sort((a, b) => a.name.localeCompare(b.name)).map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
+                        {allRecipesSorted.map(r => (
+                          <option key={r.id} value={r.id}>
+                            {r.name} ({r.kind})
+                          </option>
+                        ))}
                       </select>
                       {comp.recipe_id && (
                         <div style={{ width: 80 }}>
@@ -449,23 +543,195 @@ export function ProductsPage() {
                 ))}
               </div>
 
-              {/* Live result */}
+              {/* Pricing Overrides (R2) */}
+              <div style={{ border: '1px solid var(--border)', borderRadius: 'var(--r-md)', padding: 12, marginBottom: 16 }}>
+                <button
+                  type="button"
+                  onClick={() => setShowBatchOverrides(v => !v)}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    padding: 0,
+                    width: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    cursor: 'pointer',
+                    color: 'inherit',
+                    font: 'inherit',
+                  }}
+                >
+                  <span style={{ fontWeight: 600, fontSize: 13, display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span className="material-symbols-outlined ms-16" aria-hidden>tune</span>
+                    Pricing overrides
+                  </span>
+                  <span className="material-symbols-outlined ms-18" aria-hidden style={{ transform: showBatchOverrides ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s' }}>
+                    expand_more
+                  </span>
+                </button>
+                {showBatchOverrides && (
+                  <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 12 }}>
+                    <div className="form-row form-row-2">
+                      <div className="form-group">
+                        <label>Overhead % (global: {(data.settings.overhead_pct * 100).toFixed(0)}%)</label>
+                        <input
+                          type="number"
+                          className="input"
+                          value={editingBatch.overhead_pct !== null && editingBatch.overhead_pct !== undefined ? editingBatch.overhead_pct : ''}
+                          placeholder={String(data.settings.overhead_pct)}
+                          step={0.01}
+                          min={0}
+                          onChange={e => {
+                            const val = e.target.value.trim();
+                            setEditingBatch(p => p && ({ ...p, overhead_pct: val === '' ? null : parseFloat(val) }));
+                          }}
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label>Target margin (global: {(data.settings.target_margin * 100).toFixed(0)}%)</label>
+                        <input
+                          type="number"
+                          className="input"
+                          value={editingBatch.target_margin !== null && editingBatch.target_margin !== undefined ? editingBatch.target_margin : ''}
+                          placeholder={String(data.settings.target_margin)}
+                          step={0.01}
+                          min={0}
+                          max={0.999}
+                          onChange={e => {
+                            const val = e.target.value.trim();
+                            setEditingBatch(p => p && ({ ...p, target_margin: val === '' ? null : parseFloat(val) }));
+                          }}
+                        />
+                      </div>
+                    </div>
+                    <div className="form-row form-row-2">
+                      <div className="form-group">
+                        <label>Labour rate/hr (global: {data.settings.labour_rate_per_hour})</label>
+                        <input
+                          type="number"
+                          className="input"
+                          value={editingBatch.labour_rate_per_hour !== null && editingBatch.labour_rate_per_hour !== undefined ? editingBatch.labour_rate_per_hour : ''}
+                          placeholder={String(data.settings.labour_rate_per_hour)}
+                          step={1}
+                          min={0}
+                          onChange={e => {
+                            const val = e.target.value.trim();
+                            setEditingBatch(p => p && ({ ...p, labour_rate_per_hour: val === '' ? null : parseFloat(val) }));
+                          }}
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label>Other cost per piece ({cur})</label>
+                        <input
+                          type="number"
+                          className="input"
+                          value={editingBatch.other_cost_per_piece !== undefined && editingBatch.other_cost_per_piece !== null && editingBatch.other_cost_per_piece !== 0 ? editingBatch.other_cost_per_piece : (editingBatch.other_cost_per_piece === 0 ? '0' : '')}
+                          placeholder="0"
+                          step={0.5}
+                          min={0}
+                          onChange={e => {
+                            const val = e.target.value.trim();
+                            setEditingBatch(p => p && ({ ...p, other_cost_per_piece: val === '' ? 0 : parseFloat(val) }));
+                          }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* My selling price (R3) & Live Result */}
               {(() => {
                 const prev = { ...data, batch_products: [...data.batch_products.filter(p => p.id !== editingBatch.id), editingBatch] };
                 const res = compute(prev, null, batchMultipliers).batch_products[editingBatch.id];
                 if (!res) return null;
+
+                const targetMargin = editingBatch.target_margin ?? data.settings.target_margin;
+                const profitEach = res.profit_each;
+                const marginEach = res.margin_each;
+                const isBelowCost = profitEach !== undefined && profitEach < 0;
+                const isBelowTarget = !isBelowCost && marginEach !== undefined && marginEach < targetMargin;
+
                 return (
-                  <div className="success-banner" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: 2 }}>
-                    <b>Pieces: {res.pieces.toFixed(2)}</b>
-                    <span>Unit cost: {fmtMoney(res.unit_cost, cur, 4)}</span>
-                    <span>Each excl. box: {fmtMoney(res.each_excluding_box, cur, 4)}</span>
-                    <span>Each incl. box: {fmtMoney(res.each_including_box, cur, 4)}</span>
-                    <span>Box (full): {fmtMoney(res.box_price, cur)}</span>
-                    {res.warnings.length > 0 && (
-                      <div style={{ width: '100%', minWidth: 0, overflowWrap: 'anywhere' }}>
-                        <WarningsList warnings={res.warnings} limit={3} />
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 12 }}>
+                    <div style={{ border: '1px solid var(--border)', borderRadius: 'var(--r-md)', padding: 12, background: 'var(--bg-surface-low)' }}>
+                      <label style={{ fontWeight: 600, fontSize: 13, marginBottom: 8, display: 'block' }}>
+                        My selling price
+                      </label>
+                      <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                        <div style={{ width: 150 }}>
+                          <input
+                            type="number"
+                            className="input"
+                            value={editingBatch.my_price_each !== null && editingBatch.my_price_each !== undefined ? editingBatch.my_price_each : ''}
+                            placeholder={`Calc: ${res.headline_each.toFixed(2)}`}
+                            step={1}
+                            min={0}
+                            onChange={e => {
+                              const val = e.target.value.trim();
+                              setEditingBatch(p => p && ({ ...p, my_price_each: val === '' ? null : parseFloat(val) }));
+                            }}
+                          />
+                        </div>
+                        <button
+                          type="button"
+                          className="quote-toolbar-btn"
+                          onClick={() => setEditingBatch(p => p && ({ ...p, my_price_each: res.headline_each }))}
+                        >
+                          Use calculated
+                        </button>
+                        {res.suggested_headline_each !== undefined && (
+                          <button
+                            type="button"
+                            className="quote-toolbar-btn"
+                            onClick={() => setEditingBatch(p => p && ({ ...p, my_price_each: res.suggested_headline_each }))}
+                          >
+                            Use suggested ({fmtMoney(res.suggested_headline_each, cur)})
+                          </button>
+                        )}
+                        {editingBatch.my_price_each !== null && editingBatch.my_price_each !== undefined && (
+                          <button
+                            type="button"
+                            className="quote-toolbar-btn"
+                            onClick={() => setEditingBatch(p => p && ({ ...p, my_price_each: null }))}
+                          >
+                            Clear
+                          </button>
+                        )}
                       </div>
-                    )}
+
+                      {editingBatch.my_price_each !== null && editingBatch.my_price_each !== undefined && profitEach !== undefined && marginEach !== undefined && (
+                        <div style={{ marginTop: 8, display: 'flex', gap: 12, alignItems: 'center', fontSize: 13 }}>
+                          <span>Profit/piece: <b className={isBelowCost ? 'text-red' : 'text-green'}>{fmtMoney(profitEach, cur)}</b></span>
+                          <span>
+                            Margin: <span className={isBelowCost ? 'badge badge-red' : isBelowTarget ? 'badge badge-amber' : 'badge badge-green'}>
+                              {(marginEach * 100).toFixed(1)}%
+                            </span>
+                          </span>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="success-banner" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: 2 }}>
+                      <b>Pieces: {res.pieces.toFixed(2)}</b>
+                      <span>Unit cost: {fmtMoney(res.unit_cost, cur, 4)}</span>
+                      <span>Cost each excl. box: {fmtMoney(res.cost_each_excl_box, cur, 4)}</span>
+                      <span>Cost each incl. box: {fmtMoney(res.cost_each_incl_box, cur, 4)}</span>
+                      <span>Each excl. box: {fmtMoney(res.each_excluding_box, cur, 4)}</span>
+                      <span>Each incl. box: {fmtMoney(res.each_including_box, cur, 4)}</span>
+                      <span>Box (full): {fmtMoney(res.box_price, cur)}</span>
+                      <b>Calculated headline each: {fmtMoney(res.headline_each, cur)}</b>
+                      {res.suggested_headline_each !== undefined && (
+                        <span style={{ fontSize: 12, color: 'var(--accent-amber)' }}>
+                          Suggested: {fmtMoney(res.suggested_headline_each, cur)}
+                        </span>
+                      )}
+                      {res.warnings.length > 0 && (
+                        <div style={{ width: '100%', minWidth: 0, overflowWrap: 'anywhere' }}>
+                          <WarningsList warnings={res.warnings} limit={3} />
+                        </div>
+                      )}
+                    </div>
                   </div>
                 );
               })()}
@@ -521,6 +787,103 @@ export function ProductsPage() {
                 <NumberInput value={editingAssembled.pieces_per_box} onChange={v => setEditingAssembled(p => p && ({ ...p, pieces_per_box: v }))} />
               </div>
 
+              {/* Pricing Overrides (R2) */}
+              <div style={{ border: '1px solid var(--border)', borderRadius: 'var(--r-md)', padding: 12, marginBottom: 16 }}>
+                <button
+                  type="button"
+                  onClick={() => setShowAssembledOverrides(v => !v)}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    padding: 0,
+                    width: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    cursor: 'pointer',
+                    color: 'inherit',
+                    font: 'inherit',
+                  }}
+                >
+                  <span style={{ fontWeight: 600, fontSize: 13, display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span className="material-symbols-outlined ms-16" aria-hidden>tune</span>
+                    Pricing overrides
+                  </span>
+                  <span className="material-symbols-outlined ms-18" aria-hidden style={{ transform: showAssembledOverrides ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s' }}>
+                    expand_more
+                  </span>
+                </button>
+                {showAssembledOverrides && (
+                  <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 12 }}>
+                    <div className="form-row form-row-2">
+                      <div className="form-group">
+                        <label>Overhead % (global: {(data.settings.overhead_pct * 100).toFixed(0)}%)</label>
+                        <input
+                          type="number"
+                          className="input"
+                          value={editingAssembled.overhead_pct !== null && editingAssembled.overhead_pct !== undefined ? editingAssembled.overhead_pct : ''}
+                          placeholder={String(data.settings.overhead_pct)}
+                          step={0.01}
+                          min={0}
+                          onChange={e => {
+                            const val = e.target.value.trim();
+                            setEditingAssembled(p => p && ({ ...p, overhead_pct: val === '' ? null : parseFloat(val) }));
+                          }}
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label>Target margin (global: {(data.settings.target_margin * 100).toFixed(0)}%)</label>
+                        <input
+                          type="number"
+                          className="input"
+                          value={editingAssembled.target_margin !== null && editingAssembled.target_margin !== undefined ? editingAssembled.target_margin : ''}
+                          placeholder={String(data.settings.target_margin)}
+                          step={0.01}
+                          min={0}
+                          max={0.999}
+                          onChange={e => {
+                            const val = e.target.value.trim();
+                            setEditingAssembled(p => p && ({ ...p, target_margin: val === '' ? null : parseFloat(val) }));
+                          }}
+                        />
+                      </div>
+                    </div>
+                    <div className="form-row form-row-2">
+                      <div className="form-group">
+                        <label>Labour rate/hr (global: {data.settings.labour_rate_per_hour})</label>
+                        <input
+                          type="number"
+                          className="input"
+                          value={editingAssembled.labour_rate_per_hour !== null && editingAssembled.labour_rate_per_hour !== undefined ? editingAssembled.labour_rate_per_hour : ''}
+                          placeholder={String(data.settings.labour_rate_per_hour)}
+                          step={1}
+                          min={0}
+                          onChange={e => {
+                            const val = e.target.value.trim();
+                            setEditingAssembled(p => p && ({ ...p, labour_rate_per_hour: val === '' ? null : parseFloat(val) }));
+                          }}
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label>Other cost per piece ({cur})</label>
+                        <input
+                          type="number"
+                          className="input"
+                          value={editingAssembled.other_cost_per_piece !== undefined && editingAssembled.other_cost_per_piece !== null && editingAssembled.other_cost_per_piece !== 0 ? editingAssembled.other_cost_per_piece : (editingAssembled.other_cost_per_piece === 0 ? '0' : '')}
+                          placeholder="0"
+                          step={0.5}
+                          min={0}
+                          onChange={e => {
+                            const val = e.target.value.trim();
+                            setEditingAssembled(p => p && ({ ...p, other_cost_per_piece: val === '' ? 0 : parseFloat(val) }));
+                          }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
               {/* Components */}
               <div>
                 <div className="decorations-section-header" style={{ marginBottom: 8 }}>
@@ -558,7 +921,11 @@ export function ProductsPage() {
                       }} style={{ flex: 1, minWidth: 0 }}>
                         {comp.type === 'ingredient_grams'
                           ? [...data.ingredients].sort((a, b) => a.name.localeCompare(b.name)).map(i => <option key={i.id} value={i.id}>{i.name}</option>)
-                          : (comp.type === 'cake_recipe_grams' ? cakeRecipes : frostingRecipes).map(r => <option key={r.id} value={r.id}>{r.name}</option>)
+                          : allRecipesSorted.map(r => (
+                              <option key={r.id} value={r.id}>
+                                {r.name} ({r.kind})
+                              </option>
+                            ))
                         }
                       </select>
                       {comp.type !== 'ingredient_grams' && comp.recipe_id && (
@@ -579,27 +946,95 @@ export function ProductsPage() {
                 ))}
               </div>
 
-              {/* Live result */}
+              {/* My selling price (R3) & Live result */}
               {(() => {
                 const prev = { ...data, assembled_products: [...data.assembled_products.filter(p => p.id !== editingAssembled.id), editingAssembled] };
                 const res = compute(prev, null, batchMultipliers).assembled_products[editingAssembled.id];
                 if (!res) return null;
+
+                const targetMargin = editingAssembled.target_margin ?? data.settings.target_margin;
+                const profitEach = res.profit_each;
+                const marginEach = res.margin_each;
+                const isBelowCost = profitEach !== undefined && profitEach < 0;
+                const isBelowTarget = !isBelowCost && marginEach !== undefined && marginEach < targetMargin;
+
                 return (
-                  <div className="success-banner" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: 2 }}>
-                    <span>Unit cost: {fmtMoney(res.unit_cost, cur, 4)}</span>
-                    <span>Labour/piece: {fmtMoney(res.labour_piece, cur, 4)}</span>
-                    <span>Box/piece: {fmtMoney(res.box_piece, cur, 4)}</span>
-                    <b>Price each: {fmtMoney(res.price_each, cur)}</b>
-                    {res.suggested_price_each !== undefined && (
-                      <span style={{ fontSize: 12, color: 'var(--accent-amber)' }}>
-                        Suggested: {fmtMoney(res.suggested_price_each, cur)}
-                      </span>
-                    )}
-                    {res.warnings.length > 0 && (
-                      <div style={{ width: '100%', minWidth: 0, overflowWrap: 'anywhere' }}>
-                        <WarningsList warnings={res.warnings} limit={3} />
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 12 }}>
+                    <div style={{ border: '1px solid var(--border)', borderRadius: 'var(--r-md)', padding: 12, background: 'var(--bg-surface-low)' }}>
+                      <label style={{ fontWeight: 600, fontSize: 13, marginBottom: 8, display: 'block' }}>
+                        My selling price
+                      </label>
+                      <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                        <div style={{ width: 150 }}>
+                          <input
+                            type="number"
+                            className="input"
+                            value={editingAssembled.my_price_each !== null && editingAssembled.my_price_each !== undefined ? editingAssembled.my_price_each : ''}
+                            placeholder={`Calc: ${res.price_each.toFixed(2)}`}
+                            step={1}
+                            min={0}
+                            onChange={e => {
+                              const val = e.target.value.trim();
+                              setEditingAssembled(p => p && ({ ...p, my_price_each: val === '' ? null : parseFloat(val) }));
+                            }}
+                          />
+                        </div>
+                        <button
+                          type="button"
+                          className="quote-toolbar-btn"
+                          onClick={() => setEditingAssembled(p => p && ({ ...p, my_price_each: res.price_each }))}
+                        >
+                          Use calculated
+                        </button>
+                        {res.suggested_price_each !== undefined && (
+                          <button
+                            type="button"
+                            className="quote-toolbar-btn"
+                            onClick={() => setEditingAssembled(p => p && ({ ...p, my_price_each: res.suggested_price_each }))}
+                          >
+                            Use suggested ({fmtMoney(res.suggested_price_each, cur)})
+                          </button>
+                        )}
+                        {editingAssembled.my_price_each !== null && editingAssembled.my_price_each !== undefined && (
+                          <button
+                            type="button"
+                            className="quote-toolbar-btn"
+                            onClick={() => setEditingAssembled(p => p && ({ ...p, my_price_each: null }))}
+                          >
+                            Clear
+                          </button>
+                        )}
                       </div>
-                    )}
+
+                      {editingAssembled.my_price_each !== null && editingAssembled.my_price_each !== undefined && profitEach !== undefined && marginEach !== undefined && (
+                        <div style={{ marginTop: 8, display: 'flex', gap: 12, alignItems: 'center', fontSize: 13 }}>
+                          <span>Profit/piece: <b className={isBelowCost ? 'text-red' : 'text-green'}>{fmtMoney(profitEach, cur)}</b></span>
+                          <span>
+                            Margin: <span className={isBelowCost ? 'badge badge-red' : isBelowTarget ? 'badge badge-amber' : 'badge badge-green'}>
+                              {(marginEach * 100).toFixed(1)}%
+                            </span>
+                          </span>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="success-banner" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: 2 }}>
+                      <span>Unit cost (components): {fmtMoney(res.unit_cost, cur, 4)}</span>
+                      <span>Labour/piece: {fmtMoney(res.labour_piece, cur, 4)}</span>
+                      <span>Box/piece: {fmtMoney(res.box_piece, cur, 4)}</span>
+                      <span>Cost each: {fmtMoney(res.cost_each, cur, 4)}</span>
+                      <b>Calculated price each: {fmtMoney(res.price_each, cur)}</b>
+                      {res.suggested_price_each !== undefined && (
+                        <span style={{ fontSize: 12, color: 'var(--accent-amber)' }}>
+                          Suggested: {fmtMoney(res.suggested_price_each, cur)}
+                        </span>
+                      )}
+                      {res.warnings.length > 0 && (
+                        <div style={{ width: '100%', minWidth: 0, overflowWrap: 'anywhere' }}>
+                          <WarningsList warnings={res.warnings} limit={3} />
+                        </div>
+                      )}
+                    </div>
                   </div>
                 );
               })()}
