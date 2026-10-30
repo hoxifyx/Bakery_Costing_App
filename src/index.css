@@ -1531,6 +1531,129 @@ tbody tr:hover {
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
+.product-quote-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+
+.product-quote-products,
+.product-quote-summary {
+  min-width: 0;
+  gap: 12px;
+}
+
+.product-quote-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.product-quote-line {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+  padding: 12px;
+  background: var(--bg-surface-lowest);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+}
+
+.product-quote-line-primary {
+  display: grid;
+  grid-template-columns: minmax(100px, 0.8fr) minmax(0, 1.6fr) minmax(90px, 0.7fr) 32px;
+  gap: 10px;
+  align-items: end;
+}
+
+.product-quote-line-secondary {
+  display: grid;
+  grid-template-columns: 160px minmax(0, 1fr);
+  gap: 10px;
+  align-items: end;
+}
+
+.product-quote-summary {
+  position: static;
+}
+
+.product-quote-metrics {
+  display: grid;
+  gap: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.product-quote-metric {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+.product-quote-metric b {
+  color: var(--text-primary);
+  text-align: right;
+  white-space: nowrap;
+}
+
+.product-quote-metric-total {
+  margin: 4px -8px;
+  padding: 12px 8px;
+  border: 0;
+  border-radius: var(--r-md);
+  background: var(--bg-surface-container-high);
+  color: var(--text-primary);
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.product-quote-metric-total b {
+  color: var(--accent);
+  font-size: 16px;
+}
+
+@media (min-width: 1280px) {
+  .product-quote-layout {
+    grid-template-columns: minmax(0, 1.6fr) minmax(280px, 0.7fr);
+  }
+
+  .product-quote-summary {
+    position: sticky;
+    top: 16px;
+  }
+}
+
+@media (max-width: 640px) {
+  .product-quote-line-primary {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 32px;
+  }
+
+  .product-quote-line-primary > :nth-child(2) {
+    grid-column: 1 / 3;
+    grid-row: 2;
+  }
+
+  .product-quote-line-primary > :nth-child(3) {
+    grid-column: 1;
+    grid-row: 3;
+  }
+
+  .product-quote-line-primary > :nth-child(4) {
+    grid-column: 3;
+    grid-row: 1;
+  }
+
+  .product-quote-line-secondary {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr);
+  }
+}
+
 .decorations-section-header {
   display: flex;
   align-items: center;

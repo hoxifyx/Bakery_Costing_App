@@ -120,7 +120,7 @@ export function Layout({ currentPage, onNavigate, children }: LayoutProps) {
       title: 'Quote',
       items: [
         { id: 'quote', label: 'Quote', icon: 'request_quote' },
-        { id: 'product_quote', label: 'Product Quote', icon: 'shopping_cart' },
+        { id: 'product_quote', label: 'Product Quote', icon: 'calculate' },
         { id: 'saved_quotes', label: 'Saved Quotes', icon: 'folder_open', badge: state.data.saved_quotes.length > 0 ? state.data.saved_quotes.length : undefined },
       ],
     },

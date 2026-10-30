@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { useStore } from '../../store/store';
 import { computeProductQuote } from '../../engine/engine';
 import type { ProductQuoteLine, SavedQuote } from '../../engine/types';
-import { ConfirmDialog, NumberInput, fmtMoney } from '../components/Shared';
+import { NumberInput, fmtMoney } from '../components/Shared';
 
 const emptyLine = (batchFirstId: string): ProductQuoteLine => ({
   product_kind: 'batch',
@@ -20,8 +20,6 @@ export function ProductQuotePage() {
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [saveName, setSaveName] = useState('');
   const [saveNotes, setSaveNotes] = useState('');
-  const [deleteTarget, setDeleteTarget] = useState<SavedQuote | null>(null);
-
   const result = useMemo(() => computeProductQuote(data, productQuoteInput), [data, productQuoteInput]);
 
   const batchOptions = useMemo(() => [...data.batch_products].sort((a, b) => a.name.localeCompare(b.name)), [data.batch_products]);
@@ -115,11 +113,11 @@ export function ProductQuotePage() {
         </div>
       </div>
 
-      <div className="split-layout" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.6fr) minmax(280px, 0.7fr)', gap: 20, alignItems: 'start' }}>
-        <div className="quote-section-card" style={{ gap: 12 }}>
+      <div className="product-quote-layout">
+        <section className="quote-section-card product-quote-products">
           <div className="decorations-section-header">
             <div className="decorations-header-left">
-              <span className="material-symbols-outlined ms-20" aria-hidden>shopping_cart</span>
+              <span className="material-symbols-outlined ms-20" aria-hidden>inventory_2</span>
               <h2 className="decorations-header-title">Products</h2>
             </div>
             <button type="button" className="quote-toolbar-btn" onClick={addLine}>
@@ -130,19 +128,16 @@ export function ProductQuotePage() {
 
           {productQuoteInput.lines.length === 0 ? (
             <div className="empty-state">
-              <div className="empty-state-icon">
-                <span className="material-symbols-outlined ms-32" aria-hidden>shopping_cart</span>
-              </div>
               <div className="empty-state-title">No product lines yet</div>
               <div className="empty-state-text">Add a batch or assembled product to build a product quote.</div>
             </div>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div className="product-quote-lines">
               {productQuoteInput.lines.map((line, idx) => {
                 const options = lineOptions(line.product_kind);
                 return (
-                  <div key={`${line.product_kind}-${idx}`} className="quote-section-card" style={{ padding: 12, gap: 10 }}>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr auto', gap: 8, alignItems: 'end' }}>
+                  <div key={`${line.product_kind}-${idx}`} className="product-quote-line">
+                    <div className="product-quote-line-primary">
                       <div className="form-group" style={{ marginBottom: 0 }}>
                         <label>Type</label>
                         <select className="select" value={line.product_kind} onChange={e => updateLine(idx, { product_kind: e.target.value as 'batch' | 'assembled', product_id: lineOptions(e.target.value as 'batch' | 'assembled')[0]?.id ?? '' })}>
@@ -164,7 +159,7 @@ export function ProductQuotePage() {
                         <span className="material-symbols-outlined ms-16" aria-hidden>close</span>
                       </button>
                     </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: '160px 1fr', gap: 8, alignItems: 'center' }}>
+                    <div className="product-quote-line-secondary">
                       <div className="form-group" style={{ marginBottom: 0 }}>
                         <label>Unit</label>
                         <select className="select" value={line.unit} onChange={e => updateLine(idx, { unit: e.target.value as 'piece' | 'box' })}>
@@ -193,9 +188,9 @@ export function ProductQuotePage() {
               })}
             </div>
           )}
-        </div>
+        </section>
 
-        <div className="quote-section-card" style={{ gap: 12, position: 'sticky', top: 16 }}>
+        <aside className="quote-section-card product-quote-summary">
           <div className="decorations-section-header">
             <div className="decorations-header-left">
               <span className="material-symbols-outlined ms-20" aria-hidden>receipt_long</span>
@@ -203,14 +198,14 @@ export function ProductQuotePage() {
             </div>
           </div>
 
-          <div className="summary-metric-grid" style={{ display: 'grid', gap: 10 }}>
-            <div className="metric-row"><span>Subtotal</span><b>{fmtMoney(result.subtotal, cur)}</b></div>
-            <div className="metric-row"><span>Cost total</span><b>{fmtMoney(result.cost_total, cur)}</b></div>
-            <div className="metric-row"><span>Discount</span><b>-{fmtMoney(result.discount, cur)}</b></div>
-            <div className="metric-row"><span>Delivery</span><b>{fmtMoney(result.delivery, cur)}</b></div>
-            <div className="metric-row accent"><span>Total</span><b>{fmtMoney(result.total_price, cur)}</b></div>
-            <div className="metric-row"><span>Profit</span><b>{fmtMoney(result.profit, cur)}</b></div>
-            <div className="metric-row"><span>Effective margin</span><b>{(result.effective_margin * 100).toFixed(1)}%</b></div>
+          <div className="product-quote-metrics">
+            <div className="product-quote-metric"><span>Subtotal</span><b>{fmtMoney(result.subtotal, cur)}</b></div>
+            <div className="product-quote-metric"><span>Cost total</span><b>{fmtMoney(result.cost_total, cur)}</b></div>
+            <div className="product-quote-metric"><span>Discount</span><b>-{fmtMoney(result.discount, cur)}</b></div>
+            <div className="product-quote-metric"><span>Delivery</span><b>{fmtMoney(result.delivery, cur)}</b></div>
+            <div className="product-quote-metric product-quote-metric-total"><span>Total</span><b>{fmtMoney(result.total_price, cur)}</b></div>
+            <div className="product-quote-metric"><span>Profit</span><b>{fmtMoney(result.profit, cur)}</b></div>
+            <div className="product-quote-metric"><span>Effective margin</span><b>{(result.effective_margin * 100).toFixed(1)}%</b></div>
           </div>
 
           <div className="form-group" style={{ marginBottom: 0 }}>
@@ -251,7 +246,7 @@ export function ProductQuotePage() {
               ))}
             </div>
           )}
-        </div>
+        </aside>
       </div>
 
       {showSaveDialog && (
@@ -281,18 +276,6 @@ export function ProductQuotePage() {
         </div>
       )}
 
-      {deleteTarget && (
-        <ConfirmDialog
-          message={`Delete "${deleteTarget.name}"?`}
-          onConfirm={() => {
-            dispatch({ type: 'DELETE_SAVED_QUOTE', id: deleteTarget.id });
-            setDeleteTarget(null);
-          }}
-          onCancel={() => setDeleteTarget(null)}
-          confirmLabel="Delete Quote"
-          danger
-        />
-      )}
     </div>
   );
 }
