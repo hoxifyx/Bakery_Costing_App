@@ -18,6 +18,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Validation
 - 49 automated tests pass. Lint completes with existing warnings; the production build succeeds with the known dynamic-import and bundle-size warnings.
 
+### Fixed
+- Import/export now displays the current schema version and supports customers and orders in selective exports and selected-group imports.
+- Corrected handoff exclusion details and the ingredient price-history and round-trip test fixtures.
+
 ## [1.4.17] — 2026-10-12
 
 ### Added

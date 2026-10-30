@@ -36,13 +36,15 @@ export function ImportExportPage() {
     assembled_products: true,
     size_guide: true,
     saved_quotes: true,
+    customers: true,
+    orders: true,
   });
 
   // Import State
   const [preview, setPreview] = useState<ImportPreview | null>(null);
   const [importMode, setImportMode] = useState<'replace' | 'merge' | 'replace_selected'>('replace');
   const [selectedImportGroups, setSelectedImportGroups] = useState<PartialKey[]>([
-    'ingredients', 'packaging_items', 'recipes', 'flavours', 'fillings', 'batch_products', 'assembled_products', 'saved_quotes'
+    'ingredients', 'packaging_items', 'recipes', 'flavours', 'fillings', 'batch_products', 'assembled_products', 'saved_quotes', 'customers', 'orders'
   ]);
   const [importStatus, setImportStatus] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
@@ -224,7 +226,7 @@ export function ImportExportPage() {
               <span className="material-symbols-outlined ms-20" aria-hidden>upload_file</span>
               <h2 className="decorations-header-title">Import JSON Dataset</h2>
             </div>
-            <span className="decorations-header-right">Schema 1.0</span>
+            <span className="decorations-header-right">Schema {CURRENT_SCHEMA_VERSION}</span>
           </div>
         <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 16 }}>
           Select or drop a standard bakery costing JSON export. Data will be inspected and validated before any changes are applied.
@@ -252,7 +254,7 @@ export function ImportExportPage() {
             Click or drag & drop a .json file here
           </div>
           <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-            Strict validation against schema 1.0 (max 20 MB)
+            Strict validation against schema {CURRENT_SCHEMA_VERSION} (max 20 MB)
           </div>
           <input
             type="file"
@@ -375,7 +377,8 @@ export function ImportExportPage() {
               {importMode === 'replace_selected' && (
                 <div style={{ marginTop: 12, padding: 12, background: 'var(--bg-base)', borderRadius: 6, display: 'flex', flexWrap: 'wrap', gap: 12 }}>
                   {[
-                    'settings', 'ingredients', 'packaging_items', 'recipes', 'flavours', 'fillings', 'batch_products', 'assembled_products', 'saved_quotes'
+                    'settings', 'ingredients', 'packaging_items', 'recipes', 'flavours', 'fillings',
+                    'batch_products', 'assembled_products', 'size_guide', 'saved_quotes', 'customers', 'orders',
                   ].map(grp => (
                     <label key={grp} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, cursor: 'pointer' }}>
                       <input
@@ -422,7 +425,7 @@ export function ImportExportPage() {
           <div style={{ padding: 16, background: 'var(--bg-surface)', borderRadius: 8, border: '1px solid var(--border)' }}>
             <h4 style={{ fontSize: 14, marginBottom: 8 }}>Complete Database Backup</h4>
             <p style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 16 }}>
-              Exports all settings, ingredients, packaging, recipes, flavours, products, size guide, and saved quotes into one standard JSON file.
+              Exports settings, catalogs, products, size guide, saved quotes, customers, and orders into one standard JSON file.
             </p>
             <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
               <button className="quote-toolbar-btn quote-toolbar-btn-primary" style={{ flex: 1 }} onClick={handleFullExport}>

@@ -355,6 +355,8 @@ describe('Bakery Costing App - Golden Tests', () => {
       assembled_products: [],
       size_guide: [],
       saved_quotes: [],
+      customers: [],
+      orders: [],
     };
 
     const parsed = parseImportFile(exportedJson, emptyApp);
@@ -875,11 +877,12 @@ describe('Bakery Costing App - Golden Tests', () => {
       pack_price: original.pack_price * 2,
       price_history: [
         ...(original.price_history ?? []),
-        { date: today, pack_quantity: original.pack_price * 2, pack_price: original.pack_price * 2 },
+        { date: today, pack_quantity: original.pack_quantity, pack_price: original.pack_price * 2 },
       ],
     };
     expect(updated.price_history).toHaveLength((original.price_history?.length ?? 0) + 1);
     expect(updated.price_history!.at(-1)!.date).toBe(today);
+    expect(updated.price_history!.at(-1)!.pack_quantity).toBe(original.pack_quantity);
     expect(updated.price_history!.at(-1)!.pack_price).toBe(original.pack_price * 2);
   });
 

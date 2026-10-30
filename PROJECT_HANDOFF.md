@@ -64,21 +64,27 @@ At v1.5.0, all 49 automated tests pass. The production build succeeds with a kno
 
 ## What's Excluded and Why
 <!-- BEGIN SCRIPT:excluded -->
+The current handoff bundle excludes 23 entries:
 - `.DS_Store`: binary content (NUL byte detected)
+- `.env`: local environment file; provide your own credentials
+- `.git/` (623 files): repository metadata
+- `.vscode/` (1 file): local editor settings
 - `Ovencost_Pro_Costing_Final_Clean.xlsx`: source Excel workbook used to derive the spec; not required at runtime
-- `dist/` (5 files): dependency or build directory
+- `dist/` (18 files): generated build output; regenerate with `npm run build`
 - `node_modules/` (1047 files): dependency or build directory
+- `public/.DS_Store`, `src/.DS_Store`, `src/ui/.DS_Store`: binary metadata files
+- `public/fonts/`: 12 binary font files (Geist, JetBrains Mono, Material Symbols, and Outfit)
 - `src/assets/hero.png`: binary file
 <!-- END SCRIPT:excluded -->
 
 ## Secrets You Must Supply
 <!-- BEGIN SCRIPT:secrets -->
-No secrets excluded by name.
+Supply a local `.env` file with `VITE_GOOGLE_CLIENT_ID` if you want to enable optional Google Drive backup. See `README.md`; do not commit credentials.
 <!-- END SCRIPT:secrets -->
 
 ## Potential Secrets Detected
 <!-- BEGIN SCRIPT:potential_secrets -->
-No potential secrets detected.
+No potential secrets detected in included files. The excluded `.env` contains local credentials and must not be shared.
 <!-- END SCRIPT:potential_secrets -->
 
 ## Suspicious Content
