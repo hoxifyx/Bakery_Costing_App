@@ -330,7 +330,7 @@ export function RecipesPage() {
                             <option value="">(free / water)</option>
                             {[...data.ingredients].sort((a, b) => a.name.localeCompare(b.name)).map(ing => <option key={ing.id} value={ing.id}>{ing.name}</option>)}
                           </select>
-                          <NumberInput value={line.quantity} onChange={v => updateLine(li, { quantity: v })} placeholder="qty" />
+                          <NumberInput value={line.quantity} onChange={v => updateLine(li, { quantity: v })} placeholder="qty" aria-label="Quantity" />
                           <select
                             className="select"
                             style={{ minWidth: 0 }}

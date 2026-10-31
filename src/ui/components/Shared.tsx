@@ -1,4 +1,4 @@
-import { useState, type CSSProperties } from 'react';
+import { useState, type CSSProperties, type ReactNode } from 'react';
 
 interface ToggleProps {
   checked: boolean;
@@ -55,11 +55,13 @@ interface NumberInputProps {
   placeholder?: string;
   className?: string;
   id?: string;
+  'aria-label'?: string;
+  title?: string;
   disabled?: boolean;
   allowNeg?: boolean;
 }
 
-export function NumberInput({ value, onChange, min, max, step, placeholder, className = '', id, disabled, allowNeg }: NumberInputProps) {
+export function NumberInput({ value, onChange, min, max, step, placeholder, className = '', id, 'aria-label': ariaLabel, title, disabled, allowNeg }: NumberInputProps) {
   const [raw, setRaw] = useState<string | null>(null);
   const effectiveMin = min !== undefined ? min : (allowNeg ? undefined : 0);
 
@@ -73,6 +75,8 @@ export function NumberInput({ value, onChange, min, max, step, placeholder, clas
       max={max}
       step={step}
       placeholder={placeholder ?? '0'}
+      aria-label={ariaLabel}
+      title={title}
       disabled={disabled}
       onChange={e => {
         setRaw(e.target.value);
@@ -82,6 +86,38 @@ export function NumberInput({ value, onChange, min, max, step, placeholder, clas
       }}
       onBlur={() => setRaw(null)}
     />
+  );
+}
+
+interface ComponentRowProps {
+  type: 'cake_recipe_grams' | 'recipe_per_gram' | 'ingredient_grams' | 'recipe';
+  picker: ReactNode;
+  scale?: ReactNode;
+  grams: ReactNode;
+  remove: ReactNode;
+}
+
+const COMPONENT_ROW_TYPES: Record<ComponentRowProps['type'], { label: string; icon: string }> = {
+  cake_recipe_grams: { label: 'Cake', icon: 'cake' },
+  recipe_per_gram: { label: 'Recipe', icon: 'bakery_dining' },
+  ingredient_grams: { label: 'Ingredient', icon: 'grocery' },
+  recipe: { label: 'Recipe', icon: 'bakery_dining' },
+};
+
+export function ComponentRow({ type, picker, scale, grams, remove }: ComponentRowProps) {
+  const { label, icon } = COMPONENT_ROW_TYPES[type];
+
+  return (
+    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'center', marginBottom: 6 }}>
+      <span className="badge badge-muted" style={{ fontSize: 11, flexShrink: 0 }}>
+        <span className="material-symbols-outlined ms-14" aria-hidden>{icon}</span>
+        {label}
+      </span>
+      <div style={{ flex: '1 1 180px', minWidth: 0 }}>{picker}</div>
+      {scale && <div style={{ width: 80, flexShrink: 0 }}>{scale}</div>}
+      <div style={{ width: 88, flexShrink: 0 }}>{grams}</div>
+      {remove}
+    </div>
   );
 }
 

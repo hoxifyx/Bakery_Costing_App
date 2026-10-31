@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { useStore } from '../../store/store';
 import type { BatchProduct, AssembledProduct, AssembledComponent } from '../../engine/types';
 import { compute } from '../../engine/engine';
-import { NumberInput, SearchBar, ConfirmDialog, Toggle, fmtMoney } from '../components/Shared';
+import { NumberInput, SearchBar, ConfirmDialog, Toggle, fmtMoney, ComponentRow } from '../components/Shared';
 import { ExplainPanel } from '../components/ExplainPanel';
 import { WarningsList } from '../components/WarningsList';
 import { generateId } from '../../engine/utils';
@@ -445,6 +445,8 @@ export function ProductsPage() {
                           value={batchMultipliers[editingBatch.recipe_id] ?? 1}
                           onChange={v => setBatchMultipliers(s => ({ ...s, [editingBatch.recipe_id]: v }))}
                           min={0} step={0.1} placeholder="Scale"
+                          aria-label="Batch multiplier (preview only, not stored)"
+                          title="Batch multiplier (preview only, not stored)"
                         />
                       </div>
                     )}
@@ -510,36 +512,34 @@ export function ProductsPage() {
                   </button>
                 </div>
                 {editingBatch.components.map((comp, ci) => (
-                  <div key={ci} style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 100px 32px', gap: 6, alignItems: 'center', marginBottom: 6 }}>
-                    <div style={{ display: 'flex', gap: 6 }}>
-                      <select className="select" value={comp.recipe_id} onChange={e => {
+                  <ComponentRow
+                    key={ci}
+                    type="recipe"
+                    picker={<select className="select" aria-label="Recipe picker" value={comp.recipe_id} onChange={e => {
                         const comps = editingBatch.components.map((c, i) => i === ci ? { ...c, recipe_id: e.target.value } : c);
                         setEditingBatch(p => p && ({ ...p, components: comps }));
-                      }} style={{ flex: 1, minWidth: 0 }}>
+                      }} style={{ width: '100%', minWidth: 0 }}>
                         {allRecipesSorted.map(r => (
                           <option key={r.id} value={r.id}>
-                            {r.name} ({r.kind})
+                            Recipe: {r.name} ({r.kind})
                           </option>
                         ))}
-                      </select>
-                      {comp.recipe_id && (
-                        <div style={{ width: 80 }}>
-                          <NumberInput
-                            value={batchMultipliers[comp.recipe_id] ?? 1}
-                            onChange={v => setBatchMultipliers(s => ({ ...s, [comp.recipe_id]: v }))}
-                            min={0} step={0.1} placeholder="Scale"
-                          />
-                        </div>
-                      )}
-                    </div>
-                    <NumberInput value={comp.grams} onChange={v => {
+                      </select>}
+                    scale={comp.recipe_id ? <NumberInput
+                      value={batchMultipliers[comp.recipe_id] ?? 1}
+                      onChange={v => setBatchMultipliers(s => ({ ...s, [comp.recipe_id]: v }))}
+                      min={0} step={0.1} placeholder="×"
+                      aria-label="Batch multiplier (preview only, not stored)"
+                      title="Batch multiplier (preview only, not stored)"
+                    /> : undefined}
+                    grams={<NumberInput value={comp.grams} onChange={v => {
                       const comps = editingBatch.components.map((c, i) => i === ci ? { ...c, grams: v } : c);
                       setEditingBatch(p => p && ({ ...p, components: comps }));
-                    }} placeholder="grams" />
-                    <button className="quote-toolbar-btn" onClick={() => setEditingBatch(p => p && ({ ...p, components: p.components.filter((_, i) => i !== ci) }))} title="Remove component" aria-label="Remove component" style={{ width: 32, height: 32, padding: 0 }}>
+                    }} placeholder="g" aria-label="Grams per piece" />}
+                    remove={<button className="quote-toolbar-btn" onClick={() => setEditingBatch(p => p && ({ ...p, components: p.components.filter((_, i) => i !== ci) }))} title="Remove component" aria-label="Remove component" style={{ width: 32, height: 32, padding: 0 }}>
                       <span className="material-symbols-outlined ms-16" aria-hidden>close</span>
-                    </button>
-                  </div>
+                    </button>}
+                  />
                 ))}
               </div>
 
@@ -907,42 +907,34 @@ export function ProductsPage() {
                   </div>
                 </div>
                 {editingAssembled.components.map((comp, ci) => (
-                  <div key={ci} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 140px), 1fr))', gap: 6, alignItems: 'center', marginBottom: 6 }}>
-                    <span className="badge badge-muted" style={{ fontSize: 11 }}>
-                      <span className="material-symbols-outlined ms-14" aria-hidden>
-                        {comp.type === 'cake_recipe_grams' ? 'cake' : comp.type === 'recipe_per_gram' ? 'bakery_dining' : 'grocery'}
-                      </span>
-                      {comp.type === 'cake_recipe_grams' ? 'Cake' : comp.type === 'recipe_per_gram' ? 'Recipe' : 'Ingredient'}
-                    </span>
-                    <div style={{ display: 'flex', gap: 4, minWidth: 0 }}>
-                      <select className="select" value={comp.type === 'ingredient_grams' ? comp.ingredient_id : comp.recipe_id} onChange={e => {
+                  <ComponentRow
+                    key={ci}
+                    type={comp.type}
+                    picker={<select className="select" aria-label={comp.type === 'ingredient_grams' ? 'Ingredient picker' : 'Recipe picker'} value={comp.type === 'ingredient_grams' ? comp.ingredient_id : comp.recipe_id} onChange={e => {
                         if (comp.type === 'ingredient_grams') updateComponent(ci, { ingredient_id: e.target.value } as Partial<AssembledComponent>);
                         else updateComponent(ci, { recipe_id: e.target.value } as Partial<AssembledComponent>);
-                      }} style={{ flex: 1, minWidth: 0 }}>
+                      }} style={{ width: '100%', minWidth: 0 }}>
                         {comp.type === 'ingredient_grams'
-                          ? [...data.ingredients].sort((a, b) => a.name.localeCompare(b.name)).map(i => <option key={i.id} value={i.id}>{i.name}</option>)
+                          ? [...data.ingredients].sort((a, b) => a.name.localeCompare(b.name)).map(i => <option key={i.id} value={i.id}>Ingredient: {i.name}</option>)
                           : allRecipesSorted.map(r => (
                               <option key={r.id} value={r.id}>
-                                {r.name} ({r.kind})
+                                Recipe: {r.name} ({r.kind})
                               </option>
                             ))
                         }
-                      </select>
-                      {comp.type !== 'ingredient_grams' && comp.recipe_id && (
-                        <div style={{ width: 64, flexShrink: 0 }}>
-                          <NumberInput
-                            value={batchMultipliers[comp.recipe_id] ?? 1}
-                            onChange={v => setBatchMultipliers(s => ({ ...s, [comp.recipe_id]: v }))}
-                            min={0} step={0.1} placeholder="Scale"
-                          />
-                        </div>
-                      )}
-                    </div>
-                    <NumberInput value={comp.grams} onChange={v => updateComponent(ci, { grams: v } as Partial<AssembledComponent>)} placeholder="g" />
-                    <button className="quote-toolbar-btn" onClick={() => removeComponent(ci)} title="Remove component" aria-label="Remove component" style={{ width: 32, height: 32, padding: 0 }}>
+                      </select>}
+                    scale={comp.type !== 'ingredient_grams' && comp.recipe_id ? <NumberInput
+                      value={batchMultipliers[comp.recipe_id] ?? 1}
+                      onChange={v => setBatchMultipliers(s => ({ ...s, [comp.recipe_id]: v }))}
+                      min={0} step={0.1} placeholder="×"
+                      aria-label="Batch multiplier (preview only, not stored)"
+                      title="Batch multiplier (preview only, not stored)"
+                    /> : undefined}
+                    grams={<NumberInput value={comp.grams} onChange={v => updateComponent(ci, { grams: v } as Partial<AssembledComponent>)} placeholder="g" aria-label="Grams per piece" />}
+                    remove={<button className="quote-toolbar-btn" onClick={() => removeComponent(ci)} title="Remove component" aria-label="Remove component" style={{ width: 32, height: 32, padding: 0 }}>
                       <span className="material-symbols-outlined ms-16" aria-hidden>close</span>
-                    </button>
-                  </div>
+                    </button>}
+                  />
                 ))}
               </div>
 

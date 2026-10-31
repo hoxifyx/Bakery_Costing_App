@@ -5,6 +5,16 @@ All notable changes to the Bakery Costing App (OvenCost Pro) will be documented 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+- **Component row labels:** Both product editors (batch and assembled) now render component rows through a shared `ComponentRow` that shows an explicit type badge (`Cake` / `Recipe` / `Ingredient`), a labeled picker (`Recipe:` / `Ingredient:` prefix), a `×`-labeled batch multiplier for recipe-based rows only, and a `Grams per piece` labeled input. Ingredient rows correctly omit the multiplier.
+- **Preview-only multipliers:** The batch product's main recipe multiplier, and the three recipe-source multipliers in Flavours & Fillings (cake recipe, frosting recipe, filling source), now carry `×` plus an accessible `Batch multiplier (preview only, not stored)` label and tooltip.
+- **Recipe-line quantity:** The recipe editor's quantity input gained `aria-label="Quantity"`; the five-column line grid is unchanged.
+
+### Notes
+- UI labels and accessibility attributes only. No engine, schema, reducer, IO, or calculation changes; 49/49 tests unchanged.
+
 ## [1.5.0] — 2026-10-30
 
 ### Added

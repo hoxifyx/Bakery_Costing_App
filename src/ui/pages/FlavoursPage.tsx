@@ -362,7 +362,7 @@ export function FlavoursPage() {
                       </select>
                       {editingFlavour.cost_model.cake_recipe_id && (
                         <div style={{ width: 80 }}>
-                          <NumberInput value={batchMultipliers[(editingFlavour.cost_model as any).cake_recipe_id] ?? 1} onChange={v => setBatchMultipliers(s => ({ ...s, [(editingFlavour.cost_model as any).cake_recipe_id]: v }))} min={0} step={0.1} placeholder="Scale" />
+                          <NumberInput value={batchMultipliers[(editingFlavour.cost_model as any).cake_recipe_id] ?? 1} onChange={v => setBatchMultipliers(s => ({ ...s, [(editingFlavour.cost_model as any).cake_recipe_id]: v }))} min={0} step={0.1} placeholder="×" aria-label="Batch multiplier (preview only, not stored)" title="Batch multiplier (preview only, not stored)" />
                         </div>
                       )}
                     </div>
@@ -376,7 +376,7 @@ export function FlavoursPage() {
                       </select>
                       {editingFlavour.cost_model.frosting_recipe_id && (
                         <div style={{ width: 80 }}>
-                          <NumberInput value={batchMultipliers[(editingFlavour.cost_model as any).frosting_recipe_id] ?? 1} onChange={v => setBatchMultipliers(s => ({ ...s, [(editingFlavour.cost_model as any).frosting_recipe_id]: v }))} min={0} step={0.1} placeholder="Scale" />
+                          <NumberInput value={batchMultipliers[(editingFlavour.cost_model as any).frosting_recipe_id] ?? 1} onChange={v => setBatchMultipliers(s => ({ ...s, [(editingFlavour.cost_model as any).frosting_recipe_id]: v }))} min={0} step={0.1} placeholder="×" aria-label="Batch multiplier (preview only, not stored)" title="Batch multiplier (preview only, not stored)" />
                         </div>
                       )}
                     </div>
@@ -484,7 +484,7 @@ export function FlavoursPage() {
                     </select>
                     {editingFilling.source.recipe_id && (
                       <div style={{ width: 80 }}>
-                        <NumberInput value={batchMultipliers[(editingFilling.source as any).recipe_id] ?? 1} onChange={v => setBatchMultipliers(s => ({ ...s, [(editingFilling.source as any).recipe_id]: v }))} min={0} step={0.1} placeholder="Scale" />
+                        <NumberInput value={batchMultipliers[(editingFilling.source as any).recipe_id] ?? 1} onChange={v => setBatchMultipliers(s => ({ ...s, [(editingFilling.source as any).recipe_id]: v }))} min={0} step={0.1} placeholder="×" aria-label="Batch multiplier (preview only, not stored)" title="Batch multiplier (preview only, not stored)" />
                       </div>
                     )}
                   </div>
