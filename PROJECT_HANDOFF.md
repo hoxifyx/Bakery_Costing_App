@@ -96,6 +96,7 @@ No suspicious content detected.
 <!-- BEGIN AGENT:gotchas -->
 - Application data is stored in browser `IndexedDB`; private browsing may discard it when the session closes. Users should export backups regularly.
 - Calculations use `decimal.js`; avoid binary floating-point arithmetic for monetary calculations.
+- Merge-mode import supports partial ingredient records (only `id` required); partials for other entities are rejected. Validation runs inside `parseImportFile` against the merged candidate, not in the reducer.
 - Material Symbols ligatures in the bundled font use the OpenType `rlig` feature. When regenerating the font, use the checked-in manifest and script; do not replace `rlig` with `liga`.
 - `src/index.css` contains two Material Symbols `@font-face` declarations; keep both pointed at the active font asset.
 <!-- END AGENT:gotchas -->

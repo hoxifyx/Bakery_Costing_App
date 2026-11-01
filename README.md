@@ -13,7 +13,7 @@ The current app version and latest published release are **v1.6.0**. See [CHANGE
 - **Size guide:** Maintain the pan-size and serving guide used to help fill quote weights.
 - **Customers and orders:** Keep customer records and track order dates, due dates, and payment status.
 - **Data Health:** Review warnings about missing or invalid data and navigate to the relevant records.
-- **Import and export:** Create full or selective JSON exports, import validated datasets and ingredient CSVs, export ingredient and packaging CSVs, and download a blank JSON template.
+- **Import and export:** Create full or selective JSON exports, import validated datasets and ingredient CSVs, export ingredient and packaging CSVs, and download a blank JSON template. Merge-mode imports accept partial ingredient records — for example, a nutrition-only update can supply just `id`, `nutrition_per_100g`, and `allergens`, and existing fields are preserved.
 - **Optional Google Drive backup:** Connect Google Drive to back up and restore data in the app-specific Drive folder.
 - **Local-first storage:** App data is persisted in the browser's IndexedDB; no app server or account is required.
 

@@ -9,6 +9,7 @@ The schema version is checked on import in `src/io/io.ts`. Files with a newer ma
 ### `1.6` (Nutrition and allergens)
 *   **Added:** optional `nutrition_per_100g` values on ingredients (`kcal`, `protein_g`, `fat_g`, `carbs_g`; optional `fibre_g` and `sodium_mg`) and optional `allergens` using the 14 EU allergen codes. Missing fields remain undefined; nutrition values must be finite and non-negative, and unknown allergen codes are rejected.
 *   **Compatibility:** older exports without nutrition or allergen fields import cleanly. Nutrition and allergen summaries are approximate and include only the recorded ingredient data.
+*   **Import behavior:** Merge-mode imports accept partial ingredient records. Fields other than `id` may be omitted; absent fields are preserved from the existing record, and supplied fields are validated and merged. Orphan partial records (unknown `id`) are rejected with a specific error. Replace and Replace-Selected modes remain strict — every field must be present.
 
 ### `1.5` (Recipe and product waste / spoilage)
 *   **Added:** optional `waste_pct` on recipes, batch products, and assembled products. Older exports default the field to `0`; values must be finite and non-negative.
