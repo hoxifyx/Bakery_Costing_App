@@ -2,14 +2,14 @@
 
 ## What This Is
 <!-- BEGIN AGENT:what_this_is -->
-OvenCost Pro is a local-first bakery costing and pricing app. The app version is v1.6.0 (unreleased) with export schema 1.6; the latest published release is v1.5.0. See `CHANGELOG.md` and `MIGRATIONS.md` for release and data-format history. The phased plan and build prompt are original product documents, and their unimplemented planned phases are not a release-status checklist.
+OvenCost Pro is a local-first bakery costing and pricing app. The current release is v1.6.0 with export schema 1.6; see `CHANGELOG.md` and `MIGRATIONS.md` for release and data-format history. The phased plan and build prompt are original product documents, and their unimplemented planned phases are not a release-status checklist.
 <!-- END AGENT:what_this_is -->
 
 ## Quick Start
 
 ### Prerequisites
 <!-- BEGIN AGENT:prerequisites -->
-- Node.js v18.0.0 or higher
+- Node.js `^20.19.0` or `>=22.12.0` (required by Vite 8)
 - npm v9.0.0 or higher
 <!-- END AGENT:prerequisites -->
 
@@ -59,7 +59,7 @@ npm test
 
 ## Warnings
 <!-- BEGIN SCRIPT:warnings -->
-At v1.6.0, all 81 automated tests pass. Lint completes with 6 existing warnings; the production build succeeds with 2 existing warnings: an `INEFFECTIVE_DYNAMIC_IMPORT` warning for `src/cloud/drive.ts` and a bundle-size advisory. Runtime data warnings are surfaced in-app on the **Data Health** page.
+At v1.6.0, all 82 automated tests pass. Lint completes with 6 existing warnings; the production build succeeds with 2 existing warnings: an `INEFFECTIVE_DYNAMIC_IMPORT` warning for `src/cloud/drive.ts` and a bundle-size advisory. Runtime data warnings are surfaced in-app on the **Data Health** page.
 <!-- END SCRIPT:warnings -->
 
 ## What's Excluded and Why
@@ -136,12 +136,11 @@ including saved product-quote snapshots. The schema is now `1.4`; older exports
 without the optional product fields remain valid and continue to use global
 pricing defaults. Product quotes and cake quotes share the saved-quote archive.
 
-The v1.6.0 series (tag `v1.6.0`; unreleased) adds ingredient price impact,
-waste tracking (schema 1.4 → 1.5), an ephemeral what-if scratchpad, shopping
-lists, and nutrition/allergen information (schema 1.5 → 1.6). It has 81 passing
-automated tests and adds no dependencies. During Phase 5, recipe-to-recipe
-composition was rolled back; allergen propagation uses existing product
-composition instead.
+The v1.6.0 release (tag `v1.6.0`) adds ingredient price impact, waste tracking,
+an ephemeral what-if scratchpad, shopping lists, and nutrition/allergen
+information, bringing the schema to 1.6. It has 82 passing automated tests and
+adds no dependencies. During Phase 5, recipe-to-recipe composition was rolled
+back; allergen propagation uses existing product composition instead.
 <!-- END OWNER_NOTES -->
 
 ## When Not to Use This Bundle

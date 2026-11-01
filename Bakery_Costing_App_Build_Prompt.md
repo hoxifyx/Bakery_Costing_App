@@ -1099,6 +1099,6 @@ Phases 7, 8, and 10-18 were intentionally skipped by the user.
 
 ### Current release status (updated 2026-11-01)
 
-This prompt remains the original product specification; it is not a complete inventory of later UI and release work. The app version is **v1.6.0 (unreleased)**; the latest published release is **v1.5.0**. In addition to the earlier v1.5.0 work, the v1.6.0 series adds ingredient price impact, waste tracking, an ephemeral what-if scratchpad, shopping lists, and nutrition/allergen information.
+This prompt remains the original product specification; it is not a complete inventory of later UI and release work. The current release is **v1.6.0**. In addition to the earlier product-pricing and quote work, v1.6.0 adds ingredient price impact, waste tracking, an ephemeral what-if scratchpad, shopping lists, and nutrition/allergen information.
 
-The current export schema is `1.6`; see `MIGRATIONS.md` for the additive schema history and compatibility behavior. The automated test suite has 81 passing tests. Check the current source and tests for exact implementation details rather than assuming every original specification item was implemented.
+The current export schema is `1.6`; see `MIGRATIONS.md` for the additive schema history and compatibility behavior. The automated test suite has 82 passing tests. Check the current source and tests for exact implementation details rather than assuming every original specification item was implemented.

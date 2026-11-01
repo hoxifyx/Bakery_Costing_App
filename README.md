@@ -2,7 +2,7 @@
 
 OvenCost Pro is an offline-first costing and pricing app for bakeries, cake studios, and confectioners. Build ingredient and packaging catalogs, calculate recipe and product costs, prepare multi-tier cake quotes, and track customers and orders. Application data is stored locally in the browser.
 
-The app version is **v1.6.0**; the latest published release is **v1.5.0**. Version 1.6.0 remains unreleased. See [CHANGELOG.md](./CHANGELOG.md) for release history.
+The current app version and latest published release are **v1.6.0**. See [CHANGELOG.md](./CHANGELOG.md) for release history.
 
 ## Features
 
