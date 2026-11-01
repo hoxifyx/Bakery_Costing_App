@@ -167,7 +167,7 @@ export function SavedQuotesPage({ onNavigate }: SavedQuotesPageProps) {
                               <span>Recalculate</span>
                             </button>
                             <button className="quote-toolbar-btn" onClick={() => setShoppingTarget(sq)} title="View shopping list">
-                              <span className="material-symbols-outlined ms-16" aria-hidden>shopping_cart</span>
+                              <span className="material-symbols-outlined ms-16" aria-hidden>grocery</span>
                               <span>List</span>
                             </button>
                             <button className="quote-toolbar-btn" style={{ width: 32, height: 32, padding: 0, color: 'var(--accent-red)' }} onClick={() => setDeleteTarget(sq)} title="Delete quote" aria-label={`Delete quote ${sq.name}`}>
@@ -228,7 +228,7 @@ export function SavedQuotesPage({ onNavigate }: SavedQuotesPageProps) {
                       <span>Recalculate</span>
                     </button>
                     <button className="quote-toolbar-btn" style={{ flex: 1 }} onClick={() => setShoppingTarget(sq)}>
-                      <span className="material-symbols-outlined ms-16" aria-hidden>shopping_cart</span>
+                      <span className="material-symbols-outlined ms-16" aria-hidden>grocery</span>
                       <span>List</span>
                     </button>
                     <button className="quote-toolbar-btn" style={{ width: 32, height: 32, padding: 0, color: 'var(--accent-red)', flexShrink: 0 }} onClick={() => setDeleteTarget(sq)} title="Delete quote" aria-label={`Delete quote ${sq.name}`}>

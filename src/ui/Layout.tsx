@@ -144,7 +144,7 @@ export function Layout({ currentPage, onNavigate, children }: LayoutProps) {
     {
       title: 'Tools',
       items: [
-        { id: 'what_if', label: 'What-if', icon: 'science' },
+        { id: 'what_if', label: 'What-if', icon: 'analytics' },
         { id: 'settings', label: 'Settings', icon: 'settings' },
         { id: 'health', label: 'Data Health', icon: 'vital_signs', badge: warningCount, badgeDanger: warningCount > 0 },
         { id: 'import_export', label: 'Import / Export', icon: 'sync_alt' },

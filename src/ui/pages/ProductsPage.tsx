@@ -591,8 +591,8 @@ export function ProductsPage() {
                     <span className="material-symbols-outlined ms-16" aria-hidden>tune</span>
                     Pricing overrides
                   </span>
-                  <span className="material-symbols-outlined ms-18" aria-hidden style={{ transform: showBatchOverrides ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s' }}>
-                    expand_more
+                  <span className="material-symbols-outlined ms-18" aria-hidden style={{ transform: `rotate(${showBatchOverrides ? 270 : 90}deg)`, transition: 'transform 0.15s' }}>
+                    arrow_forward
                   </span>
                 </button>
                 {showBatchOverrides && (
@@ -849,8 +849,8 @@ export function ProductsPage() {
                     <span className="material-symbols-outlined ms-16" aria-hidden>tune</span>
                     Pricing overrides
                   </span>
-                  <span className="material-symbols-outlined ms-18" aria-hidden style={{ transform: showAssembledOverrides ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s' }}>
-                    expand_more
+                  <span className="material-symbols-outlined ms-18" aria-hidden style={{ transform: `rotate(${showAssembledOverrides ? 270 : 90}deg)`, transition: 'transform 0.15s' }}>
+                    arrow_forward
                   </span>
                 </button>
                 {showAssembledOverrides && (

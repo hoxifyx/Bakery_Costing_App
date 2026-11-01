@@ -361,7 +361,7 @@ export function IngredientsPage() {
                               <span className="material-symbols-outlined ms-16" aria-hidden>schedule</span>
                             </button>
                             <button className="quote-toolbar-btn" onClick={() => openHistory(ing)} title="Price impact" aria-label={`Price impact for ${ing.name}`} style={{ width: 32, height: 32, padding: 0 }}>
-                              <span className="material-symbols-outlined ms-16" aria-hidden>monitoring</span>
+                              <span className="material-symbols-outlined ms-16" aria-hidden>analytics</span>
                             </button>
                             <button className="quote-toolbar-btn" onClick={() => openEdit(ing)} title="Edit" aria-label={`Edit ${ing.name}`} style={{ width: 32, height: 32, padding: 0 }}>
                               <span className="material-symbols-outlined ms-16" aria-hidden>edit</span>

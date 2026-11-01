@@ -187,7 +187,7 @@ export function OrdersPage({ onNavigate }: OrdersPageProps) {
                                 <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{quote.name}</span>
                               </button>
                               <button className="quote-toolbar-btn" onClick={() => setShoppingTarget(quote)} title={`View shopping list for ${quote.name}`} aria-label={`View shopping list for ${quote.name}`}>
-                                <span className="material-symbols-outlined ms-16" aria-hidden>shopping_cart</span>
+                                <span className="material-symbols-outlined ms-16" aria-hidden>grocery</span>
                               </button>
                             </div>
                           ) : (

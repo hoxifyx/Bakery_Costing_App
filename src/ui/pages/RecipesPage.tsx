@@ -452,7 +452,7 @@ export function RecipesPage() {
                   <section className="quote-section-card recipe-nutrition-panel" aria-label="Nutrition estimate and allergens">
                     <div className="decorations-section-header">
                       <div className="decorations-header-left">
-                        <span className="material-symbols-outlined ms-18" aria-hidden>nutrition</span>
+                        <span className="material-symbols-outlined ms-18" aria-hidden>vital_signs</span>
                         <h3 className="decorations-header-title">Nutrition estimate</h3>
                       </div>
                     </div>

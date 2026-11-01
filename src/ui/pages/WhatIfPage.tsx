@@ -121,7 +121,7 @@ export function WhatIfPage() {
         <section className="quote-section-card what-if-controls" aria-labelledby="what-if-controls-title">
           <div className="decorations-section-header">
             <div className="decorations-header-left">
-              <span className="material-symbols-outlined ms-20" aria-hidden>science</span>
+              <span className="material-symbols-outlined ms-20" aria-hidden>analytics</span>
               <h2 id="what-if-controls-title" className="decorations-header-title">Scenario</h2>
             </div>
           </div>
