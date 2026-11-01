@@ -1,7 +1,9 @@
 import { useMemo } from 'react';
+import Decimal from 'decimal.js';
 import { useStore } from '../../store/store';
 import { compute } from '../../engine';
 import type { WarningCode } from '../../engine/types';
+import { fmtMoney } from '../components/Shared';
 
 interface DataHealthPageProps {
   onNavigate?: (page: string) => void;
@@ -39,6 +41,29 @@ export function DataHealthPage({ onNavigate }: DataHealthPageProps) {
     });
   }, [recipes, engineResult]);
 
+  const wasteImpact = useMemo(() => {
+    const recipeWaste = recipes
+      .filter(recipe => (recipe.waste_pct ?? 0) > 0)
+      .reduce((total, recipe) => {
+        const result = engineResult.recipes[recipe.id];
+        return result
+          ? total.plus(new Decimal(result.raw_after_waste).minus(result.raw))
+          : total;
+      }, new Decimal(0));
+    const batchWaste = batch_products
+      .filter(product => (product.waste_pct ?? 0) > 0)
+      .reduce((total, product) => total.plus(engineResult.batch_products[product.id]?.waste_added ?? 0), new Decimal(0));
+    const assembledWaste = assembled_products
+      .filter(product => (product.waste_pct ?? 0) > 0)
+      .reduce((total, product) => total.plus(engineResult.assembled_products[product.id]?.waste_added ?? 0), new Decimal(0));
+    return {
+      amount: recipeWaste.plus(batchWaste).plus(assembledWaste).toNumber(),
+      recipeCount: recipes.filter(recipe => (recipe.waste_pct ?? 0) > 0).length,
+      productCount: batch_products.filter(product => (product.waste_pct ?? 0) > 0).length +
+        assembled_products.filter(product => (product.waste_pct ?? 0) > 0).length,
+    };
+  }, [recipes, batch_products, assembled_products, engineResult]);
+
   // Group warnings by code
   const groupedWarnings = useMemo(() => {
     const groups = new Map<WarningCode, typeof all_warnings>();
@@ -70,6 +95,7 @@ export function DataHealthPage({ onNavigate }: DataHealthPageProps) {
     W_PRICE_BELOW_TARGET: 'Margin Below Target Margin',
     W_UNKNOWN_PRODUCT: 'Quote with Unknown Product Reference',
     W_ZERO_QUANTITY: 'Quote Line with Zero Quantity',
+    W_WASTE_HIGH: 'Waste / Spoilage at 50% or More',
   };
 
   const getPageForItem = (warning: typeof all_warnings[0]): string => {
@@ -142,6 +168,30 @@ export function DataHealthPage({ onNavigate }: DataHealthPageProps) {
               {zeroWeightRecipes.length}
             </div>
             <div className="text-body-md">{zeroWeightRecipes.length > 0 ? 'Yield weight is zero or negative' : 'All recipes yield &gt; 0g'}</div>
+          </div>
+
+          <div
+            className="quote-section-card"
+            style={{
+              padding: 16,
+              gap: 6,
+              borderLeft: wasteImpact.amount > 0 ? '3px solid var(--accent-amber)' : '3px solid var(--border)',
+              color: wasteImpact.amount > 0 ? undefined : 'var(--text-muted)',
+            }}
+          >
+            <div className="text-label-caps">Waste impact (all recipes)</div>
+            <div
+              className="text-headline-xl"
+              style={{
+                fontVariantNumeric: 'tabular-nums',
+                color: wasteImpact.amount > 0 ? undefined : 'var(--text-muted)',
+              }}
+            >
+              {fmtMoney(wasteImpact.amount, state.data.settings.currency_code)}
+            </div>
+            <div className="text-body-md">
+              Wasted across {wasteImpact.recipeCount} recipes / {wasteImpact.productCount} products
+            </div>
           </div>
         </div>
 

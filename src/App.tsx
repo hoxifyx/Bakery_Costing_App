@@ -3,6 +3,7 @@ import { StoreProvider, useStore } from './store/store';
 import { Layout } from './ui/Layout';
 import { QuotePage } from './ui/pages/QuotePage';
 import { ProductQuotePage } from './ui/pages/ProductQuotePage';
+import { WhatIfPage } from './ui/pages/WhatIfPage';
 import { IngredientsPage } from './ui/pages/IngredientsPage';
 import { PackagingPage } from './ui/pages/PackagingPage';
 import { RecipesPage } from './ui/pages/RecipesPage';
@@ -43,6 +44,8 @@ function AppContent() {
         return <QuotePage />;
       case 'product_quote':
         return <ProductQuotePage />;
+      case 'what_if':
+        return <WhatIfPage />;
       case 'saved_quotes':
         return <SavedQuotesPage onNavigate={setCurrentPage} />;
       case 'customers':

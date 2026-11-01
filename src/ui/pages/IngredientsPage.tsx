@@ -1,5 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useStore } from '../../store/store';
+import { computeIngredientPriceImpact } from '../../engine';
+import type { ImpactItem, ImpactMetric } from '../../engine/impact';
 import type { Ingredient, PriceHistoryEntry } from '../../engine/types';
 import { NumberInput, SearchBar, ConfirmDialog, fmtMoney } from '../components/Shared';
 import { exportIngredientsCSV, importIngredientsCSV } from '../../io/io';
@@ -30,6 +32,14 @@ function getUsedIn(id: string, data: ReturnType<typeof useStore>['state']['data'
   return used;
 }
 
+function getRecentPriceChangeRange(): { cutoff: string; today: string } {
+  const date = new Date();
+  const today = date.toISOString().slice(0, 10);
+  date.setUTCHours(0, 0, 0, 0);
+  date.setUTCDate(date.getUTCDate() - 30);
+  return { cutoff: date.toISOString().slice(0, 10), today };
+}
+
 export function IngredientsPage() {
   const { state, dispatch } = useStore();
   const { data } = state;
@@ -40,8 +50,42 @@ export function IngredientsPage() {
   const [isNew, setIsNew] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Ingredient | null>(null);
   const [historyTarget, setHistoryTarget] = useState<Ingredient | null>(null);
+  const [recentlyChangedOnly, setRecentlyChangedOnly] = useState(false);
+  const [showAllImpact, setShowAllImpact] = useState(false);
   const [csvMode, setCsvMode] = useState(false);
   const [csvError, setCsvError] = useState('');
+
+  const recentIngredients = useMemo(() => {
+    const { cutoff, today } = getRecentPriceChangeRange();
+    return data.ingredients.filter(ingredient =>
+      ingredient.price_history?.some(entry => entry.date >= cutoff && entry.date <= today),
+    );
+  }, [data.ingredients]);
+  const recentIngredientIds = useMemo(
+    () => new Set(recentIngredients.map(ingredient => ingredient.id)),
+    [recentIngredients],
+  );
+  const recentImpactCounts = useMemo(() => {
+    const recipes = new Set<string>();
+    const products = new Set<string>();
+    for (const ingredient of recentIngredients) {
+      const history = ingredient.price_history ?? [];
+      if (history.length < 2) continue;
+      const impact = computeIngredientPriceImpact(data, ingredient.id, { fromEntryIndex: history.length - 2 });
+      for (const item of impact?.items ?? []) {
+        if (item.category === 'Recipe') recipes.add(item.id);
+        if (item.category === 'Batch product' || item.category === 'Assembled product') {
+          products.add(`${item.category}:${item.id}`);
+        }
+      }
+    }
+    return { recipes: recipes.size, products: products.size };
+  }, [data, recentIngredients]);
+  const historyImpact = useMemo(() => {
+    const history = historyTarget?.price_history ?? [];
+    if (history.length < 2 || !historyTarget) return null;
+    return computeIngredientPriceImpact(data, historyTarget.id, { fromEntryIndex: history.length - 2 });
+  }, [data, historyTarget]);
 
   const filtered = useMemo(() =>
     data.ingredients
@@ -49,8 +93,9 @@ export function IngredientsPage() {
         i.name.toLowerCase().includes(search.toLowerCase()) ||
         i.id.toLowerCase().includes(search.toLowerCase())
       )
+      .filter(i => !recentlyChangedOnly || recentIngredientIds.has(i.id))
       .sort((a, b) => a.name.localeCompare(b.name)),
-    [data.ingredients, search]);
+    [data.ingredients, search, recentlyChangedOnly, recentIngredientIds]);
 
   const openNew = () => {
     setIsNew(true);
@@ -60,6 +105,11 @@ export function IngredientsPage() {
   const openEdit = (ing: Ingredient) => {
     setIsNew(false);
     setEditing({ ...ing });
+  };
+
+  const openHistory = (ing: Ingredient) => {
+    setShowAllImpact(false);
+    setHistoryTarget(ing);
   };
 
   const duplicate = (ing: Ingredient) => {
@@ -173,13 +223,42 @@ export function IngredientsPage() {
       )}
 
       <div className="quote-page-root">
+        <div className="ingredient-impact-summary">
+          <div>
+            <h2 className="decorations-header-title">Price impact summary</h2>
+            <div className="text-muted" style={{ fontSize: 13, marginTop: 4 }}>
+              Based on recorded ingredient price-history dates from the last 30 days.
+            </div>
+          </div>
+          <div className="ingredient-impact-summary-stat">
+            <strong>{recentIngredients.length}</strong>
+            <span>ingredients changed</span>
+          </div>
+          <div className="ingredient-impact-summary-stat">
+            <strong>{recentImpactCounts.recipes}</strong>
+            <span>recipes affected</span>
+          </div>
+          <div className="ingredient-impact-summary-stat">
+            <strong>{recentImpactCounts.products}</strong>
+            <span>products affected</span>
+          </div>
+          <button
+            className={`quote-toolbar-btn${recentlyChangedOnly ? ' quote-toolbar-btn-primary' : ''}`}
+            onClick={() => setRecentlyChangedOnly(value => !value)}
+            aria-pressed={recentlyChangedOnly}
+          >
+            {recentlyChangedOnly ? 'Show all ingredients' : 'Filter recently changed'}
+          </button>
+        </div>
         <div className="quote-section-card">
           <div className="decorations-section-header">
             <div className="decorations-header-left">
               <span className="material-symbols-outlined ms-20" aria-hidden>grocery</span>
               <h2 className="decorations-header-title">Ingredient Catalog</h2>
             </div>
-            <span className="decorations-header-right">{filtered.length} of {data.ingredients.length} ingredients</span>
+            <span className="decorations-header-right">
+              {filtered.length} of {data.ingredients.length} ingredients{recentlyChangedOnly ? ' · recently changed' : ''}
+            </span>
           </div>
           <SearchBar value={search} onChange={setSearch} placeholder="Search ingredients…" maxWidth={420} />
 
@@ -238,8 +317,11 @@ export function IngredientsPage() {
                         </td>
                         <td>
                           <div className="td-actions">
-                            <button className="quote-toolbar-btn" onClick={() => setHistoryTarget(ing)} title="Price history" aria-label={`Price history for ${ing.name}`} style={{ width: 32, height: 32, padding: 0 }}>
+                            <button className="quote-toolbar-btn" onClick={() => openHistory(ing)} title="Price history" aria-label={`Price history for ${ing.name}`} style={{ width: 32, height: 32, padding: 0 }}>
                               <span className="material-symbols-outlined ms-16" aria-hidden>schedule</span>
+                            </button>
+                            <button className="quote-toolbar-btn" onClick={() => openHistory(ing)} title="Price impact" aria-label={`Price impact for ${ing.name}`} style={{ width: 32, height: 32, padding: 0 }}>
+                              <span className="material-symbols-outlined ms-16" aria-hidden>monitoring</span>
                             </button>
                             <button className="quote-toolbar-btn" onClick={() => openEdit(ing)} title="Edit" aria-label={`Edit ${ing.name}`} style={{ width: 32, height: 32, padding: 0 }}>
                               <span className="material-symbols-outlined ms-16" aria-hidden>edit</span>
@@ -353,7 +435,7 @@ export function IngredientsPage() {
       {/* Price History Modal */}
       {historyTarget && (
         <div className="modal-backdrop" onClick={() => setHistoryTarget(null)}>
-          <div className="modal modal-lg" onClick={e => e.stopPropagation()} style={{ maxWidth: 600 }}>
+          <div className="modal modal-lg ingredient-impact-modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 760 }}>
             <div className="modal-header">
               <h2 className="modal-title" style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
                 <span className="material-symbols-outlined ms-18" aria-hidden>schedule</span>
@@ -364,13 +446,9 @@ export function IngredientsPage() {
               </button>
             </div>
             <div className="modal-body">
-              {(!historyTarget.price_history || historyTarget.price_history.length === 0) ? (
-                <div style={{ textAlign: 'center', padding: '32px 0', color: 'var(--text-muted)', fontSize: 14 }}>
-                  No price history yet. Editing and saving the pack price or quantity will automatically log an entry.
-                </div>
-              ) : (
+              {(historyTarget.price_history?.length ?? 0) > 0 && (
                 <>
-                  <PriceSparkline history={historyTarget.price_history} unitType={historyTarget.unit_type} cur={cur} />
+                  <PriceSparkline history={historyTarget.price_history ?? []} unitType={historyTarget.unit_type} cur={cur} />
                   <div className="table-wrapper" style={{ marginTop: 16 }}>
                     <table>
                       <thead>
@@ -383,7 +461,7 @@ export function IngredientsPage() {
                         </tr>
                       </thead>
                       <tbody>
-                        {[...historyTarget.price_history].reverse().map((h, i) => {
+                        {[...(historyTarget.price_history ?? [])].reverse().map((h, i) => {
                           const perUnit = h.pack_quantity > 0
                             ? (historyTarget.unit_type === 'g' ? h.pack_price / h.pack_quantity * 1000 : h.pack_price / h.pack_quantity)
                             : 0;
@@ -402,6 +480,32 @@ export function IngredientsPage() {
                   </div>
                 </>
               )}
+              <section className="ingredient-impact-section" aria-labelledby="ingredient-impact-title">
+                <div>
+                  <h3 id="ingredient-impact-title" className="decorations-header-title">Impact of this price change</h3>
+                  {historyImpact && (
+                    <p className="text-muted ingredient-impact-range">
+                      {historyImpact.from.date}: {fmtMoney(historyImpact.from.pack_price, cur)} / {historyImpact.from.pack_quantity} {historyTarget.unit_type === 'g' ? 'g' : 'pcs'}
+                      {' → '}
+                      {historyImpact.to.date}: {fmtMoney(historyImpact.to.pack_price, cur)} / {historyImpact.to.pack_quantity} {historyTarget.unit_type === 'g' ? 'g' : 'pcs'}
+                    </p>
+                  )}
+                </div>
+                {(historyTarget.price_history?.length ?? 0) < 2 ? (
+                  <div className="text-muted ingredient-impact-empty">
+                    {(historyTarget.price_history?.length ?? 0) === 0
+                      ? 'No recorded price change yet. A history entry is created on the next edit.'
+                      : 'One price on record; impact will populate on the next edit.'}
+                  </div>
+                ) : (
+                  <ImpactList
+                    items={historyImpact?.items ?? []}
+                    currency={cur}
+                    showAll={showAllImpact}
+                    onShowAll={() => setShowAllImpact(true)}
+                  />
+                )}
+              </section>
             </div>
             <div className="modal-footer">
               <div style={{ fontSize: 12, color: 'var(--text-muted)', flex: 1 }}>
@@ -412,6 +516,72 @@ export function IngredientsPage() {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+function ImpactList({
+  items,
+  currency,
+  showAll,
+  onShowAll,
+}: {
+  items: ImpactItem[];
+  currency: string;
+  showAll: boolean;
+  onShowAll: () => void;
+}) {
+  const visibleItems = showAll ? items : items.slice(0, 30);
+  const remaining = items.length - visibleItems.length;
+
+  if (items.length === 0) {
+    return <div className="text-muted ingredient-impact-empty">No recipe or product costs changed between these two recorded prices.</div>;
+  }
+
+  return (
+    <div className="ingredient-impact-list">
+      {visibleItems.map(item => (
+        <article className="ingredient-impact-item" key={`${item.category}:${item.id}`}>
+          <div className="ingredient-impact-item-heading">
+            <span className="badge badge-muted">{item.category}</span>
+            <strong>{item.name}</strong>
+          </div>
+          {item.metrics.map(change => (
+            <ImpactMetricView key={change.label} metric={change} currency={currency} />
+          ))}
+        </article>
+      ))}
+      {remaining > 0 && (
+        <button type="button" className="ingredient-impact-more" onClick={onShowAll}>
+          +{remaining} more
+        </button>
+      )}
+    </div>
+  );
+}
+
+function ImpactMetricView({ metric, currency }: { metric: ImpactMetric; currency: string }) {
+  return (
+    <div className="ingredient-impact-metric">
+      <strong className="ingredient-impact-metric-label">{metric.label}</strong>
+      <div>
+        <span className="ingredient-impact-value-label">Old </span>
+        <span className="td-mono">{fmtMoney(metric.oldValue, currency, 4)}</span>
+      </div>
+      <div>
+        <span className="ingredient-impact-value-label">New </span>
+        <span className="td-mono">{fmtMoney(metric.newValue, currency, 4)}</span>
+      </div>
+      <div>
+        <span className="ingredient-impact-value-label">Delta </span>
+        <span className="td-mono">{metric.delta > 0 ? '+' : ''}{fmtMoney(metric.delta, currency, 4)}</span>
+      </div>
+      <div>
+        <span className="ingredient-impact-value-label">Change </span>
+        {metric.percentageDelta === null
+          ? <span className="td-mono" title="No prior cost to compare.">—</span>
+          : <span className="td-mono">{metric.percentageDelta > 0 ? '+' : ''}{metric.percentageDelta.toFixed(1)}%</span>}
+      </div>
     </div>
   );
 }

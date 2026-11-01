@@ -69,6 +69,7 @@ export interface Recipe {
   lines: RecipeLine[];
   weight_adjustment_g: number;
   labour_hours?: number; // hands-on labour hours per batch; default 0; informational only
+  waste_pct?: number;
   notes?: string;
 }
 
@@ -109,6 +110,7 @@ export interface BatchProduct {
   target_margin?: number | null;
   labour_rate_per_hour?: number | null;
   other_cost_per_piece?: number;
+  waste_pct?: number;
   my_price_each?: number | null;
   my_price_box?: number | null;
 }
@@ -130,6 +132,7 @@ export interface AssembledProduct {
   target_margin?: number | null;
   labour_rate_per_hour?: number | null;
   other_cost_per_piece?: number;
+  waste_pct?: number;
   my_price_each?: number | null;
 }
 
@@ -258,7 +261,8 @@ export type WarningCode =
   | 'W_PRICE_BELOW_COST'
   | 'W_PRICE_BELOW_TARGET'
   | 'W_UNKNOWN_PRODUCT'
-  | 'W_ZERO_QUANTITY';
+  | 'W_ZERO_QUANTITY'
+  | 'W_WASTE_HIGH';
 
 export interface Warning {
   code: WarningCode;
@@ -275,6 +279,7 @@ export interface AuditStep {
 
 export interface RecipeResult {
   raw: number;
+  raw_after_waste: number;
   cwo: number;
   weight: number;
   per_gram_cwo: number;
@@ -300,6 +305,7 @@ export interface FillingResult {
 export interface BatchProductResult {
   pieces: number;
   raw_cost_per_piece: number;
+  waste_added: number;
   unit_cost: number;
   cost_each_excl_box: number;
   cost_each_incl_box: number;
@@ -323,6 +329,7 @@ export interface BatchProductResult {
 
 export interface AssembledProductResult {
   unit_cost: number;
+  waste_added: number;
   labour_piece: number;
   box_piece: number;
   cost_each: number;

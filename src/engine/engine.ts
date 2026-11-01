@@ -170,7 +170,12 @@ function computeRecipe(
     weightG = weightG.mul(D(multiplier));
   }
 
-  const cwo = rawCost.mul(D(1).add(OH));
+  const wastePct = D(recipe.waste_pct ?? 0);
+  const rawAfterWaste = rawCost.mul(D(1).add(wastePct));
+  if (wastePct.gte(0.5)) {
+    warn(recipeWarnings, 'W_WASTE_HIGH', `Recipe "${recipe.name}" has a high waste / spoilage setting (${toNum(wastePct.mul(100)).toFixed(1)}%)`, `recipe[${recipe.id}].waste_pct`);
+  }
+  const cwo = rawAfterWaste.mul(D(1).add(OH));
   const perGramCwo = weightG.gt(0) ? cwo.div(weightG) : D(0);
   const cakeCostPerKg = cwo.mul(D(settings.cake_batches_per_kg));
   const frostingCostPerKgCake = cwo.mul(D(settings.frosting_batches_per_kg));
@@ -179,7 +184,9 @@ function computeRecipe(
 
   const audit: AuditStep[] = [
     step('Raw cost (Σ line costs)', 'Σ line_cost(l)', rawCost, lineAudit),
-    step('Cost with overhead (cwo)', 'raw_cost × (1 + OH)', cwo),
+    step('Waste adjustment', 'raw × (1 + waste_pct); added = raw × waste_pct', rawAfterWaste.minus(rawCost)),
+    step('Raw cost after waste', 'raw_cost × (1 + waste_pct)', rawAfterWaste),
+    step('Cost with overhead (cwo)', 'raw_after_waste × (1 + OH)', cwo),
     step('Batch weight', 'Σ line_weight(l) + weight_adjustment_g', weightG),
     step('Per-gram cwo', 'cwo / weight_g', perGramCwo),
     step('Cake cost/kg', 'cwo × cake_batches_per_kg', cakeCostPerKg),
@@ -188,6 +195,7 @@ function computeRecipe(
 
   return {
     raw: toNum(rawCost),
+    raw_after_waste: toNum(rawAfterWaste),
     cwo: toNum(cwo),
     weight: toNum(weightG),
     per_gram_cwo: toNum(perGramCwo),
@@ -344,7 +352,13 @@ function computeBatchProduct(
 
   const r = recipeResults.get(product.recipe_id);
   const rawCost = r ? D(r.raw) : D(0);
+  const rawAfterRecipeWaste = r ? D(r.raw_after_waste) : D(0);
   const weightG = r ? D(r.weight) : D(0);
+  const wastePct = D(product.waste_pct ?? 0);
+  const wasteMultiplier = D(1).add(wastePct);
+  if (wastePct.gte(0.5)) {
+    warn(prodWarnings, 'W_WASTE_HIGH', `Batch product "${product.name}" has a high waste / spoilage setting (${toNum(wastePct.mul(100)).toFixed(1)}%)`, `batch_product[${product.id}].waste_pct`);
+  }
 
   let pieces: Decimal;
   if (product.pieces_mode === 'by_weight') {
@@ -369,8 +383,9 @@ function computeBatchProduct(
   }
 
   const labour = D(product.labour_hours_per_batch).mul(LAB);
+  const effectiveRawCost = rawAfterRecipeWaste.mul(wasteMultiplier);
   const baseUnitCost = pieces.gt(0)
-    ? rawCost.add(labour).mul(D(1).add(OH)).div(pieces)
+    ? effectiveRawCost.add(labour).mul(D(1).add(OH)).div(pieces)
     : D(0);
 
   // Components (already contain overhead, do NOT add again)
@@ -382,7 +397,12 @@ function computeBatchProduct(
     componentsCost = componentsCost.add(pgCwo.mul(D(comp.grams)));
   }
 
-  const unitCost = baseUnitCost.add(componentsCost);
+  const componentsCostWithWaste = componentsCost.mul(wasteMultiplier);
+  const unitCost = baseUnitCost.add(componentsCostWithWaste);
+  const recipeWasteAdded = pieces.gt(0)
+    ? rawAfterRecipeWaste.mul(D(1).add(OH)).mul(wastePct).div(pieces)
+    : D(0);
+  const wasteAdded = recipeWasteAdded.add(componentsCost.mul(wastePct));
   const costEachExclBox = unitCost.add(otherCost);
 
   const boxItem = product.box_id ? packMap.get(product.box_id) : null;
@@ -408,8 +428,9 @@ function computeBatchProduct(
 
   audit.push(
     step('Labour', 'labour_hours × LAB', labour),
-    step('Base unit cost', '(raw_cost + labour) × (1+OH) / pieces', baseUnitCost),
-    step('Components cost/piece', 'Σ per_gram_cwo × grams', componentsCost),
+    step('Product waste adjustment', 'ingredient-derived cost × waste_pct', wasteAdded),
+    step('Base unit cost', '(raw_after_recipe_waste × (1 + product_waste) + labour) × (1+OH) / pieces', baseUnitCost),
+    step('Components cost/piece', 'Σ per_gram_cwo × grams × (1 + product_waste)', componentsCostWithWaste),
     step('Unit cost', 'base_unit_cost + components_cost', unitCost),
     step('Cost each excl. box', 'unit_cost + other_cost_per_piece', costEachExclBox),
     step('Cost each incl. box', 'cost_each_excl_box + box_price / pieces_per_box', costEachInclBox),
@@ -465,6 +486,7 @@ function computeBatchProduct(
   return {
     pieces: toNum(pieces),
     raw_cost_per_piece: toNum(rawCostPerPiece),
+    waste_added: toNum(wasteAdded),
     unit_cost: toNum(unitCost),
     cost_each_excl_box: toNum(costEachExclBox),
     cost_each_incl_box: toNum(costEachInclBox),
@@ -503,8 +525,14 @@ function computeAssembledProduct(
   const M = D(product.target_margin ?? settings.target_margin);
   const LAB = D(product.labour_rate_per_hour ?? settings.labour_rate_per_hour);
   const otherCost = D(product.other_cost_per_piece ?? 0);
+  const wastePct = D(product.waste_pct ?? 0);
+  const wasteMultiplier = D(1).add(wastePct);
   const prodWarnings: Warning[] = [];
   const audit: AuditStep[] = [];
+
+  if (wastePct.gte(0.5)) {
+    warn(prodWarnings, 'W_WASTE_HIGH', `Assembled product "${product.name}" has a high waste / spoilage setting (${toNum(wastePct.mul(100)).toFixed(1)}%)`, `assembled_products[${product.id}].waste_pct`);
+  }
 
   let unitCost = D(0);
   for (const comp of product.components) {
@@ -533,6 +561,10 @@ function computeAssembledProduct(
     unitCost = unitCost.add(compCost);
   }
 
+  const componentCostBeforeWaste = unitCost;
+  unitCost = unitCost.mul(wasteMultiplier);
+  const wasteAdded = componentCostBeforeWaste.mul(wastePct);
+
   if (product.labour_hours_per_batch === 0) {
     warn(prodWarnings, 'W_NO_LABOUR_HOURS', `Assembled product "${product.id}" has zero labour hours`, `assembled[${product.id}]`);
   }
@@ -552,7 +584,8 @@ function computeAssembledProduct(
     : D(0);
 
   audit.push(
-    step('Unit cost (components)', 'Σ component_cost(c)', unitCost),
+    step('Product waste adjustment', 'component_cost × waste_pct', wasteAdded),
+    step('Unit cost (components)', 'Σ component_cost(c) × (1 + product_waste)', unitCost),
     step('Labour per piece', 'labour_hours × LAB × (1+OH) / pieces_per_batch', labourPiece),
     step('Box per piece', 'box_price / pieces_per_box', boxPiece),
     step('Other cost per piece', 'user amount', otherCost),
@@ -592,6 +625,7 @@ function computeAssembledProduct(
 
   return {
     unit_cost: toNum(unitCost),
+    waste_added: toNum(wasteAdded),
     labour_piece: toNum(labourPiece),
     box_piece: toNum(boxPiece),
     cost_each: toNum(costEach),

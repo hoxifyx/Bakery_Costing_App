@@ -2191,6 +2191,168 @@ tbody tr:hover {
   color: var(--text-muted);
 }
 
+.ingredient-impact-summary {
+  display: grid;
+  grid-template-columns: minmax(200px, 1fr) repeat(3, minmax(100px, auto)) auto;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+  padding: 18px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+}
+
+.ingredient-impact-summary-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.ingredient-impact-summary-stat strong {
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 20px;
+}
+
+.product-waste-badge {
+  display: inline-flex;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  max-width: 100%;
+  margin-top: 4px;
+}
+
+.product-waste-field {
+  min-width: 0;
+}
+
+.ingredient-impact-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.ingredient-impact-range {
+  font-size: 12px;
+  margin: 4px 0 0;
+  overflow-wrap: anywhere;
+}
+
+.ingredient-impact-empty {
+  padding: 20px 12px;
+  text-align: center;
+  font-size: 14px;
+}
+
+.ingredient-impact-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ingredient-impact-item {
+  min-width: 0;
+  padding: 12px;
+  background: var(--bg-surface-lowest);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+}
+
+.ingredient-impact-item-heading {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
+  overflow-wrap: anywhere;
+}
+
+.ingredient-impact-metric {
+  display: grid;
+  grid-template-columns: minmax(130px, 1fr) repeat(4, minmax(78px, auto));
+  align-items: baseline;
+  gap: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+  font-size: 12px;
+}
+
+.ingredient-impact-metric + .ingredient-impact-metric {
+  margin-top: 8px;
+}
+
+.ingredient-impact-metric-label {
+  overflow-wrap: anywhere;
+}
+
+.ingredient-impact-value-label {
+  display: none;
+  color: var(--text-muted);
+}
+
+.ingredient-impact-more {
+  width: 100%;
+  min-height: 44px;
+  border: 1px dashed var(--border);
+  border-radius: var(--r-md);
+  background: transparent;
+  color: var(--accent);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+@media (max-width: 1023px) {
+  .ingredient-impact-summary {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .ingredient-impact-summary > div:first-child {
+    grid-column: 1 / -1;
+  }
+
+  .ingredient-impact-summary > button {
+    grid-column: 1 / -1;
+    justify-self: start;
+  }
+}
+
+@media (max-width: 767px) {
+  .ingredient-impact-summary {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .ingredient-impact-summary > div:first-child,
+  .ingredient-impact-summary > button {
+    grid-column: auto;
+  }
+
+  .ingredient-impact-modal {
+    max-height: calc(100dvh - 24px);
+  }
+}
+
+@media (max-width: 640px) {
+  .ingredient-impact-metric {
+    grid-template-columns: 1fr 1fr;
+    gap: 6px 10px;
+  }
+
+  .ingredient-impact-metric-label {
+    grid-column: 1 / -1;
+  }
+
+  .ingredient-impact-value-label {
+    display: inline;
+  }
+}
+
 .strip-hint {
   font-family: var(--font-mono);
   font-size: 11px;
@@ -2548,4 +2710,136 @@ tbody tr:hover {
   font-size: 12px;
   color: var(--text-secondary);
   word-break: break-all;
+}
+
+.what-if-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+
+.what-if-controls,
+.what-if-results {
+  min-width: 0;
+}
+
+.what-if-input-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.what-if-input-grid .form-group {
+  min-width: 0;
+}
+
+.what-if-input-grid .input,
+.what-if-input-grid .select {
+  width: 100%;
+  min-width: 0;
+}
+
+.what-if-scratchpad-note {
+  margin: 0 0 12px;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.what-if-displaced-badge {
+  margin: 0 0 8px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--bg-surface-low);
+  color: var(--text-secondary);
+  font-size: 12px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.what-if-result-metrics {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 0;
+}
+
+.what-if-result-metrics > div {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  color: var(--text-secondary);
+}
+
+.what-if-result-metrics strong {
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  text-align: right;
+}
+
+.what-if-result-metrics .what-if-total {
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+  color: var(--text-primary);
+  font-weight: 700;
+}
+
+.what-if-result-metrics .what-if-total strong {
+  color: var(--accent);
+  font-size: 18px;
+}
+
+.what-if-result-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.what-if-copy-status {
+  min-height: 18px;
+  margin-top: 6px;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+@media (min-width: 1280px) {
+  .what-if-layout {
+    grid-template-columns: minmax(0, 1.6fr) minmax(280px, 0.7fr);
+  }
+
+  .what-if-results {
+    position: sticky;
+    top: 16px;
+  }
+}
+
+@media (max-width: 640px) {
+  .what-if-input-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .what-if-result-actions > button {
+    flex: 1 1 140px;
+  }
+}
+
+@media (max-width: 768px) {
+  .what-if-results {
+    position: sticky;
+    bottom: 0;
+    z-index: 20;
+    max-height: min(58vh, 480px);
+    overflow-y: auto;
+    background: var(--bg-surface);
+    box-shadow: 0 -8px 24px rgb(0 0 0 / 12%);
+  }
+}
+
+@media (pointer: coarse) {
+  .what-if-input-grid .input,
+  .what-if-input-grid .select {
+    min-height: 44px;
+  }
 }

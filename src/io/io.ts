@@ -23,7 +23,7 @@ import type {
 } from '../engine/types';
 import { DEFAULT_SETTINGS, DEFAULT_SIZE_GUIDE } from '../engine/types';
 
-export const CURRENT_SCHEMA_VERSION = '1.4';
+export const CURRENT_SCHEMA_VERSION = '1.5';
 export const CURRENT_APP_VERSION = '1.5.0';
 const FORMAT_FIELD = 'bakery-costing-data';
 const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20 MB
@@ -201,6 +201,7 @@ function validateRecipe(raw: unknown, idx: number, errors: ImportError[]): Recip
     labour_hours: typeof r.labour_hours === 'number' && isFinite(r.labour_hours) && r.labour_hours >= 0
       ? r.labour_hours
       : undefined,
+    waste_pct: r.waste_pct === undefined ? 0 : requireNumber(r.waste_pct, `${p}.waste_pct`, errors),
     notes: typeof r.notes === 'string' ? r.notes : undefined,
   };
 }
@@ -319,6 +320,7 @@ function validateBatchProduct(raw: unknown, idx: number, errors: ImportError[]):
     target_margin,
     labour_rate_per_hour,
     other_cost_per_piece,
+    waste_pct: r.waste_pct === undefined ? 0 : requireNumber(r.waste_pct, `${p}.waste_pct`, errors),
     my_price_each,
     my_price_box,
   };
@@ -387,6 +389,7 @@ function validateAssembledProduct(raw: unknown, idx: number, errors: ImportError
     target_margin,
     labour_rate_per_hour,
     other_cost_per_piece,
+    waste_pct: r.waste_pct === undefined ? 0 : requireNumber(r.waste_pct, `${p}.waste_pct`, errors),
     my_price_each,
   };
 }

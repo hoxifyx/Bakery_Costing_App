@@ -55,6 +55,7 @@ export function RecipesPage() {
       kind: 'cake',
       lines: [emptyLine()],
       weight_adjustment_g: 0,
+      waste_pct: 0,
     });
   };
 
@@ -374,6 +375,23 @@ export function RecipesPage() {
                 </div>
 
                 <div className="form-group">
+                  <label htmlFor="recipe-waste-pct">Waste / spoilage (%)</label>
+                  <NumberInput
+                    id="recipe-waste-pct"
+                    value={(editing.waste_pct ?? 0) * 100}
+                    onChange={v => setEditing(r => r && ({ ...r, waste_pct: v / 100 }))}
+                    step={0.1}
+                    aria-label="Waste / spoilage percentage"
+                  />
+                  <span className="input-hint">
+                    Applied to raw ingredient cost before overhead. Use for trim loss, evaporation, or spoilage. Recipe and product waste are separate, multiplicative loss events (3% + 5% = ×1.03 ×1.05).
+                  </span>
+                  {(editing.waste_pct ?? 0) >= 0.5 && (
+                    <span className="text-red" role="status">High waste / spoilage (50% or more)</span>
+                  )}
+                </div>
+
+                <div className="form-group">
                   <label>Labour hours per batch</label>
                   <NumberInput
                     value={editing.labour_hours ?? 0}
@@ -408,6 +426,12 @@ export function RecipesPage() {
                     return (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 8, fontSize: 13 }}>
                         <div className="result-row"><span className="text-secondary">Raw cost</span><span className="td-mono">{fmtMoney(res.raw, cur)}</span></div>
+                        {(editing.waste_pct ?? 0) > 0 && (
+                          <div className="result-row">
+                            <span className="text-secondary">Waste adjustment</span>
+                            <span className="td-mono">{fmtMoney(res.raw_after_waste - res.raw, cur)}</span>
+                          </div>
+                        )}
                         <div className="result-row"><span className="text-secondary">CWO (+{(data.settings.overhead_pct * 100).toFixed(0)}%)</span><span className="td-mono text-green">{fmtMoney(res.cwo, cur)}</span></div>
                         <div className="result-row"><span className="text-secondary">Batch weight</span><span className="td-mono">{res.weight.toFixed(0)}g</span></div>
                         <div className="result-row"><span className="text-secondary">Per gram</span><span className="td-mono">{fmtMoney(res.per_gram_cwo, cur, 4)}</span></div>

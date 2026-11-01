@@ -19,7 +19,7 @@ describe('Recipe labour hours import and export', () => {
       app_version: string;
       recipes: Array<{ labour_hours?: number }>;
     };
-    expect(exported.schema_version).toBe('1.4');
+    expect(exported.schema_version).toBe('1.5');
     expect(exported.app_version).toBe('1.5.0');
     expect(exported.recipes[0].labour_hours).toBe(0.5);
 

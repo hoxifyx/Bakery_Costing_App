@@ -54,6 +54,7 @@ export function ProductsPage() {
       target_margin: null,
       labour_rate_per_hour: null,
       other_cost_per_piece: 0,
+      waste_pct: 0,
       my_price_each: null,
       my_price_box: null,
     });
@@ -86,6 +87,7 @@ export function ProductsPage() {
       target_margin: null,
       labour_rate_per_hour: null,
       other_cost_per_piece: 0,
+      waste_pct: 0,
       my_price_each: null,
     });
   };
@@ -220,6 +222,11 @@ export function ProductsPage() {
                         <td>
                           <div style={{ fontWeight: 600 }}>{p.name}</div>
                           <div className="text-muted" style={{ fontSize: 11 }}>{p.id}</div>
+                          {(p.waste_pct ?? 0) > 0 && (
+                            <span className="badge badge-amber product-waste-badge" title={`Adds ${fmtMoney(res?.waste_added ?? 0, cur, 4)} ingredient cost per piece`}>
+                              Waste {((p.waste_pct ?? 0) * 100).toFixed(1).replace(/\.0$/, '')}%
+                            </span>
+                          )}
                         </td>
                         <td className="td-mono">{res?.pieces.toFixed(2) ?? '—'}</td>
                         <td className="td-mono">{res ? fmtMoney(res.unit_cost, cur, 4) : '—'}</td>
@@ -344,6 +351,11 @@ export function ProductsPage() {
                         <td>
                           <div style={{ fontWeight: 600 }}>{p.name}</div>
                           <div className="text-muted" style={{ fontSize: 11 }}>{p.id}</div>
+                          {(p.waste_pct ?? 0) > 0 && (
+                            <span className="badge badge-amber product-waste-badge" title={`Adds ${fmtMoney(res?.waste_added ?? 0, cur, 4)} ingredient cost per piece`}>
+                              Waste {((p.waste_pct ?? 0) * 100).toFixed(1).replace(/\.0$/, '')}%
+                            </span>
+                          )}
                         </td>
                         <td className="td-mono">{p.pieces_per_batch}</td>
                         <td className="td-mono">{res ? fmtMoney(res.unit_cost, cur, 4) : '—'}</td>
@@ -472,6 +484,20 @@ export function ProductsPage() {
                     <label>Fixed pieces</label>
                     <NumberInput value={editingBatch.fixed_pieces ?? 0} onChange={v => setEditingBatch(p => p && ({ ...p, fixed_pieces: v }))} />
                   </div>
+                )}
+              </div>
+              <div className="form-group product-waste-field">
+                <label htmlFor="batch-product-waste">Waste / spoilage (%)</label>
+                <NumberInput
+                  id="batch-product-waste"
+                  value={(editingBatch.waste_pct ?? 0) * 100}
+                  onChange={v => setEditingBatch(p => p && ({ ...p, waste_pct: v / 100 }))}
+                  step={0.1}
+                  aria-label="Batch product waste / spoilage percentage"
+                />
+                <span className="input-hint">A separate multiplier on ingredient-derived cost; labour, other cost, and box are excluded.</span>
+                {(editingBatch.waste_pct ?? 0) >= 0.5 && (
+                  <span className="text-red" role="status">High waste / spoilage (50% or more)</span>
                 )}
               </div>
               <div className="form-row form-row-3">
@@ -764,6 +790,20 @@ export function ProductsPage() {
               <div className="form-group">
                 <label>Name *</label>
                 <input className="input" value={editingAssembled.name} onChange={e => setEditingAssembled(p => p && ({ ...p, name: e.target.value }))} />
+              </div>
+              <div className="form-group product-waste-field">
+                <label htmlFor="assembled-product-waste">Waste / spoilage (%)</label>
+                <NumberInput
+                  id="assembled-product-waste"
+                  value={(editingAssembled.waste_pct ?? 0) * 100}
+                  onChange={v => setEditingAssembled(p => p && ({ ...p, waste_pct: v / 100 }))}
+                  step={0.1}
+                  aria-label="Assembled product waste / spoilage percentage"
+                />
+                <span className="input-hint">A separate multiplier on ingredient-derived cost; labour, other cost, and box are excluded.</span>
+                {(editingAssembled.waste_pct ?? 0) >= 0.5 && (
+                  <span className="text-red" role="status">High waste / spoilage (50% or more)</span>
+                )}
               </div>
               <div className="form-row form-row-3">
                 <div className="form-group">

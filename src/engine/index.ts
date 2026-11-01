@@ -1,4 +1,15 @@
 export { compute, computeProductQuote, roundPrice } from './engine';
+export { computeIngredientPriceImpact } from './impact';
+export type { ImpactCategory, ImpactItem, ImpactMetric, IngredientPriceImpact } from './impact';
+export { computeWhatIf } from './whatif';
+export type {
+  WhatIfDisplacedOverrides,
+  WhatIfOverride,
+  WhatIfParams,
+  WhatIfResult,
+  WhatIfSource,
+  WhatIfUnit,
+} from './whatif';
 export type {
   AppData,
   Settings,
