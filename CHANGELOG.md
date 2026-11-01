@@ -8,15 +8,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Ingredient price impact:** Review the cost effect of recorded ingredient price changes across recipes and products.
 - **Waste / spoilage costing:** Recipes, batch products, and assembled products can apply waste percentages to ingredient-derived costs. Waste is calculated before overhead, product waste is independent and multiplicative, and high settings (50%+) are surfaced in Data Health.
+- **What-if price scratchpad:** Test temporary quantity and pricing overrides for recipes and products without saving them to app data.
+- **Shopping and production lists:** Generate and export aggregated ingredient requirements from saved cake or product quotes and orders, with separate piece counts and warnings for deleted items.
+- **Nutrition and allergen labels:** Review approximate recipe nutrition and inherited allergens from ingredient data, with warnings for missing information.
 
 ### Changed
 - **Component row labels:** Both product editors (batch and assembled) now render component rows through a shared `ComponentRow` that shows an explicit type badge (`Cake` / `Recipe` / `Ingredient`), a labeled picker (`Recipe:` / `Ingredient:` prefix), a `×`-labeled batch multiplier for recipe-based rows only, and a `Grams per piece` labeled input. Ingredient rows correctly omit the multiplier.
 - **Preview-only multipliers:** The batch product's main recipe multiplier, and the three recipe-source multipliers in Flavours & Fillings (cake recipe, frosting recipe, filling source), now carry `×` plus an accessible `Batch multiplier (preview only, not stored)` label and tooltip.
 - **Recipe-line quantity:** The recipe editor's quantity input gained `aria-label="Quantity"`; the five-column line grid is unchanged.
-
-### Notes
-- UI labels and accessibility attributes only. No engine, schema, reducer, IO, or calculation changes; 49/49 tests unchanged.
 
 ## [1.5.0] — 2026-10-30
 

@@ -2,7 +2,7 @@
 
 OvenCost Pro is an offline-first costing and pricing app for bakeries, cake studios, and confectioners. Build ingredient and packaging catalogs, calculate recipe and product costs, prepare multi-tier cake quotes, and track customers and orders. Application data is stored locally in the browser.
 
-The latest release is **v1.5.0**. See [CHANGELOG.md](./CHANGELOG.md) for release history.
+The app version is **v1.6.0**; the latest published release is **v1.5.0**. Version 1.6.0 remains unreleased. See [CHANGELOG.md](./CHANGELOG.md) for release history.
 
 ## Features
 
@@ -16,6 +16,26 @@ The latest release is **v1.5.0**. See [CHANGELOG.md](./CHANGELOG.md) for release
 - **Import and export:** Create full or selective JSON exports, import validated datasets and ingredient CSVs, export ingredient and packaging CSVs, and download a blank JSON template.
 - **Optional Google Drive backup:** Connect Google Drive to back up and restore data in the app-specific Drive folder.
 - **Local-first storage:** App data is persisted in the browser's IndexedDB; no app server or account is required.
+
+### Ingredient price impact
+
+Ingredient price history shows how a recorded price change affects recipe and product costs. The calculation is in [impact.ts](./src/engine/impact.ts), with the history view in [IngredientsPage.tsx](./src/ui/pages/IngredientsPage.tsx).
+
+### Waste and spoilage tracking
+
+Recipes and products can account for ingredient-derived waste, with costs and warnings surfaced in Data Health. Calculations are in [engine.ts](./src/engine/engine.ts), with controls in [RecipesPage.tsx](./src/ui/pages/RecipesPage.tsx) and [ProductsPage.tsx](./src/ui/pages/ProductsPage.tsx).
+
+### What-if price scratchpad
+
+Simulate recipe or product prices with temporary quantity and pricing overrides; scratchpad inputs are not saved to app data. The calculation and interface are in [whatif.ts](./src/engine/whatif.ts) and [WhatIfPage.tsx](./src/ui/pages/WhatIfPage.tsx).
+
+### Shopping and production lists
+
+Generate and export ingredient requirements from saved quotes or linked orders, including separate piece counts and warnings for removed catalog items. The shared list calculation and modal are in [shopping.ts](./src/engine/shopping.ts) and [ShoppingListModal.tsx](./src/ui/components/ShoppingListModal.tsx).
+
+### Nutrition and allergen information
+
+Recipe panels summarize nutrition and inherited allergens from entered ingredient data; results are approximate and should be verified before customer-facing use. Calculations are in [nutrition.ts](./src/engine/nutrition.ts), with editors and panels in [IngredientsPage.tsx](./src/ui/pages/IngredientsPage.tsx) and [RecipesPage.tsx](./src/ui/pages/RecipesPage.tsx).
 
 ## Run locally
 
