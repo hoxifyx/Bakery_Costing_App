@@ -2,6 +2,14 @@ export { compute, computeProductQuote, roundPrice } from './engine';
 export { computeIngredientPriceImpact } from './impact';
 export type { ImpactCategory, ImpactItem, ImpactMetric, IngredientPriceImpact } from './impact';
 export { computeWhatIf } from './whatif';
+export { computeShoppingList } from './shopping';
+export type {
+  ShoppingIngredientRow,
+  ShoppingList,
+  ShoppingPackagingRow,
+  ShoppingProductionRow,
+  ShoppingWarningRow,
+} from './shopping';
 export type {
   WhatIfDisplacedOverrides,
   WhatIfOverride,

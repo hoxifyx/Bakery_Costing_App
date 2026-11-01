@@ -3,6 +3,7 @@ import { useStore } from '../../store/store';
 import type { Order, OrderStatus } from '../../engine/types';
 import { generateId } from '../../engine/utils';
 import { ConfirmDialog, SearchBar } from '../components/Shared';
+import { ShoppingListModal } from '../components/ShoppingListModal';
 
 interface OrdersPageProps {
   onNavigate: (page: string) => void;
@@ -19,6 +20,7 @@ export function OrdersPage({ onNavigate }: OrdersPageProps) {
   const [editing, setEditing] = useState<Order | null>(null);
   const [isNew, setIsNew] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Order | null>(null);
+  const [shoppingTarget, setShoppingTarget] = useState<(typeof saved_quotes)[number] | null>(null);
 
   const filtered = useMemo(() => {
     let res = [...orders];
@@ -179,10 +181,15 @@ export function OrdersPage({ onNavigate }: OrdersPageProps) {
                         </td>
                         <td>
                           {quote ? (
-                            <button className="quote-toolbar-btn" onClick={() => handleOpenQuote(quote.id)} style={{ maxWidth: 220 }}>
-                              <span className="material-symbols-outlined ms-16" aria-hidden>request_quote</span>
-                              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{quote.name}</span>
-                            </button>
+                            <div className="order-quote-actions">
+                              <button className="quote-toolbar-btn" onClick={() => handleOpenQuote(quote.id)} style={{ maxWidth: 220 }}>
+                                <span className="material-symbols-outlined ms-16" aria-hidden>request_quote</span>
+                                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{quote.name}</span>
+                              </button>
+                              <button className="quote-toolbar-btn" onClick={() => setShoppingTarget(quote)} title={`View shopping list for ${quote.name}`} aria-label={`View shopping list for ${quote.name}`}>
+                                <span className="material-symbols-outlined ms-16" aria-hidden>shopping_cart</span>
+                              </button>
+                            </div>
                           ) : (
                             <span className="text-muted" style={{ fontSize: 12 }}>No Quote</span>
                           )}
@@ -294,6 +301,13 @@ export function OrdersPage({ onNavigate }: OrdersPageProps) {
           onCancel={() => setDeleteTarget(null)}
           confirmLabel="Delete"
           danger
+        />
+      )}
+      {shoppingTarget && (
+        <ShoppingListModal
+          data={state.data}
+          quote={shoppingTarget}
+          onClose={() => setShoppingTarget(null)}
         />
       )}
     </>

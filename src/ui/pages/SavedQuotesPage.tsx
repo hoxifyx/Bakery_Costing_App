@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useStore } from '../../store/store';
 import type { SavedQuote } from '../../engine/types';
 import { ConfirmDialog, SearchBar, fmtMoney } from '../components/Shared';
+import { ShoppingListModal } from '../components/ShoppingListModal';
 
 interface SavedQuotesPageProps {
   onNavigate: (page: string) => void;
@@ -13,6 +14,7 @@ export function SavedQuotesPage({ onNavigate }: SavedQuotesPageProps) {
   const cur = settings.currency_code;
 
   const [deleteTarget, setDeleteTarget] = useState<SavedQuote | null>(null);
+  const [shoppingTarget, setShoppingTarget] = useState<SavedQuote | null>(null);
   const [search, setSearch] = useState('');
 
   // Sort descending by created_at date
@@ -164,6 +166,10 @@ export function SavedQuotesPage({ onNavigate }: SavedQuotesPageProps) {
                               <span className="material-symbols-outlined ms-16" aria-hidden>sync</span>
                               <span>Recalculate</span>
                             </button>
+                            <button className="quote-toolbar-btn" onClick={() => setShoppingTarget(sq)} title="View shopping list">
+                              <span className="material-symbols-outlined ms-16" aria-hidden>shopping_cart</span>
+                              <span>List</span>
+                            </button>
                             <button className="quote-toolbar-btn" style={{ width: 32, height: 32, padding: 0, color: 'var(--accent-red)' }} onClick={() => setDeleteTarget(sq)} title="Delete quote" aria-label={`Delete quote ${sq.name}`}>
                               <span className="material-symbols-outlined ms-16" aria-hidden>delete</span>
                             </button>
@@ -221,6 +227,10 @@ export function SavedQuotesPage({ onNavigate }: SavedQuotesPageProps) {
                       <span className="material-symbols-outlined ms-16" aria-hidden>sync</span>
                       <span>Recalculate</span>
                     </button>
+                    <button className="quote-toolbar-btn" style={{ flex: 1 }} onClick={() => setShoppingTarget(sq)}>
+                      <span className="material-symbols-outlined ms-16" aria-hidden>shopping_cart</span>
+                      <span>List</span>
+                    </button>
                     <button className="quote-toolbar-btn" style={{ width: 32, height: 32, padding: 0, color: 'var(--accent-red)', flexShrink: 0 }} onClick={() => setDeleteTarget(sq)} title="Delete quote" aria-label={`Delete quote ${sq.name}`}>
                       <span className="material-symbols-outlined ms-16" aria-hidden>delete</span>
                     </button>
@@ -239,6 +249,13 @@ export function SavedQuotesPage({ onNavigate }: SavedQuotesPageProps) {
           onCancel={() => setDeleteTarget(null)}
           confirmLabel="Delete Quote"
           danger
+        />
+      )}
+      {shoppingTarget && (
+        <ShoppingListModal
+          data={state.data}
+          quote={shoppingTarget}
+          onClose={() => setShoppingTarget(null)}
         />
       )}
     </>

@@ -786,7 +786,7 @@ export const MAX_IMPORT_SIZE = MAX_FILE_SIZE;
 // CSV export/import
 // ---------------------------------------------------------------------------
 
-function csvEscape(v: unknown): string {
+export function csvEscape(v: unknown): string {
   const s = String(v ?? '');
   if (s.includes(',') || s.includes('"') || s.includes('\n')) {
     return `"${s.replace(/"/g, '""')}"`;
