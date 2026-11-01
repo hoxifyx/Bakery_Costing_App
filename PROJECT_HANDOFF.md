@@ -2,7 +2,7 @@
 
 ## What This Is
 <!-- BEGIN AGENT:what_this_is -->
-OvenCost Pro is a local-first bakery costing and pricing app. The current release is v1.5.0 with export schema 1.4; see `CHANGELOG.md` and `MIGRATIONS.md` for release and data-format history. The phased plan and build prompt are original product documents, and their unimplemented planned phases are not a release-status checklist.
+OvenCost Pro is a local-first bakery costing and pricing app. The app version is v1.6.0 (unreleased) with export schema 1.6; the latest published release is v1.5.0. See `CHANGELOG.md` and `MIGRATIONS.md` for release and data-format history. The phased plan and build prompt are original product documents, and their unimplemented planned phases are not a release-status checklist.
 <!-- END AGENT:what_this_is -->
 
 ## Quick Start
@@ -59,7 +59,7 @@ npm test
 
 ## Warnings
 <!-- BEGIN SCRIPT:warnings -->
-At v1.5.0, all 49 automated tests pass. The production build succeeds with a known `INEFFECTIVE_DYNAMIC_IMPORT` warning for `src/cloud/drive.ts` and a bundle-size advisory. Lint completes with existing warnings in `tests/cloud.test.ts`, `src/store/store.tsx`, `src/ui/components/Shared.tsx`, and `src/ui/pages/QuotePage.tsx`. Runtime data warnings are surfaced in-app on the **Data Health** page.
+At v1.6.0, all 81 automated tests pass. Lint completes with 6 existing warnings; the production build succeeds with 2 existing warnings: an `INEFFECTIVE_DYNAMIC_IMPORT` warning for `src/cloud/drive.ts` and a bundle-size advisory. Runtime data warnings are surfaced in-app on the **Data Health** page.
 <!-- END SCRIPT:warnings -->
 
 ## What's Excluded and Why
@@ -104,6 +104,7 @@ No suspicious content detected.
 <!-- BEGIN AGENT:extend -->
 1.  **Data Model**: Add the new interface to `src/engine/types.ts` and update the `AppData` interface.
 2.  **Engine**: If adding a computed property, update `src/engine/engine.ts`.
+    - New pure helpers should follow the established pattern in `impact.ts`, `whatif.ts`, `shopping.ts`, and `nutrition.ts`: import only `./engine`, `./types`, and `decimal.js`, then re-export from `src/engine/index.ts`.
 3.  **IO / Migrations**: Update `src/io/io.ts` to validate the new field and bump the `CURRENT_SCHEMA_VERSION`. Update `MIGRATIONS.md` with instructions.
 4.  **UI**: Create a new page under `src/ui/pages/`, register it in `App.tsx`, and add a navigation link in `Layout.tsx`.
 <!-- END AGENT:extend -->
@@ -134,6 +135,13 @@ The v1.5.0 release added product-level pricing overrides and product quotes,
 including saved product-quote snapshots. The schema is now `1.4`; older exports
 without the optional product fields remain valid and continue to use global
 pricing defaults. Product quotes and cake quotes share the saved-quote archive.
+
+The v1.6.0 series (tag `v1.6.0`; unreleased) adds ingredient price impact,
+waste tracking (schema 1.4 → 1.5), an ephemeral what-if scratchpad, shopping
+lists, and nutrition/allergen information (schema 1.5 → 1.6). It has 81 passing
+automated tests and adds no dependencies. During Phase 5, recipe-to-recipe
+composition was rolled back; allergen propagation uses existing product
+composition instead.
 <!-- END OWNER_NOTES -->
 
 ## When Not to Use This Bundle

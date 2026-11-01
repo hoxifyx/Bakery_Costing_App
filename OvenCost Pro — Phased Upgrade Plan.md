@@ -385,9 +385,9 @@ Wait for me to reply "confirmed" (or "fix X first") before moving on.
 
 **Responsive:** final manual check across the seven widths listed in Phase 18.
 
-### Current documentation status (updated 2026-10-30)
+### Current documentation status (updated 2026-11-01)
 
-This file records the original phased proposal and should not be read as a definitive inventory of shipped features. The app's current release is v1.5.0 with export schema `1.4`; consult `CHANGELOG.md`, `MIGRATIONS.md`, `README.md`, and `PROJECT_HANDOFF.md` for current release details and maintenance instructions. The current automated suite has 49 passing tests.
+This file records the original phased proposal and should not be read as a definitive inventory of shipped features. The app version is v1.6.0 (unreleased) with export schema `1.6`; the latest published release is v1.5.0. Consult `CHANGELOG.md`, `MIGRATIONS.md`, `README.md`, and `PROJECT_HANDOFF.md` for current release details and maintenance instructions. The current automated suite has 81 passing tests. Beyond the original phase list, the v1.6.0 series adds ingredient price impact, waste tracking, an ephemeral what-if scratchpad, shopping lists, and nutrition/allergen information.
 
 The v1.4.12 Settings validation fix and v1.4.13 Material Symbols font subset are release-series work outside the original feature-phase sequence. The v1.5.0 product pricing and quote upgrade is also release-series work outside these original phases. The subset uses the source font's `rlig` ligature feature and is reproducible from `scripts/material-symbols-manifest.txt` with `scripts/subset-material-symbols.sh`. See `MIGRATIONS.md` for current schema details.
 
