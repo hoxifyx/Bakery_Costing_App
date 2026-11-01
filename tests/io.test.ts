@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { EMPTY_APP_DATA, type Recipe } from '../src/engine/types';
+import { EMPTY_APP_DATA, type AppData, type Recipe } from '../src/engine/types';
 import { exportAllData, parseImportFile } from '../src/io/io';
 
 describe('Recipe labour hours import and export', () => {
@@ -42,5 +42,78 @@ describe('Recipe labour hours import and export', () => {
     const preview = parseImportFile(content, EMPTY_APP_DATA);
     expect(preview.valid).toBe(true);
     expect(preview.parsed.recipes?.map(recipe => recipe.labour_hours)).toEqual([undefined, undefined, undefined]);
+  });
+});
+
+describe('Partial ingredient imports', () => {
+  const flour = {
+    id: 'flour',
+    name: 'Flour',
+    unit_type: 'g' as const,
+    pack_quantity: 1000,
+    pack_price: 100,
+    piece_weight_g: null,
+    grams_per_tsp: null,
+  };
+  const data = { ...EMPTY_APP_DATA, ingredients: [flour] };
+  const content = (ingredient: Record<string, unknown>) => JSON.stringify({
+    format: 'bakery-costing-data',
+    schema_version: '1.6',
+    ingredients: [ingredient],
+  });
+
+  it('rejects partial records in strict mode and accepts them in merge mode', () => {
+    const patch = {
+      id: 'flour',
+      nutrition_per_100g: { kcal: 364, protein_g: 10, fat_g: 1, carbs_g: 76 },
+      allergens: ['gluten'],
+    };
+
+    const strict = parseImportFile(content(patch), data, { allowPartialIngredients: false });
+    expect(strict.valid).toBe(false);
+    expect(strict.errors.some(error => error.path === 'ingredients[0].unit_type' && error.message === 'Must be "g" or "piece"')).toBe(true);
+
+    const merged = parseImportFile(content(patch), data, { allowPartialIngredients: true });
+    expect(merged.valid).toBe(true);
+    expect(merged.partialIngredients).toBe(1);
+    expect(merged.counts.ingredients).toEqual({ add: 0, update: 1, unchanged: 0 });
+    expect(merged.parsed.ingredients?.[0]).toMatchObject({
+      id: 'flour',
+      name: 'Flour',
+      unit_type: 'g',
+      nutrition_per_100g: { kcal: 364, protein_g: 10, fat_g: 1, carbs_g: 76 },
+      allergens: ['gluten'],
+    });
+  });
+
+  it('validates required fields supplied in a partial record', () => {
+    const invalidUnit = parseImportFile(content({ id: 'flour', unit_type: 'invalid' }), data, { allowPartialIngredients: true });
+    expect(invalidUnit.valid).toBe(false);
+    expect(invalidUnit.errors).toContainEqual({
+      path: 'ingredients[0].unit_type',
+      message: 'Must be "g" or "piece"',
+    });
+
+    const validUnit = parseImportFile(content({ id: 'flour', unit_type: 'g' }), data, { allowPartialIngredients: true });
+    expect(validUnit.valid).toBe(true);
+    expect(validUnit.parsed.ingredients?.[0]).toMatchObject({ name: 'Flour', unit_type: 'g' });
+  });
+
+  it('preserves existing optional fields omitted from the partial patch', () => {
+    const dataWithOptionalFields: AppData = {
+      ...data,
+      ingredients: [{ ...flour, notes: 'Keep this note', allergens: ['dairy'] }],
+    };
+    const preview = parseImportFile(content({
+      id: 'flour',
+      nutrition_per_100g: { kcal: 364, protein_g: 10, fat_g: 1, carbs_g: 76 },
+    }), dataWithOptionalFields, { allowPartialIngredients: true });
+
+    expect(preview.valid).toBe(true);
+    expect(preview.parsed.ingredients?.[0]).toMatchObject({
+      name: 'Flour',
+      notes: 'Keep this note',
+      allergens: ['dairy'],
+    });
   });
 });

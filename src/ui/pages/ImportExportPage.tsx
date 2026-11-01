@@ -43,6 +43,7 @@ export function ImportExportPage() {
   // Import State
   const [preview, setPreview] = useState<ImportPreview | null>(null);
   const [importMode, setImportMode] = useState<'replace' | 'merge' | 'replace_selected'>('replace');
+  const [rawImportText, setRawImportText] = useState<string | null>(null);
   const [selectedImportGroups, setSelectedImportGroups] = useState<PartialKey[]>([
     'ingredients', 'packaging_items', 'recipes', 'flavours', 'fillings', 'batch_products', 'assembled_products', 'saved_quotes', 'customers', 'orders'
   ]);
@@ -96,13 +97,22 @@ export function ImportExportPage() {
     reader.onload = e => {
       try {
         const text = e.target?.result as string;
-        const res = parseImportFile(text, state.data);
+        setRawImportText(text);
+        setImportMode('replace');
+        const res = parseImportFile(text, state.data, { allowPartialIngredients: false });
         setPreview(res);
       } catch (err: any) {
         setImportStatus({ type: 'error', message: `Failed to read file: ${err.message}` });
       }
     };
     reader.readAsText(file);
+  };
+
+  const handleImportModeChange = (mode: 'replace' | 'merge' | 'replace_selected') => {
+    setImportMode(mode);
+    if (rawImportText !== null) {
+      setPreview(parseImportFile(rawImportText, state.data, { allowPartialIngredients: mode === 'merge' }));
+    }
   };
 
   const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -122,6 +132,10 @@ export function ImportExportPage() {
   // Apply Import
   const handleApplyImport = () => {
     if (!preview || !preview.valid) return;
+    if (
+      preview.partialIngredients > 0
+      && !window.confirm(`${preview.partialIngredients} partial ingredient records will be merged into existing entries. Continue?`)
+    ) return;
     try {
       let dataToImport = preview.parsed;
       if (importMode === 'replace_selected') {
@@ -143,6 +157,7 @@ export function ImportExportPage() {
         message: `Successfully imported dataset using mode "${importMode}".`,
       });
       setPreview(null);
+      setRawImportText(null);
       if (fileInputRef.current) fileInputRef.current.value = '';
     } catch (err: any) {
       setImportStatus({ type: 'error', message: `Import error: ${err.message}` });
@@ -276,6 +291,12 @@ export function ImportExportPage() {
               </span>
             </div>
 
+            {preview.partialIngredients > 0 && (
+              <div className="partial-import-badge" role="status">
+                ⚠ {preview.partialIngredients} partial ingredient records — will merge into existing
+              </div>
+            )}
+
             {/* Validation Errors */}
             {preview.errors.length > 0 && (
               <div className="error-banner" style={{ marginBottom: 12 }}>
@@ -348,7 +369,7 @@ export function ImportExportPage() {
                     name="importMode"
                     value="replace"
                     checked={importMode === 'replace'}
-                    onChange={() => setImportMode('replace')}
+                    onChange={() => handleImportModeChange('replace')}
                   />
                   <span><strong>Replace Everything:</strong> Groups present in file replace current data completely; groups absent in file are retained.</span>
                 </label>
@@ -358,7 +379,7 @@ export function ImportExportPage() {
                     name="importMode"
                     value="merge"
                     checked={importMode === 'merge'}
-                    onChange={() => setImportMode('merge')}
+                    onChange={() => handleImportModeChange('merge')}
                   />
                   <span><strong>Merge:</strong> Upsert records by ID; existing records not mentioned in the file are never deleted.</span>
                 </label>
@@ -368,7 +389,7 @@ export function ImportExportPage() {
                     name="importMode"
                     value="replace_selected"
                     checked={importMode === 'replace_selected'}
-                    onChange={() => setImportMode('replace_selected')}
+                    onChange={() => handleImportModeChange('replace_selected')}
                   />
                   <span><strong>Replace Selected Groups Only:</strong> Choose specific catalogs below to replace.</span>
                 </label>
@@ -397,7 +418,7 @@ export function ImportExportPage() {
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, flexWrap: 'wrap' }}>
-              <button className="quote-toolbar-btn" onClick={() => setPreview(null)}>Cancel</button>
+              <button className="quote-toolbar-btn" onClick={() => { setPreview(null); setRawImportText(null); }}>Cancel</button>
               <button
                 className="quote-toolbar-btn quote-toolbar-btn-primary"
                 onClick={handleApplyImport}

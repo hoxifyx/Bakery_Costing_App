@@ -947,6 +947,16 @@ tbody tr:hover {
 .badge-amber  { background: hsl(38,80%,15%); color: var(--accent-amber); }
 .badge-red    { background: hsl(354,60%,15%); color: var(--accent-red); }
 .badge-muted  { background: var(--bg-hover); color: var(--text-secondary); }
+.partial-import-badge {
+  display: inline-flex;
+  margin-bottom: 12px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: hsl(38,80%,15%);
+  color: var(--accent-amber);
+  font-size: 12px;
+  font-weight: 600;
+}
 
 /* ============================================================
    Warnings / alerts

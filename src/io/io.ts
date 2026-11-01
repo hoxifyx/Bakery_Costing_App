@@ -39,6 +39,7 @@ export interface ImportPreview {
   valid: boolean;
   errors: ImportError[];
   warnings: string[];
+  partialIngredients: number;
   counts: {
     settings: boolean;
     ingredients: { add: number; update: number; unchanged: number };
@@ -118,16 +119,111 @@ function validateSettings(raw: unknown, errors: ImportError[]): Settings {
   return out;
 }
 
-function validateIngredient(raw: unknown, idx: number, errors: ImportError[]): Ingredient | null {
+function validateIngredient(raw: unknown, idx: number, errors: ImportError[]): Ingredient | null;
+function validateIngredient(
+  raw: unknown,
+  idx: number,
+  errors: ImportError[],
+  allowPartial: true,
+): Ingredient | Partial<Ingredient> | null;
+function validateIngredient(
+  raw: unknown,
+  idx: number,
+  errors: ImportError[],
+  allowPartial: boolean,
+): Ingredient | Partial<Ingredient> | null;
+function validateIngredient(
+  raw: unknown,
+  idx: number,
+  errors: ImportError[],
+  allowPartial = false,
+): Ingredient | Partial<Ingredient> | null {
   const r = (raw ?? {}) as Record<string, unknown>;
   const p = `ingredients[${idx}]`;
   const id = r.id;
   if (!validateId(id, `${p}.id`, errors)) return null;
+  const requiredFields = ['name', 'unit_type', 'pack_quantity', 'pack_price'] as const;
+  const isPartial = requiredFields.some(field => r[field] === undefined);
+  if (allowPartial && isPartial) {
+    const partial: Partial<Ingredient> = { id: id as string };
+    if (r.name !== undefined) partial.name = requireString(r.name, `${p}.name`, errors);
+
+    if (r.unit_type !== undefined) {
+      if (r.unit_type !== 'g' && r.unit_type !== 'piece') {
+        errors.push({ path: `${p}.unit_type`, message: 'Must be "g" or "piece"' });
+      } else {
+        partial.unit_type = r.unit_type;
+      }
+    }
+
+    if (r.pack_quantity !== undefined) {
+      partial.pack_quantity = requireNumber(r.pack_quantity, `${p}.pack_quantity`, errors);
+    }
+    if (r.pack_price !== undefined) {
+      partial.pack_price = requireNumber(r.pack_price, `${p}.pack_price`, errors);
+    }
+
+    if (r.piece_weight_g !== undefined) {
+      partial.piece_weight_g = typeof r.piece_weight_g === 'number' ? r.piece_weight_g : null;
+    }
+    if (r.grams_per_tsp !== undefined) {
+      partial.grams_per_tsp = typeof r.grams_per_tsp === 'number' ? r.grams_per_tsp : null;
+    }
+    if (r.notes !== undefined && typeof r.notes === 'string') partial.notes = r.notes;
+    if (Array.isArray(r.price_history)) {
+      partial.price_history = (r.price_history as unknown[]).map((h): PriceHistoryEntry => {
+        const he = (h ?? {}) as Record<string, unknown>;
+        return {
+          date: typeof he.date === 'string' ? he.date : '',
+          pack_quantity: typeof he.pack_quantity === 'number' ? he.pack_quantity : 0,
+          pack_price: typeof he.pack_price === 'number' ? he.pack_price : 0,
+          note: typeof he.note === 'string' ? he.note : undefined,
+        };
+      });
+    }
+
+    const parsedExtras = validateIngredientNutritionAndAllergens(r, p, errors);
+    if (r.nutrition_per_100g !== undefined) partial.nutrition_per_100g = parsedExtras.nutrition_per_100g;
+    if (r.allergens !== undefined) partial.allergens = parsedExtras.allergens;
+    return partial;
+  }
+
   const unitType = r.unit_type;
   if (unitType !== 'g' && unitType !== 'piece') {
     errors.push({ path: `${p}.unit_type`, message: `Must be "g" or "piece"` });
     return null;
   }
+  const parsedExtras = validateIngredientNutritionAndAllergens(r, p, errors);
+  return {
+    id: id as string,
+    name: requireString(r.name, `${p}.name`, errors),
+    unit_type: unitType,
+    pack_quantity: requireNumber(r.pack_quantity, `${p}.pack_quantity`, errors),
+    pack_price: requireNumber(r.pack_price, `${p}.pack_price`, errors),
+    piece_weight_g: typeof r.piece_weight_g === 'number' ? r.piece_weight_g : null,
+    grams_per_tsp: typeof r.grams_per_tsp === 'number' ? r.grams_per_tsp : null,
+    notes: typeof r.notes === 'string' ? r.notes : undefined,
+    price_history: Array.isArray(r.price_history)
+      ? (r.price_history as unknown[]).map((h): PriceHistoryEntry => {
+          const he = (h ?? {}) as Record<string, unknown>;
+          return {
+            date: typeof he.date === 'string' ? he.date : '',
+            pack_quantity: typeof he.pack_quantity === 'number' ? he.pack_quantity : 0,
+            pack_price: typeof he.pack_price === 'number' ? he.pack_price : 0,
+            note: typeof he.note === 'string' ? he.note : undefined,
+          };
+        })
+      : undefined,
+    nutrition_per_100g: parsedExtras.nutrition_per_100g,
+    allergens: parsedExtras.allergens,
+  };
+}
+
+function validateIngredientNutritionAndAllergens(
+  r: Record<string, unknown>,
+  p: string,
+  errors: ImportError[],
+): Pick<Ingredient, 'nutrition_per_100g' | 'allergens'> {
   let nutrition: NutritionPer100g | undefined;
   if (r.nutrition_per_100g !== undefined) {
     const rawNutrition = r.nutrition_per_100g;
@@ -164,29 +260,7 @@ function validateIngredient(raw: unknown, idx: number, errors: ImportError[]): I
       }
     }
   }
-  return {
-    id: id as string,
-    name: requireString(r.name, `${p}.name`, errors),
-    unit_type: unitType,
-    pack_quantity: requireNumber(r.pack_quantity, `${p}.pack_quantity`, errors),
-    pack_price: requireNumber(r.pack_price, `${p}.pack_price`, errors),
-    piece_weight_g: typeof r.piece_weight_g === 'number' ? r.piece_weight_g : null,
-    grams_per_tsp: typeof r.grams_per_tsp === 'number' ? r.grams_per_tsp : null,
-    notes: typeof r.notes === 'string' ? r.notes : undefined,
-    price_history: Array.isArray(r.price_history)
-      ? (r.price_history as unknown[]).map((h): PriceHistoryEntry => {
-          const he = (h ?? {}) as Record<string, unknown>;
-          return {
-            date: typeof he.date === 'string' ? he.date : '',
-            pack_quantity: typeof he.pack_quantity === 'number' ? he.pack_quantity : 0,
-            pack_price: typeof he.pack_price === 'number' ? he.pack_price : 0,
-            note: typeof he.note === 'string' ? he.note : undefined,
-          };
-        })
-      : undefined,
-    nutrition_per_100g: nutrition,
-    allergens,
-  };
+  return { nutrition_per_100g: nutrition, allergens };
 }
 
 function validatePackaging(raw: unknown, idx: number, errors: ImportError[]): PackagingItem | null {
@@ -614,14 +688,14 @@ function checkReferences(data: AppData, errors: ImportError[]): void {
 // Count helper
 // ---------------------------------------------------------------------------
 
-function countChanges<T extends { id: Id }>(existing?: T[], incoming?: T[]) {
+function countChanges<T extends { id: Id }>(existing?: T[], incoming?: T[], forcedUpdates?: Set<Id>) {
   const safeExisting = existing ?? [];
   const safeIncoming = incoming ?? [];
   const existingMap = new Map(safeExisting.map(x => [x.id, x]));
   let add = 0, update = 0, unchanged = 0;
   for (const item of safeIncoming) {
     if (!existingMap.has(item.id)) add++;
-    else if (JSON.stringify(existingMap.get(item.id)) !== JSON.stringify(item)) update++;
+    else if (forcedUpdates?.has(item.id) || JSON.stringify(existingMap.get(item.id)) !== JSON.stringify(item)) update++;
     else unchanged++;
   }
   return { add, update, unchanged };
@@ -631,7 +705,11 @@ function countChanges<T extends { id: Id }>(existing?: T[], incoming?: T[]) {
 // Parse and validate import
 // ---------------------------------------------------------------------------
 
-export function parseImportFile(content: string, currentData: AppData): ImportPreview {
+export function parseImportFile(
+  content: string,
+  currentData: AppData,
+  opts: { allowPartialIngredients?: boolean } = {},
+): ImportPreview {
   const errors: ImportError[] = [];
   const warnings: string[] = [];
   let raw: Record<string, unknown>;
@@ -643,6 +721,7 @@ export function parseImportFile(content: string, currentData: AppData): ImportPr
       valid: false,
       errors: [{ path: 'file', message: 'Invalid JSON' }],
       warnings: [],
+      partialIngredients: 0,
       counts: emptyPreviewCounts(),
       parsed: {},
     };
@@ -660,18 +739,54 @@ export function parseImportFile(content: string, currentData: AppData): ImportPr
       valid: false,
       errors: [{ path: 'schema_version', message: `Schema version ${sv} is newer than supported (${CURRENT_SCHEMA_VERSION})` }],
       warnings: [],
+      partialIngredients: 0,
       counts: emptyPreviewCounts(),
       parsed: {},
     };
   }
 
   const parsed: Partial<AppData> = {};
+  const partialIds = new Set<string>();
 
   if (raw.settings !== undefined) {
     parsed.settings = validateSettings(raw.settings, errors);
   }
   if (Array.isArray(raw.ingredients)) {
-    parsed.ingredients = raw.ingredients.map((x, i) => validateIngredient(x, i, errors)).filter(Boolean) as Ingredient[];
+    const ingredients: Ingredient[] = [];
+    for (const [i, rawIngredient] of raw.ingredients.entries()) {
+      const errorCountBefore = errors.length;
+      const validated = validateIngredient(rawIngredient, i, errors, opts.allowPartialIngredients === true);
+      if (!validated) continue;
+      const validatedId = validated.id;
+      if (typeof validatedId !== 'string') continue;
+
+      const rawRecord = (rawIngredient ?? {}) as Record<string, unknown>;
+      const isPartial = opts.allowPartialIngredients === true
+        && (['name', 'unit_type', 'pack_quantity', 'pack_price'] as const).some(field => rawRecord[field] === undefined);
+      if (!isPartial) {
+        ingredients.push(validated as Ingredient);
+        continue;
+      }
+
+      if (errors.length !== errorCountBefore) continue;
+      const existing = currentData.ingredients.find(item => item.id === validatedId);
+      if (!existing) {
+        errors.push({
+          path: `ingredients[${i}].id`,
+          message: `Partial ingredient '${validated.id}' cannot be added — merge into an existing record or supply all required fields.`,
+        });
+        continue;
+      }
+
+      const mergedErrors: ImportError[] = [];
+      const merged = validateIngredient({ ...existing, ...validated }, i, mergedErrors);
+      if (mergedErrors.length > 0) errors.push(...mergedErrors);
+      else if (merged) {
+        ingredients.push(merged);
+        partialIds.add(validatedId);
+      }
+    }
+    parsed.ingredients = ingredients;
   }
   if (Array.isArray(raw.packaging_items)) {
     parsed.packaging_items = raw.packaging_items.map((x, i) => validatePackaging(x, i, errors)).filter(Boolean) as PackagingItem[];
@@ -711,16 +826,22 @@ export function parseImportFile(content: string, currentData: AppData): ImportPr
 
   // Reference integrity check on merged data
   if (errors.length === 0) {
+    const mergedIngredients = opts.allowPartialIngredients && parsed.ingredients
+      ? Array.from(new Map(
+          [...currentData.ingredients, ...parsed.ingredients].map(ingredient => [ingredient.id, ingredient]),
+        ).values())
+      : undefined;
     const merged: AppData = {
       ...currentData,
       ...parsed,
+      ...(mergedIngredients ? { ingredients: mergedIngredients } : {}),
     };
     checkReferences(merged, errors);
   }
 
   const counts = {
     settings: !!parsed.settings,
-    ingredients: countChanges(currentData.ingredients, parsed.ingredients ?? []),
+    ingredients: countChanges(currentData.ingredients, parsed.ingredients ?? [], partialIds),
     packaging_items: countChanges(currentData.packaging_items, parsed.packaging_items ?? []),
     recipes: countChanges(currentData.recipes, parsed.recipes ?? []),
     flavours: countChanges(currentData.flavours, parsed.flavours ?? []),
@@ -732,7 +853,7 @@ export function parseImportFile(content: string, currentData: AppData): ImportPr
     orders: countChanges(currentData.orders, parsed.orders ?? []),
   };
 
-  return { valid: errors.length === 0, errors, warnings, counts, parsed };
+  return { valid: errors.length === 0, errors, warnings, partialIngredients: partialIds.size, counts, parsed };
 }
 
 function emptyPreviewCounts() {
