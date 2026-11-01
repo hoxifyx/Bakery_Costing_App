@@ -30,6 +30,31 @@ export interface PriceHistoryEntry {
   note?: string;
 }
 
+export interface NutritionPer100g {
+  kcal: number;
+  protein_g: number;
+  fat_g: number;
+  carbs_g: number;
+  fibre_g?: number;
+  sodium_mg?: number;
+}
+
+export type AllergenCode =
+  | 'gluten'
+  | 'dairy'
+  | 'egg'
+  | 'soy'
+  | 'nuts'
+  | 'peanuts'
+  | 'sesame'
+  | 'fish'
+  | 'shellfish'
+  | 'sulphites'
+  | 'celery'
+  | 'mustard'
+  | 'lupin'
+  | 'molluscs';
+
 export interface Ingredient {
   id: Id;
   name: string;
@@ -40,6 +65,8 @@ export interface Ingredient {
   grams_per_tsp?: number | null;
   notes?: string;
   price_history?: PriceHistoryEntry[];
+  nutrition_per_100g?: NutritionPer100g;
+  allergens?: AllergenCode[];
 }
 
 export interface PackagingItem {
@@ -262,7 +289,9 @@ export type WarningCode =
   | 'W_PRICE_BELOW_TARGET'
   | 'W_UNKNOWN_PRODUCT'
   | 'W_ZERO_QUANTITY'
-  | 'W_WASTE_HIGH';
+  | 'W_WASTE_HIGH'
+  | 'W_ALLERGEN_UNKNOWN'
+  | 'W_NUTRITION_PARTIAL';
 
 export interface Warning {
   code: WarningCode;

@@ -19,12 +19,14 @@ import type {
   Order,
   OrderStatus,
   PriceHistoryEntry,
+  NutritionPer100g,
+  AllergenCode,
   Id,
 } from '../engine/types';
 import { DEFAULT_SETTINGS, DEFAULT_SIZE_GUIDE } from '../engine/types';
 
-export const CURRENT_SCHEMA_VERSION = '1.5';
-export const CURRENT_APP_VERSION = '1.5.0';
+export const CURRENT_SCHEMA_VERSION = '1.6';
+export const CURRENT_APP_VERSION = '1.6.0';
 const FORMAT_FIELD = 'bakery-costing-data';
 const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20 MB
 
@@ -126,6 +128,42 @@ function validateIngredient(raw: unknown, idx: number, errors: ImportError[]): I
     errors.push({ path: `${p}.unit_type`, message: `Must be "g" or "piece"` });
     return null;
   }
+  let nutrition: NutritionPer100g | undefined;
+  if (r.nutrition_per_100g !== undefined) {
+    const rawNutrition = r.nutrition_per_100g;
+    if (!rawNutrition || typeof rawNutrition !== 'object' || Array.isArray(rawNutrition)) {
+      errors.push({ path: `${p}.nutrition_per_100g`, message: 'Expected a nutrition object' });
+    } else {
+      const values = rawNutrition as Record<string, unknown>;
+      nutrition = {
+        kcal: requireNumber(values.kcal, `${p}.nutrition_per_100g.kcal`, errors),
+        protein_g: requireNumber(values.protein_g, `${p}.nutrition_per_100g.protein_g`, errors),
+        fat_g: requireNumber(values.fat_g, `${p}.nutrition_per_100g.fat_g`, errors),
+        carbs_g: requireNumber(values.carbs_g, `${p}.nutrition_per_100g.carbs_g`, errors),
+        fibre_g: values.fibre_g === undefined ? undefined : requireNumber(values.fibre_g, `${p}.nutrition_per_100g.fibre_g`, errors),
+        sodium_mg: values.sodium_mg === undefined ? undefined : requireNumber(values.sodium_mg, `${p}.nutrition_per_100g.sodium_mg`, errors),
+      };
+    }
+  }
+  let allergens: AllergenCode[] | undefined;
+  if (r.allergens !== undefined) {
+    if (!Array.isArray(r.allergens)) {
+      errors.push({ path: `${p}.allergens`, message: 'Expected an array of allergen codes' });
+    } else {
+      const codes = new Set<AllergenCode>([
+        'gluten', 'dairy', 'egg', 'soy', 'nuts', 'peanuts', 'sesame',
+        'fish', 'shellfish', 'sulphites', 'celery', 'mustard', 'lupin', 'molluscs',
+      ]);
+      allergens = [];
+      for (const [allergenIndex, value] of r.allergens.entries()) {
+        if (typeof value !== 'string' || !codes.has(value as AllergenCode)) {
+          errors.push({ path: `${p}.allergens[${allergenIndex}]`, message: `Unknown allergen code "${value}"` });
+        } else if (!allergens.includes(value as AllergenCode)) {
+          allergens.push(value as AllergenCode);
+        }
+      }
+    }
+  }
   return {
     id: id as string,
     name: requireString(r.name, `${p}.name`, errors),
@@ -146,6 +184,8 @@ function validateIngredient(raw: unknown, idx: number, errors: ImportError[]): I
           };
         })
       : undefined,
+    nutrition_per_100g: nutrition,
+    allergens,
   };
 }
 

@@ -3,6 +3,8 @@ export { computeIngredientPriceImpact } from './impact';
 export type { ImpactCategory, ImpactItem, ImpactMetric, IngredientPriceImpact } from './impact';
 export { computeWhatIf } from './whatif';
 export { computeShoppingList } from './shopping';
+export { computeAllergens, computeNutrition } from './nutrition';
+export type { AllergenResult, NutritionResult, NutritionValues } from './nutrition';
 export type {
   ShoppingIngredientRow,
   ShoppingList,
@@ -22,6 +24,8 @@ export type {
   AppData,
   Settings,
   Ingredient,
+  NutritionPer100g,
+  AllergenCode,
   PackagingItem,
   Recipe,
   RecipeLine,

@@ -3026,3 +3026,114 @@ tbody tr:hover {
     text-transform: uppercase;
   }
 }
+
+.ingredient-nutrition-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+}
+
+.ingredient-nutrition-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.ingredient-allergen-grid,
+.recipe-allergen-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.ingredient-allergen-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 6px 9px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.ingredient-allergen-chip input {
+  margin: 0;
+  accent-color: var(--accent);
+}
+
+.ingredient-nutrition-disclaimer,
+.recipe-nutrition-disclaimer {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.recipe-editor-modal-body {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
+  gap: 20px;
+}
+
+.recipe-line-row {
+  display: grid;
+  grid-template-columns: 90px minmax(0, 1fr) 64px 72px 32px 32px;
+  gap: 6px;
+  align-items: center;
+}
+
+.recipe-editor-results {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+.recipe-nutrition-panel {
+  gap: 10px;
+  min-width: 0;
+}
+
+.recipe-nutrition-values {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.recipe-allergen-heading {
+  margin-top: 2px;
+}
+
+@media (max-width: 768px) {
+  .recipe-editor-modal-body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .ingredient-nutrition-grid,
+  .recipe-nutrition-values {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .recipe-line-row {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 32px;
+  }
+
+  .recipe-line-row > :nth-child(1),
+  .recipe-line-row > :nth-child(2) {
+    grid-column: span 3;
+  }
+}
+
+@media (pointer: coarse) {
+  .recipe-line-row .input,
+  .recipe-line-row .select {
+    min-height: 44px;
+  }
+}

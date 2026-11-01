@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import Decimal from 'decimal.js';
 import { useStore } from '../../store/store';
-import { compute } from '../../engine';
+import { compute, computeAllergens, computeNutrition } from '../../engine';
 import type { WarningCode } from '../../engine/types';
 import { fmtMoney } from '../components/Shared';
 
@@ -16,6 +16,45 @@ export function DataHealthPage({ onNavigate }: DataHealthPageProps) {
   // Run engine to compute global warnings
   const engineResult = useMemo(() => compute(state.data), [state.data]);
   const { all_warnings } = engineResult;
+  const usedIngredientIds = useMemo(() => {
+    const ids = new Set<string>();
+    for (const recipe of recipes) {
+      for (const line of recipe.lines) if (line.ingredient_id) ids.add(line.ingredient_id);
+    }
+    for (const product of assembled_products) {
+      for (const component of product.components) {
+        if (component.type === 'ingredient_grams') ids.add(component.ingredient_id);
+      }
+    }
+    return ids;
+  }, [recipes, assembled_products]);
+  const missingAllergenIngredients = useMemo(
+    () => ingredients.filter(ingredient => usedIngredientIds.has(ingredient.id) && ingredient.allergens === undefined),
+    [ingredients, usedIngredientIds],
+  );
+  const healthWarnings = useMemo(() => {
+    const additional = recipes.flatMap(recipe => [
+      ...computeNutrition(state.data, recipe.id).warnings,
+      ...computeAllergens(state.data, recipe.id).warnings,
+    ]);
+    const productLines = [
+      ...batch_products.map(product => ({ product_kind: 'batch' as const, product_id: product.id, quantity: 1, unit: 'piece' as const })),
+      ...assembled_products.map(product => ({ product_kind: 'assembled' as const, product_id: product.id, quantity: 1, unit: 'piece' as const })),
+    ];
+    if (productLines.length > 0) {
+      additional.push(...computeAllergens(state.data, {
+        id: 'data-health-products',
+        name: 'Data Health products',
+        created_at: '',
+        kind: 'products',
+        input: { tiers: [], decoration: { fondant_kg: 0, prints: 0, flowers: 0, toppers: 0, time_hours: 0, others: 0, delivery: 0 } },
+        product_quote_input: { lines: productLines, delivery: 0 },
+        result_snapshot: null,
+      }).warnings);
+    }
+    const uniqueAdditional = new Map(additional.map(warning => [`${warning.code}:${warning.path ?? warning.context}`, warning]));
+    return [...all_warnings, ...uniqueAdditional.values()];
+  }, [all_warnings, recipes, state.data, batch_products, assembled_products]);
 
   // Specific counts required by spec §5.9:
   const unpricedIngredients = useMemo(
@@ -66,14 +105,14 @@ export function DataHealthPage({ onNavigate }: DataHealthPageProps) {
 
   // Group warnings by code
   const groupedWarnings = useMemo(() => {
-    const groups = new Map<WarningCode, typeof all_warnings>();
-    for (const w of all_warnings) {
+    const groups = new Map<WarningCode, typeof healthWarnings>();
+    for (const w of healthWarnings) {
       const list = groups.get(w.code) || [];
       list.push(w);
       groups.set(w.code, list);
     }
     return groups;
-  }, [all_warnings]);
+  }, [healthWarnings]);
 
   const warningCodeLabels: Record<WarningCode, string> = {
     W_UNPRICED_INGREDIENT: 'Unpriced Ingredients',
@@ -96,11 +135,13 @@ export function DataHealthPage({ onNavigate }: DataHealthPageProps) {
     W_UNKNOWN_PRODUCT: 'Quote with Unknown Product Reference',
     W_ZERO_QUANTITY: 'Quote Line with Zero Quantity',
     W_WASTE_HIGH: 'Waste / Spoilage at 50% or More',
+    W_ALLERGEN_UNKNOWN: 'Ingredients Missing Allergen Data',
+    W_NUTRITION_PARTIAL: 'Recipes with Partial Nutrition Data',
   };
 
   const getPageForItem = (warning: typeof all_warnings[0]): string => {
     const p = warning.path || '';
-    if (warning.code === 'W_UNPRICED_INGREDIENT') return 'ingredients';
+    if (warning.code === 'W_UNPRICED_INGREDIENT' || warning.code === 'W_ALLERGEN_UNKNOWN') return 'ingredients';
     if (p.startsWith('recipes') || p.startsWith('recipe[')) return 'recipes';
     if (p.startsWith('flavours') || p.startsWith('fillings')) return 'flavours';
     if (p.startsWith('batch_products') || p.startsWith('assembled_products') || p.startsWith('products') || p.startsWith('batch_product[')) return 'products';
@@ -123,7 +164,7 @@ export function DataHealthPage({ onNavigate }: DataHealthPageProps) {
           </div>
           <div className="quote-title-row">
             <h1 className="quote-title">Data Health</h1>
-            {all_warnings.length === 0 ? (
+            {healthWarnings.length === 0 ? (
               <span className="badge badge-green" style={{ fontSize: 12, padding: '4px 10px' }}>
                 <span className="material-symbols-outlined ms-14" aria-hidden>check_circle</span>
                 All Clear
@@ -131,7 +172,7 @@ export function DataHealthPage({ onNavigate }: DataHealthPageProps) {
             ) : (
               <span className="badge badge-amber" style={{ fontSize: 12, padding: '4px 10px' }}>
                 <span className="material-symbols-outlined ms-14" aria-hidden>warning</span>
-                {all_warnings.length} Warning{all_warnings.length !== 1 ? 's' : ''}
+                {healthWarnings.length} Warning{healthWarnings.length !== 1 ? 's' : ''}
               </span>
             )}
           </div>
@@ -170,6 +211,14 @@ export function DataHealthPage({ onNavigate }: DataHealthPageProps) {
             <div className="text-body-md">{zeroWeightRecipes.length > 0 ? 'Yield weight is zero or negative' : 'All recipes yield &gt; 0g'}</div>
           </div>
 
+          <div className="quote-section-card" style={{ padding: 16, gap: 6, borderLeft: missingAllergenIngredients.length > 0 ? '3px solid var(--accent-amber)' : '3px solid var(--accent-green)' }}>
+            <div className="text-label-caps">Ingredients missing allergen data</div>
+            <div className="text-headline-xl" style={{ color: missingAllergenIngredients.length > 0 ? 'var(--accent-amber)' : 'var(--text-primary)', fontVariantNumeric: 'tabular-nums' }}>
+              {missingAllergenIngredients.length}
+            </div>
+            <div className="text-body-md">{missingAllergenIngredients.length > 0 ? 'Used in at least one recipe or product' : 'All used ingredients have allergen data'}</div>
+          </div>
+
           <div
             className="quote-section-card"
             style={{
@@ -201,10 +250,10 @@ export function DataHealthPage({ onNavigate }: DataHealthPageProps) {
               <span className="material-symbols-outlined ms-20" aria-hidden>warning</span>
               <h2 className="decorations-header-title">Detected Warnings by Category</h2>
             </div>
-            <span className="decorations-header-right">{all_warnings.length} total</span>
+            <span className="decorations-header-right">{healthWarnings.length} total</span>
           </div>
 
-          {all_warnings.length === 0 ? (
+          {healthWarnings.length === 0 ? (
             <div className="empty-state" style={{ padding: '40px 20px' }}>
               <div className="empty-state-icon">
                 <span className="material-symbols-outlined ms-32" aria-hidden>verified_user</span>

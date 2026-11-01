@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { useStore } from '../../store/store';
 import type { Recipe, RecipeLine } from '../../engine/types';
 import { compute } from '../../engine/engine';
+import { computeAllergens, computeNutrition } from '../../engine';
 import { NumberInput, SearchBar, ConfirmDialog, fmtMoney } from '../components/Shared';
 import { ExplainPanel } from '../components/ExplainPanel';
 import { WarningsList } from '../components/WarningsList';
@@ -40,6 +41,11 @@ export function RecipesPage() {
 
   const baseResult = useMemo(() => compute(data), [data]);
   const result = useMemo(() => compute(data, null, scales), [data, scales]);
+  const previewData = useMemo(() => editing
+    ? { ...data, recipes: [...data.recipes.filter(recipe => recipe.id !== editing.id), editing] }
+    : null, [data, editing]);
+  const nutrition = useMemo(() => previewData && editing ? computeNutrition(previewData, editing.id) : null, [previewData, editing]);
+  const allergens = useMemo(() => previewData && editing ? computeAllergens(previewData, editing.id) : null, [previewData, editing]);
 
   const filtered = useMemo(() => data.recipes.filter(r => {
     const matchSearch = r.name.toLowerCase().includes(search.toLowerCase()) || r.id.toLowerCase().includes(search.toLowerCase());
@@ -442,6 +448,50 @@ export function RecipesPage() {
                     );
                   })()}
                 </div>
+                {nutrition && allergens && (
+                  <section className="quote-section-card recipe-nutrition-panel" aria-label="Nutrition estimate and allergens">
+                    <div className="decorations-section-header">
+                      <div className="decorations-header-left">
+                        <span className="material-symbols-outlined ms-18" aria-hidden>nutrition</span>
+                        <h3 className="decorations-header-title">Nutrition estimate</h3>
+                      </div>
+                    </div>
+                    <div className="recipe-nutrition-values">
+                      <div>
+                        <div className="text-label-caps">Whole batch</div>
+                        <div className="result-row"><span>Energy</span><span className="td-mono">{Math.round(nutrition.total.kcal)} kcal</span></div>
+                        <div className="result-row"><span>Protein</span><span className="td-mono">{nutrition.total.protein_g.toFixed(1)} g</span></div>
+                        <div className="result-row"><span>Fat</span><span className="td-mono">{nutrition.total.fat_g.toFixed(1)} g</span></div>
+                        <div className="result-row"><span>Carbohydrates</span><span className="td-mono">{nutrition.total.carbs_g.toFixed(1)} g</span></div>
+                        <div className="result-row"><span>Fibre</span><span className="td-mono">{nutrition.total.fibre_g.toFixed(1)} g</span></div>
+                        <div className="result-row"><span>Sodium</span><span className="td-mono">{nutrition.total.sodium_mg.toFixed(1)} mg</span></div>
+                      </div>
+                      <div>
+                        <div className="text-label-caps">Per 100 g</div>
+                        {nutrition.per_100g ? (
+                          <>
+                            <div className="result-row"><span>Energy</span><span className="td-mono">{Math.round(nutrition.per_100g.kcal)} kcal</span></div>
+                            <div className="result-row"><span>Protein</span><span className="td-mono">{nutrition.per_100g.protein_g.toFixed(1)} g</span></div>
+                            <div className="result-row"><span>Fat</span><span className="td-mono">{nutrition.per_100g.fat_g.toFixed(1)} g</span></div>
+                            <div className="result-row"><span>Carbohydrates</span><span className="td-mono">{nutrition.per_100g.carbs_g.toFixed(1)} g</span></div>
+                            <div className="result-row"><span>Fibre</span><span className="td-mono">{nutrition.per_100g.fibre_g.toFixed(1)} g</span></div>
+                            <div className="result-row"><span>Sodium</span><span className="td-mono">{nutrition.per_100g.sodium_mg.toFixed(1)} mg</span></div>
+                          </>
+                        ) : <div className="text-muted text-sm">Recipe weight is needed for per-100 g values.</div>}
+                      </div>
+                    </div>
+                    <div className="text-label-caps recipe-allergen-heading">Allergens</div>
+                    {allergens.allergens.length > 0
+                      ? <div className="recipe-allergen-chips">{allergens.allergens.map(allergen => <span className="badge badge-amber" key={allergen}>{allergen}</span>)}</div>
+                      : <div className="text-muted text-sm">No allergen codes recorded for the ingredients in this recipe.</div>}
+                    <p className="recipe-nutrition-disclaimer">
+                      Approximate. Based only on ingredients with nutrition data entered. Verify before customer-facing use.
+                    </p>
+                    {[...nutrition.warnings, ...allergens.warnings].length > 0 && (
+                      <WarningsList warnings={[...nutrition.warnings, ...allergens.warnings]} limit={4} />
+                    )}
+                  </section>
+                )}
               </div>
             </div>
             <div className="modal-footer">

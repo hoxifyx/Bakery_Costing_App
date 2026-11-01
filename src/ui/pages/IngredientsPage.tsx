@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { useStore } from '../../store/store';
 import { computeIngredientPriceImpact } from '../../engine';
 import type { ImpactItem, ImpactMetric } from '../../engine/impact';
-import type { Ingredient, PriceHistoryEntry } from '../../engine/types';
+import type { AllergenCode, Ingredient, NutritionPer100g, PriceHistoryEntry } from '../../engine/types';
 import { NumberInput, SearchBar, ConfirmDialog, fmtMoney } from '../components/Shared';
 import { exportIngredientsCSV, importIngredientsCSV } from '../../io/io';
 import { generateId } from '../../engine/utils';
@@ -16,6 +16,23 @@ const EMPTY_ING: Omit<Ingredient, 'id'> = {
   grams_per_tsp: null,
   notes: '',
 };
+
+const ALLERGENS: { code: AllergenCode; label: string }[] = [
+  { code: 'gluten', label: 'Gluten' },
+  { code: 'dairy', label: 'Milk / dairy' },
+  { code: 'egg', label: 'Egg' },
+  { code: 'soy', label: 'Soy' },
+  { code: 'nuts', label: 'Tree nuts' },
+  { code: 'peanuts', label: 'Peanuts' },
+  { code: 'sesame', label: 'Sesame' },
+  { code: 'fish', label: 'Fish' },
+  { code: 'shellfish', label: 'Crustaceans' },
+  { code: 'sulphites', label: 'Sulphites' },
+  { code: 'celery', label: 'Celery' },
+  { code: 'mustard', label: 'Mustard' },
+  { code: 'lupin', label: 'Lupin' },
+  { code: 'molluscs', label: 'Molluscs' },
+];
 
 function getUsedIn(id: string, data: ReturnType<typeof useStore>['state']['data']): string[] {
   const used: string[] = [];
@@ -116,6 +133,29 @@ export function IngredientsPage() {
     const newId = generateId('ing');
     setIsNew(true);
     setEditing({ ...ing, id: newId, name: ing.name + ' (copy)' });
+  };
+
+  const updateNutrition = (key: keyof NutritionPer100g, value: number) => {
+    setEditing(current => {
+      if (!current) return current;
+      const nutrition = current.nutrition_per_100g ?? {
+        kcal: 0,
+        protein_g: 0,
+        fat_g: 0,
+        carbs_g: 0,
+      };
+      return { ...current, nutrition_per_100g: { ...nutrition, [key]: value } };
+    });
+  };
+
+  const toggleAllergen = (code: AllergenCode) => {
+    setEditing(current => {
+      if (!current) return current;
+      const allergens = new Set(current.allergens ?? []);
+      if (allergens.has(code)) allergens.delete(code);
+      else allergens.add(code);
+      return { ...current, allergens: [...allergens] };
+    });
   };
 
   const save = () => {
@@ -399,6 +439,45 @@ export function IngredientsPage() {
                 <label>Notes (optional)</label>
                 <input className="input" value={editing.notes ?? ''} onChange={e => setEditing(p => p && ({ ...p, notes: e.target.value }))} />
               </div>
+              <section className="ingredient-nutrition-section" aria-label="Nutrition and allergen data">
+                <h3 className="decorations-header-title">Nutrition per 100 g</h3>
+                <div className="ingredient-nutrition-grid">
+                  {([
+                    ['kcal', 'Energy (kcal)'],
+                    ['protein_g', 'Protein (g)'],
+                    ['fat_g', 'Fat (g)'],
+                    ['carbs_g', 'Carbohydrates (g)'],
+                    ['fibre_g', 'Fibre (g)'],
+                    ['sodium_mg', 'Sodium (mg)'],
+                  ] as const).map(([key, label]) => (
+                    <div className="form-group" key={key}>
+                      <label htmlFor={`ingredient-nutrition-${key}`}>{label}</label>
+                      <NumberInput
+                        id={`ingredient-nutrition-${key}`}
+                        value={editing.nutrition_per_100g?.[key] ?? 0}
+                        onChange={value => updateNutrition(key, value)}
+                        min={0}
+                      />
+                    </div>
+                  ))}
+                </div>
+                <h3 className="decorations-header-title">Allergens</h3>
+                <div className="ingredient-allergen-grid">
+                  {ALLERGENS.map(allergen => (
+                    <label className="ingredient-allergen-chip" key={allergen.code}>
+                      <input
+                        type="checkbox"
+                        checked={editing.allergens?.includes(allergen.code) ?? false}
+                        onChange={() => toggleAllergen(allergen.code)}
+                      />
+                      <span>{allergen.label}</span>
+                    </label>
+                  ))}
+                </div>
+                <p className="ingredient-nutrition-disclaimer">
+                  Approximate. Based only on ingredients with nutrition data entered. Verify before customer-facing use.
+                </p>
+              </section>
               {editing.pack_quantity > 0 && editing.pack_price > 0 && (
                 <div className="success-banner">
                   Price per {editing.unit_type === 'g' ? 'kg' : 'piece'}: {fmtMoney(

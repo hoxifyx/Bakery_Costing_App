@@ -2,9 +2,13 @@
 
 This file documents schema changes and how to migrate data from older versions.
 
-## Current Schema Version: 1.5
+## Current Schema Version: 1.6
 
 The schema version is checked on import in `src/io/io.ts`. Files with a newer major schema version are rejected; versions with the same or an older major version are accepted and validated using the compatibility behavior described below. Missing settings fields are filled from `DEFAULT_SETTINGS`. Omitted entity arrays are not automatically cleared by a selective import.
+
+### `1.6` (Nutrition and allergens)
+*   **Added:** optional `nutrition_per_100g` values on ingredients (`kcal`, `protein_g`, `fat_g`, `carbs_g`; optional `fibre_g` and `sodium_mg`) and optional `allergens` using the 14 EU allergen codes. Missing fields remain undefined; nutrition values must be finite and non-negative, and unknown allergen codes are rejected.
+*   **Compatibility:** older exports without nutrition or allergen fields import cleanly. Nutrition and allergen summaries are approximate and include only the recorded ingredient data.
 
 ### `1.5` (Recipe and product waste / spoilage)
 *   **Added:** optional `waste_pct` on recipes, batch products, and assembled products. Older exports default the field to `0`; values must be finite and non-negative.
@@ -42,5 +46,6 @@ These app releases did not change the exported data schema and require no data m
 *   **v1.4.16:** Quote-page breakpoint and size-guide pill fixes; app data is unchanged.
 
 **v1.5.0** adds the product-pricing and product-quote schema fields described above.
+**v1.6.0** adds the nutrition and allergen ingredient fields described above.
 
-The current schema is `1.5`. UI redesigns, validation fixes, and static-asset changes do not by themselves require a schema-version bump.
+The current schema is `1.6`. UI redesigns, validation fixes, and static-asset changes do not by themselves require a schema-version bump.
