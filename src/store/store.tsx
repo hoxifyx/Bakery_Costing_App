@@ -19,10 +19,10 @@ import type {
   SavedQuote,
   Customer,
   Order,
-  PriceHistoryEntry,
   Id,
 } from '../engine/types';
 import { EMPTY_APP_DATA } from '../engine/types';
+import { recordImportedIngredientPriceChanges, recordIngredientPriceChange } from './ingredientPriceHistory';
 
 // ---------------------------------------------------------------------------
 // IndexedDB persistence
@@ -218,7 +218,8 @@ function remove<T extends { id: Id }>(list: T[], id: Id): T[] {
   return list.filter(x => x.id !== id);
 }
 
-function reducer(state: StoreState, action: Action): StoreState {
+// oxlint-disable-next-line react/only-export-components -- exported for reducer unit tests
+export function reducer(state: StoreState, action: Action): StoreState {
   switch (action.type) {
     case 'LOADED':
       return { ...state, data: action.data, loading: false };
@@ -235,13 +236,7 @@ function reducer(state: StoreState, action: Action): StoreState {
       const prev = state.data.ingredients.find(i => i.id === action.item.id);
       let updated = action.item;
       if (prev && (prev.pack_price !== action.item.pack_price || prev.pack_quantity !== action.item.pack_quantity)) {
-        const today = new Date().toISOString().split('T')[0];
-        const entry: PriceHistoryEntry = {
-          date: today,
-          pack_quantity: action.item.pack_quantity,
-          pack_price: action.item.pack_price,
-        };
-        updated = { ...action.item, price_history: [...(action.item.price_history ?? []), entry] };
+        updated = recordIngredientPriceChange(prev, action.item);
       }
       return { ...state, data: { ...state.data, ingredients: upsert(state.data.ingredients, updated) } };
     }
@@ -333,6 +328,12 @@ function reducer(state: StoreState, action: Action): StoreState {
           saved_quotes: mergeList(state.data.saved_quotes, d.saved_quotes),
           customers: mergeList(state.data.customers, d.customers),
           orders: mergeList(state.data.orders, d.orders),
+        };
+      }
+      if (action.data.ingredients && action.mode !== 'replace') {
+        next = {
+          ...next,
+          ingredients: recordImportedIngredientPriceChanges(state.data.ingredients, next.ingredients),
         };
       }
       return { ...state, data: next, undoSnapshot: snapshot };

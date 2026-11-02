@@ -116,8 +116,10 @@ export function DataHealthPage({ onNavigate }: DataHealthPageProps) {
 
   const warningCodeLabels: Record<WarningCode, string> = {
     W_UNPRICED_INGREDIENT: 'Unpriced Ingredients',
+    W_TSP_UNCONVERTED: 'Teaspoon Ingredients Missing Weight Conversion',
     W_ZERO_WEIGHT_RECIPE: 'Recipes with Zero / Negative Weight',
     W_ZERO_PIECES: 'Batch Products with Zero Pieces',
+    W_ZERO_PACK_SIZE: 'Products with Zero Pieces per Box',
     W_NO_LABOUR_HOURS: 'Products with Zero Labour Hours',
     W_NO_TIME_HOURS: 'Quote with Zero Labour Time',
     W_TIER_NO_FLAVOUR: 'Tiers Missing Flavour Selection',

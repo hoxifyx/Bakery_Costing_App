@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { EMPTY_APP_DATA, type AppData, type Recipe } from '../src/engine/types';
-import { exportAllData, parseImportFile } from '../src/io/io';
+import { exportAllData, importIngredientsCSV, parseImportFile } from '../src/io/io';
 
 describe('Recipe labour hours import and export', () => {
   it('preserves recipe labour_hours through a full JSON export and import', () => {
@@ -60,6 +60,30 @@ describe('Partial ingredient imports', () => {
     format: 'bakery-costing-data',
     schema_version: '1.6',
     ingredients: [ingredient],
+  });
+
+  describe('Ingredient CSV numeric validation', () => {
+    it('rejects invalid prices without changing the existing ingredient', () => {
+      const flour = {
+        id: 'flour',
+        name: 'Flour',
+        unit_type: 'g' as const,
+        pack_quantity: 1000,
+        pack_price: 120,
+      };
+      const csv = [
+        'id,name,unit_type,pack_quantity,pack_price,piece_weight_g,grams_per_tsp,notes',
+        'flour,Flour,g,1000,abc,,,',
+        'flour,Flour,g,1000,-50,,,',
+      ].join('\n');
+
+      const result = importIngredientsCSV(csv, [flour]);
+
+      expect(result.errors).toHaveLength(2);
+      expect(result.errors[0]).toContain('Row 2: pack_price');
+      expect(result.errors[1]).toContain('Row 3: pack_price');
+      expect(result.items).toEqual([flour]);
+    });
   });
 
   it('rejects partial records in strict mode and accepts them in merge mode', () => {

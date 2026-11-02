@@ -5,6 +5,7 @@ import { compute } from '../../engine/engine';
 import { NumberInput, SearchBar, ConfirmDialog, fmtMoney } from '../components/Shared';
 import { ExplainPanel } from '../components/ExplainPanel';
 import { generateId } from '../../engine/utils';
+import { getFillingUsedIn } from '../quoteReferences';
 
 export function FlavoursPage() {
   const { state, dispatch } = useStore();
@@ -95,7 +96,16 @@ export function FlavoursPage() {
   const doDelete = () => {
     if (!deleteTarget) return;
     if (deleteTarget.type === 'flavour') dispatch({ type: 'DELETE_FLAVOUR', id: deleteTarget.id });
-    else dispatch({ type: 'DELETE_FILLING', id: deleteTarget.id });
+    else {
+      const filling = data.fillings.find(item => item.id === deleteTarget.id);
+      const usedIn = getFillingUsedIn(deleteTarget.id, data.saved_quotes);
+      if (filling && usedIn.length > 0) {
+        alert(`Cannot delete "${filling.name}" — used in saved quotes:\n${usedIn.map(quote => quote.name).join('\n')}`);
+        setDeleteTarget(null);
+        return;
+      }
+      dispatch({ type: 'DELETE_FILLING', id: deleteTarget.id });
+    }
     setDeleteTarget(null);
   };
 

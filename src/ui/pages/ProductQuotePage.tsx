@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { useStore } from '../../store/store';
 import { computeProductQuote } from '../../engine/engine';
 import type { ProductQuoteLine, SavedQuote } from '../../engine/types';
+import { localDateString } from '../../engine/utils';
 import { NumberInput, fmtMoney } from '../components/Shared';
 
 const emptyLine = (batchFirstId: string): ProductQuoteLine => ({
@@ -60,7 +61,7 @@ export function ProductQuotePage() {
     const now = new Date().toISOString();
     const quoteToSave: SavedQuote = {
       id: typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `pq-${Date.now()}`,
-      name: saveName.trim() || `Product Quote ${new Date().toISOString().slice(0, 10)}`,
+      name: saveName.trim() || `Product Quote ${localDateString()}`,
       created_at: now,
       updated_at: now,
       kind: 'products',

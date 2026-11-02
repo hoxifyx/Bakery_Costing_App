@@ -5,6 +5,7 @@ import type { TierInput, SavedQuote } from '../../engine/types';
 import { ExplainPanel } from '../components/ExplainPanel';
 import { WarningsList } from '../components/WarningsList';
 import { NumberInput } from '../components/Shared';
+import { localDateString } from '../../engine/utils';
 
 function fmt(n: number, cur: string): string {
   return `${cur} ${n.toFixed(2)}`;
@@ -115,7 +116,7 @@ export function QuotePage() {
   };
 
   const handleOpenSaveDialog = () => {
-    const todayStr = new Date().toISOString().slice(0, 10);
+    const todayStr = localDateString();
     const defaultName = activeSavedQuote?.name || `Quote ${todayStr}`;
     setSaveName(defaultName);
     setSaveNotes(activeSavedQuote?.notes || '');
@@ -123,7 +124,7 @@ export function QuotePage() {
   };
 
   const handleSaveQuote = () => {
-    const todayStr = new Date().toISOString().slice(0, 10);
+    const todayStr = localDateString();
     const now = new Date().toISOString();
     // Capture ingredient prices at save time for Phase 5 price-change detection
     const ingredientPrices = data.ingredients.map(i => ({
@@ -833,7 +834,7 @@ export function QuotePage() {
                   className="input"
                   value={saveName}
                   onChange={e => setSaveName(e.target.value)}
-                  placeholder={`Quote ${new Date().toISOString().slice(0, 10)}`}
+                  placeholder={`Quote ${localDateString()}`}
                   autoFocus
                 />
               </div>

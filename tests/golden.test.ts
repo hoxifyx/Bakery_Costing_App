@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import * as fs from 'fs';
 import * as path from 'path';
 import { compute } from '../src/engine/engine';
+import { localDateString } from '../src/engine/utils';
 import { AppData, QuoteInput, SavedQuote, Customer, Order } from '../src/engine/types';
 import { exportAllData, parseImportFile } from '../src/io/io';
 
@@ -20,6 +21,17 @@ function closeTo(actual: number, expected: number, tol = TOLERANCE) {
 }
 
 describe('Bakery Costing App - Golden Tests', () => {
+  it('T3a: importer rejects target_margin >= 1', () => {
+    const invalidData = {
+      ...fixtureData,
+      settings: { ...fixtureData.settings, target_margin: 1 },
+    };
+    const preview = parseImportFile(exportAllData(invalidData), fixtureData);
+
+    expect(preview.valid).toBe(false);
+    expect(preview.errors.some(error => error.path === 'settings.target_margin')).toBe(true);
+  });
+
   // -------------------------------------------------------------------------
   // Test T1: Standard fixture
   // -------------------------------------------------------------------------
@@ -871,7 +883,7 @@ describe('Bakery Costing App - Golden Tests', () => {
 
     // Simulate UPDATE_INGREDIENT with a changed pack_price by applying the same
     // logic the store reducer uses: detect a diff and append a history entry.
-    const today = new Date().toISOString().split('T')[0];
+    const today = localDateString();
     const updated = {
       ...original,
       pack_price: original.pack_price * 2,
@@ -941,5 +953,44 @@ describe('Bakery Costing App - Golden Tests', () => {
 
     // per_gram_cwo should be unaffected (except for precision artifacts)
     expect(scaledDouble.per_gram_cwo).toBeCloseTo(unscaled.per_gram_cwo, 4);
+  });
+
+  it('T34: warns when a teaspoon ingredient has no grams conversion', () => {
+    const ingredient = { ...fixtureData.ingredients[0], grams_per_tsp: null };
+    const data: AppData = {
+      ...fixtureData,
+      ingredients: fixtureData.ingredients.map(item => item.id === ingredient.id ? ingredient : item),
+      recipes: [...fixtureData.recipes, {
+        id: 'tsp_recipe',
+        name: 'Teaspoon recipe',
+        kind: 'other',
+        lines: [{ ingredient_id: ingredient.id, quantity: 1, unit: 'tsp' }],
+        weight_adjustment_g: 0,
+      }],
+    };
+
+    const result = compute(data);
+
+    expect(result.recipes.tsp_recipe).toBeDefined();
+    expect(result.all_warnings.some(warning => warning.code === 'W_TSP_UNCONVERTED')).toBe(true);
+  });
+
+  it('T35: warns when a product has no valid pieces-per-box value', () => {
+    const batch = { ...fixtureData.batch_products[0], pieces_per_box: 0 };
+    const assembled = { ...fixtureData.assembled_products[0], pieces_per_box: 0 };
+    const result = compute({
+      ...fixtureData,
+      batch_products: [batch],
+      assembled_products: [assembled],
+    });
+
+    expect(result.batch_products[batch.id].warnings.some(warning => warning.code === 'W_ZERO_PACK_SIZE')).toBe(true);
+    expect(result.assembled_products[assembled.id].warnings.some(warning => warning.code === 'W_ZERO_PACK_SIZE')).toBe(true);
+    expect(Number.isFinite(result.batch_products[batch.id].cost_each)).toBe(true);
+    expect(Number.isFinite(result.assembled_products[assembled.id].cost_each)).toBe(true);
+  });
+
+  it('localDateString uses the local calendar date rather than UTC', () => {
+    expect(localDateString(new Date('2026-11-02T02:00:00+06:00'))).toBe('2026-11-02');
   });
 });

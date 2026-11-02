@@ -3,6 +3,7 @@
  * No UI, storage or network access. All arithmetic uses decimal.js.
  */
 import Decimal from 'decimal.js';
+import { localDateString } from './utils';
 import type {
   AppData,
   Ingredient,
@@ -99,6 +100,9 @@ function lineCost(
   if (!ing) {
     warn(warnings, 'W_UNPRICED_INGREDIENT', `Ingredient ${line.ingredient_id} not found`, path);
     return D(0);
+  }
+  if (line.unit === 'tsp' && (!ing.grams_per_tsp || ing.grams_per_tsp <= 0)) {
+    warn(warnings, 'W_TSP_UNCONVERTED', `Ingredient "${ing.name}" has no valid grams_per_tsp conversion`, path);
   }
   if (unpriced(ing)) {
     warn(warnings, 'W_UNPRICED_INGREDIENT', `Ingredient "${ing.name}" is unpriced`, path);
@@ -349,6 +353,9 @@ function computeBatchProduct(
   const otherCost = D(product.other_cost_per_piece ?? 0);
   const prodWarnings: Warning[] = [];
   const audit: AuditStep[] = [];
+  if (product.pieces_per_box <= 0) {
+    warn(prodWarnings, 'W_ZERO_PACK_SIZE', `Product "${product.id}" has zero or negative pieces_per_box`, `batch_product[${product.id}].pieces_per_box`);
+  }
 
   const r = recipeResults.get(product.recipe_id);
   const rawCost = r ? D(r.raw) : D(0);
@@ -529,6 +536,9 @@ function computeAssembledProduct(
   const wasteMultiplier = D(1).add(wastePct);
   const prodWarnings: Warning[] = [];
   const audit: AuditStep[] = [];
+  if (product.pieces_per_box <= 0) {
+    warn(prodWarnings, 'W_ZERO_PACK_SIZE', `Product "${product.id}" has zero or negative pieces_per_box`, `assembled_products[${product.id}].pieces_per_box`);
+  }
 
   if (wastePct.gte(0.5)) {
     warn(prodWarnings, 'W_WASTE_HIGH', `Assembled product "${product.name}" has a high waste / spoilage setting (${toNum(wastePct.mul(100)).toFixed(1)}%)`, `assembled_products[${product.id}].waste_pct`);
@@ -920,7 +930,7 @@ export function compute(data: AppData, quoteInput?: QuoteInput | null, recipeMul
   }
 
   // Phase 4: Order data health warnings
-  const todayStr = new Date().toISOString().split('T')[0];
+  const todayStr = localDateString();
   if (data.orders) {
     for (const o of data.orders) {
       if (!o.quote_id) {

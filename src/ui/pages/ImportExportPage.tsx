@@ -16,6 +16,7 @@ import {
 import { createBackup, restoreBackup, getBackupHistory, deleteBackup, signIn, signOut } from '../../cloud/backupManager';
 import type { ImportPreview } from '../../io/io';
 import type { AppData } from '../../engine/types';
+import { localDateString } from '../../engine/utils';
 
 type PartialKey = keyof AppData;
 
@@ -78,7 +79,7 @@ export function ImportExportPage() {
       ...partial,
     };
     const jsonStr = JSON.stringify(envelope, null, 2);
-    downloadJSON(jsonStr, `bakery-costing-partial-${new Date().toISOString().slice(0, 10)}.json`);
+    downloadJSON(jsonStr, `bakery-costing-partial-${localDateString()}.json`);
   };
 
   // Handler for File Selection
@@ -539,7 +540,7 @@ export function ImportExportPage() {
                   const url = URL.createObjectURL(blob);
                   const a = document.createElement('a');
                   a.href = url;
-                  a.download = `ingredients-${new Date().toISOString().slice(0, 10)}.csv`;
+                  a.download = `ingredients-${localDateString()}.csv`;
                   a.click();
                   URL.revokeObjectURL(url);
                 }}
@@ -555,7 +556,7 @@ export function ImportExportPage() {
                   const url = URL.createObjectURL(blob);
                   const a = document.createElement('a');
                   a.href = url;
-                  a.download = `packaging-${new Date().toISOString().slice(0, 10)}.csv`;
+                  a.download = `packaging-${localDateString()}.csv`;
                   a.click();
                   URL.revokeObjectURL(url);
                 }}

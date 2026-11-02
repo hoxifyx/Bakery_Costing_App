@@ -1003,6 +1003,22 @@ export function importIngredientsCSV(
   const resultMap = new Map(result.map((i, idx) => [i.id, idx]));
 
   for (const [ri, row] of rows.entries()) {
+    const numericFields = ['pack_quantity', 'pack_price', 'piece_weight_g', 'grams_per_tsp'] as const;
+    const numericValues: Partial<Record<typeof numericFields[number], number>> = {};
+    let hasInvalidNumber = false;
+    for (const field of numericFields) {
+      const rawValue = row[field]?.trim();
+      if (!rawValue) continue;
+      const value = Number(rawValue);
+      if (!Number.isFinite(value) || value < 0) {
+        errors.push(`Row ${ri + 2}: ${field} must be a finite non-negative number`);
+        hasInvalidNumber = true;
+      } else {
+        numericValues[field] = value;
+      }
+    }
+    if (hasInvalidNumber) continue;
+
     let existing_item: Ingredient | undefined;
     if (row.id && existingById.has(row.id)) {
       existing_item = existingById.get(row.id);
@@ -1015,8 +1031,8 @@ export function importIngredientsCSV(
       const idx = resultMap.get(existing_item.id)!;
       result[idx] = {
         ...result[idx],
-        pack_quantity: row.pack_quantity ? parseFloat(row.pack_quantity) : result[idx].pack_quantity,
-        pack_price: row.pack_price ? parseFloat(row.pack_price) : result[idx].pack_price,
+        pack_quantity: numericValues.pack_quantity ?? result[idx].pack_quantity,
+        pack_price: numericValues.pack_price ?? result[idx].pack_price,
       };
     } else {
       if (existing_item) {
@@ -1025,10 +1041,10 @@ export function importIngredientsCSV(
           ...result[idx],
           name: row.name || result[idx].name,
           unit_type: (row.unit_type === 'g' || row.unit_type === 'piece') ? row.unit_type : result[idx].unit_type,
-          pack_quantity: row.pack_quantity ? parseFloat(row.pack_quantity) : result[idx].pack_quantity,
-          pack_price: row.pack_price ? parseFloat(row.pack_price) : result[idx].pack_price,
-          piece_weight_g: row.piece_weight_g ? parseFloat(row.piece_weight_g) : result[idx].piece_weight_g,
-          grams_per_tsp: row.grams_per_tsp ? parseFloat(row.grams_per_tsp) : result[idx].grams_per_tsp,
+          pack_quantity: numericValues.pack_quantity ?? result[idx].pack_quantity,
+          pack_price: numericValues.pack_price ?? result[idx].pack_price,
+          piece_weight_g: numericValues.piece_weight_g ?? result[idx].piece_weight_g,
+          grams_per_tsp: numericValues.grams_per_tsp ?? result[idx].grams_per_tsp,
           notes: row.notes || result[idx].notes,
         };
       } else {
@@ -1037,10 +1053,10 @@ export function importIngredientsCSV(
           id: newId,
           name: row.name || newId,
           unit_type: (row.unit_type === 'g' || row.unit_type === 'piece') ? row.unit_type : 'g',
-          pack_quantity: parseFloat(row.pack_quantity ?? '0') || 0,
-          pack_price: parseFloat(row.pack_price ?? '0') || 0,
-          piece_weight_g: row.piece_weight_g ? parseFloat(row.piece_weight_g) : null,
-          grams_per_tsp: row.grams_per_tsp ? parseFloat(row.grams_per_tsp) : null,
+          pack_quantity: numericValues.pack_quantity ?? 0,
+          pack_price: numericValues.pack_price ?? 0,
+          piece_weight_g: numericValues.piece_weight_g ?? null,
+          grams_per_tsp: numericValues.grams_per_tsp ?? null,
           notes: row.notes || undefined,
         };
         result.push(newItem);

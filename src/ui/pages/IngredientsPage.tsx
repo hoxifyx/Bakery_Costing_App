@@ -5,7 +5,7 @@ import type { ImpactItem, ImpactMetric } from '../../engine/impact';
 import type { AllergenCode, Ingredient, NutritionPer100g, PriceHistoryEntry } from '../../engine/types';
 import { NumberInput, SearchBar, ConfirmDialog, fmtMoney } from '../components/Shared';
 import { exportIngredientsCSV, importIngredientsCSV } from '../../io/io';
-import { generateId } from '../../engine/utils';
+import { generateId, localDateString } from '../../engine/utils';
 
 const EMPTY_ING: Omit<Ingredient, 'id'> = {
   name: '',
@@ -51,10 +51,9 @@ function getUsedIn(id: string, data: ReturnType<typeof useStore>['state']['data'
 
 function getRecentPriceChangeRange(): { cutoff: string; today: string } {
   const date = new Date();
-  const today = date.toISOString().slice(0, 10);
-  date.setUTCHours(0, 0, 0, 0);
-  date.setUTCDate(date.getUTCDate() - 30);
-  return { cutoff: date.toISOString().slice(0, 10), today };
+  const today = localDateString(date);
+  date.setDate(date.getDate() - 30);
+  return { cutoff: localDateString(date), today };
 }
 
 export function IngredientsPage() {
@@ -222,7 +221,7 @@ export function IngredientsPage() {
         <div className="quote-toolbar">
           <button className="quote-toolbar-btn" onClick={() => setCsvMode(m => !m)}>
             <span className="material-symbols-outlined ms-16" aria-hidden>download</span>
-            <span>Export CSV</span>
+            <span>CSV Actions</span>
           </button>
           <button className="quote-toolbar-btn quote-toolbar-btn-primary" onClick={openNew}>
             <span className="material-symbols-outlined ms-18" aria-hidden>add</span>

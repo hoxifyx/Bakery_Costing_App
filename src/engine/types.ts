@@ -133,8 +133,11 @@ export interface BatchProduct {
   box_id: Id | null;
   pieces_per_box: number;
   show_each_including_box: boolean;
+  /** Overrides global overhead for labour and base recipe cost. Recipe components already include global overhead via per_gram_cwo and are not re-overhead-ed. */
   overhead_pct?: number | null;
+  /** Overrides the global target margin. Recipe components already include global overhead via per_gram_cwo and are not re-overhead-ed. */
   target_margin?: number | null;
+  /** Overrides the global labour rate. Recipe components already include global overhead via per_gram_cwo and are not re-overhead-ed. */
   labour_rate_per_hour?: number | null;
   other_cost_per_piece?: number;
   waste_pct?: number;
@@ -155,8 +158,11 @@ export interface AssembledProduct {
   pieces_per_batch: number;
   box_id: Id | null;
   pieces_per_box: number;
+  /** Overrides global overhead for labour and base recipe cost. Recipe components already include global overhead via per_gram_cwo and are not re-overhead-ed. */
   overhead_pct?: number | null;
+  /** Overrides the global target margin. Recipe components already include global overhead via per_gram_cwo and are not re-overhead-ed. */
   target_margin?: number | null;
+  /** Overrides the global labour rate. Recipe components already include global overhead via per_gram_cwo and are not re-overhead-ed. */
   labour_rate_per_hour?: number | null;
   other_cost_per_piece?: number;
   waste_pct?: number;
@@ -271,8 +277,10 @@ export interface Order {
 
 export type WarningCode =
   | 'W_UNPRICED_INGREDIENT'
+  | 'W_TSP_UNCONVERTED'
   | 'W_ZERO_WEIGHT_RECIPE'
   | 'W_ZERO_PIECES'
+  | 'W_ZERO_PACK_SIZE'
   | 'W_TIER_NO_FLAVOUR'
   | 'W_TIER_NO_FILLING'
   | 'W_TIER_NO_SIZE'

@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useStore } from '../../store/store';
 import type { Order, OrderStatus } from '../../engine/types';
-import { generateId } from '../../engine/utils';
+import { generateId, localDateString } from '../../engine/utils';
 import { ConfirmDialog, SearchBar } from '../components/Shared';
 import { ShoppingListModal } from '../components/ShoppingListModal';
 
@@ -53,7 +53,7 @@ export function OrdersPage({ onNavigate }: OrdersPageProps) {
       id: generateId('ord'),
       customer_id: null,
       quote_id: null,
-      order_date: new Date().toISOString().split('T')[0],
+      order_date: localDateString(),
       due_date: '',
       status: 'Draft',
       notes: ''

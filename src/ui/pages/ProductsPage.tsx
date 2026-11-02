@@ -612,6 +612,7 @@ export function ProductsPage() {
                             setEditingBatch(p => p && ({ ...p, overhead_pct: val === '' ? null : parseFloat(val) }));
                           }}
                         />
+                        <span className="input-hint">Applies to labour and the base recipe; component costs already include the global overhead.</span>
                       </div>
                       <div className="form-group">
                         <label>Target margin (global: {(data.settings.target_margin * 100).toFixed(0)}%)</label>
@@ -870,6 +871,7 @@ export function ProductsPage() {
                             setEditingAssembled(p => p && ({ ...p, overhead_pct: val === '' ? null : parseFloat(val) }));
                           }}
                         />
+                        <span className="input-hint">Applies to labour and the base recipe; component costs already include the global overhead.</span>
                       </div>
                       <div className="form-group">
                         <label>Target margin (global: {(data.settings.target_margin * 100).toFixed(0)}%)</label>
