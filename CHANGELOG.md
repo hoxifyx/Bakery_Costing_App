@@ -5,6 +5,23 @@ All notable changes to the Bakery Costing App (OvenCost Pro) will be documented 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.3] — 2026-11-03
+
+### Fixed
+- **Quote references:** The saved-quotes page blocks deletion when orders reference a quote and identifies those orders.
+- **Ingredient units:** Gram-based ingredient pickers now exclude piece-based ingredients. Data Health reports unit mismatches for gram-priced fillings, assembled-product components, and fondant.
+- **Recipe preview multipliers:** Scaled previews no longer alter per-gram, per-kilogram, flavour, or downstream derived metrics.
+- **CSV round trips:** Ingredient and packaging CSV parsing now preserves quoted commas, quotes, and embedded newlines.
+- **Storage load failure:** Failed IndexedDB loads no longer fall back to empty data or trigger autosave; the store retains the load error.
+
+### Changed
+- The app/export version is `1.6.3`. The exported data schema remains `1.6`; no migration is required.
+
+### Validation
+- `TZ=Asia/Dhaka npx vitest run`: 107 tests passed; 1 skipped.
+- `npx oxlint`: 0 errors; 5 warnings.
+- `npm run build`: succeeded with the existing dynamic-import and bundle-size advisories.
+
 ## [1.6.1] — 2026-11-03
 
 ### Fixed
