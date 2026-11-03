@@ -164,6 +164,7 @@ export function ImportExportPage() {
         type: 'IMPORT_DATA',
         data: dataToImport,
         mode: importMode,
+        description: `data import (${importMode})`,
       });
       setImportStatus({
         type: 'success',
@@ -181,7 +182,10 @@ export function ImportExportPage() {
   const handleUndo = () => {
     if (!state.undoSnapshot) return;
     dispatch({ type: 'UNDO_IMPORT' });
-    setImportStatus({ type: 'success', message: 'Undid last import and restored prior snapshot.' });
+    setImportStatus({
+      type: 'success',
+      message: `Undid ${state.undoDescription ?? 'the last import'} and restored the prior snapshot.`,
+    });
   };
 
   // CSV Import
@@ -202,6 +206,7 @@ export function ImportExportPage() {
           type: 'IMPORT_DATA',
           data: { ingredients: items },
           mode: 'replace_selected',
+          description: 'CSV ingredient import',
         });
       } catch (err: any) {
         setCsvStatus(`CSV Import Error: ${err.message}`);
@@ -230,7 +235,7 @@ export function ImportExportPage() {
           {state.undoSnapshot && (
             <button className="quote-toolbar-btn" onClick={handleUndo}>
               <span className="material-symbols-outlined ms-16" aria-hidden>undo</span>
-              <span>Undo Last Import</span>
+              <span>Undo {state.undoDescription ?? 'last import'}</span>
             </button>
           )}
         </div>
@@ -785,7 +790,12 @@ function RestoreModal({ onClose }: { onClose: () => void }) {
 
   const handleApply = (mode: 'replace' | 'merge') => {
     if (!preview || !preview.valid) return;
-    dispatch({ type: 'IMPORT_DATA', data: preview.parsed, mode });
+    dispatch({
+      type: 'IMPORT_DATA',
+      data: preview.parsed,
+      mode,
+      description: `backup restore (${mode})`,
+    });
     dispatch({ type: 'CLOUD_RESTORE_APPLIED' });
     onClose();
   };

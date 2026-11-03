@@ -245,6 +245,7 @@ export interface ActiveSavedQuoteInfo {
 export interface StoreState {
   data: AppData;
   undoSnapshot: AppData | null;  // snapshot before last import
+  undoDescription: string | null;
   draftClearRevision: { quote: number; product: number };
   quoteInput: QuoteInput;
   productQuoteInput: ProductQuoteInput;
@@ -407,7 +408,7 @@ type Action =
   | { type: 'RESET_QUOTE' }
   | { type: 'SET_PRODUCT_QUOTE_INPUT'; input: ProductQuoteInput }
   | { type: 'RESET_PRODUCT_QUOTE' }
-  | { type: 'IMPORT_DATA'; data: Partial<AppData>; mode: 'replace' | 'merge' | 'replace_selected' }
+  | { type: 'IMPORT_DATA'; data: Partial<AppData>; mode: 'replace' | 'merge' | 'replace_selected'; description?: string }
   | { type: 'UNDO_IMPORT' }
   | { type: 'ADD_SAVED_QUOTE'; item: SavedQuote }
   | { type: 'UPDATE_SAVED_QUOTE'; item: SavedQuote }
@@ -453,8 +454,7 @@ function quoteUsesProduct(quote: SavedQuote, kind: 'batch' | 'assembled', id: Id
   return quote.product_quote_input?.lines?.some(line => line.product_kind === kind && line.product_id === id) ?? false;
 }
 
-// oxlint-disable-next-line react/only-export-components -- exported for reducer unit tests
-export function reducer(state: StoreState, action: Action): StoreState {
+function reduceAction(state: StoreState, action: Action): StoreState {
   switch (action.type) {
     case 'LOAD_STARTED':
       return { ...state, loading: true, loadError: null };
@@ -604,11 +604,12 @@ export function reducer(state: StoreState, action: Action): StoreState {
         ...state,
         data: next,
         undoSnapshot: snapshot,
+        undoDescription: action.description ?? 'data import',
       };
     }
     case 'UNDO_IMPORT':
       if (!state.undoSnapshot) return state;
-      return { ...state, data: state.undoSnapshot, undoSnapshot: null };
+      return { ...state, data: state.undoSnapshot, undoSnapshot: null, undoDescription: null };
     case 'ADD_SAVED_QUOTE':
       return {
         ...state,
@@ -681,6 +682,16 @@ export function reducer(state: StoreState, action: Action): StoreState {
   }
 }
 
+// oxlint-disable-next-line react/only-export-components -- exported for reducer unit tests
+export function reducer(state: StoreState, action: Action): StoreState {
+  const next = reduceAction(state, action);
+  if (action.type === 'UNDO_IMPORT' || action.type === 'IMPORT_DATA') return next;
+  if (state.undoSnapshot && next.data !== state.data) {
+    return { ...next, undoSnapshot: null, undoDescription: null };
+  }
+  return next;
+}
+
 function mergeList<T extends { id: Id }>(existing: T[], incoming?: T[]): T[] {
   if (!incoming) return existing;
   const map = new Map(existing.map(x => [x.id, x]));
@@ -725,6 +736,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = useReducer(reducer, {
     data: { ...EMPTY_APP_DATA },
     undoSnapshot: null,
+    undoDescription: null,
     draftClearRevision: { quote: 0, product: 0 },
     quoteInput: DEFAULT_QUOTE_INPUT,
     productQuoteInput: DEFAULT_PRODUCT_QUOTE_INPUT,

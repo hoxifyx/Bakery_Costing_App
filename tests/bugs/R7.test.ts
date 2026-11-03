@@ -5,6 +5,8 @@ import { reducer } from '../../src/store/store';
 const blankState = {
   data: { ...EMPTY_APP_DATA },
   undoSnapshot: null,
+  undoDescription: null,
+  draftClearRevision: { quote: 0, product: 0 },
   quoteInput: { tiers: [], decoration: { fondant_kg: 0, prints: 0, flowers: 0, toppers: 0, time_hours: 0, others: 0, delivery: 0, discount: 0 } },
   productQuoteInput: { lines: [], delivery: 0, discount: 0 },
   activeSavedQuote: null,
