@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 describe('R4 product pricing override percentage entry', () => {
   it('converts a displayed percent to the stored fractional value', async () => {
-    const module = await import('../../src/ui/pages/ProductsPage');
+    const module = await import('../../src/ui/productPricing');
     const parsePercentToFraction = module.parsePercentToFraction;
     const validatePricingOverrides = module.validatePricingOverrides;
 
