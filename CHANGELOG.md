@@ -23,6 +23,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Import input shape:** JSON nulls and primitives now produce a clear invalid preview rather than throwing.
 - **Product quote units:** Switching a quote line to an assembled product resets its unit to Piece.
 
+### Tests
+- Made the local-date regression assertion independent of the test runner's timezone.
+
 ## [1.6.3] — 2026-11-03
 
 ### Fixed

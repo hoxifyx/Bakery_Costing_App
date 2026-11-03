@@ -991,6 +991,6 @@ describe('Bakery Costing App - Golden Tests', () => {
   });
 
   it('localDateString uses the local calendar date rather than UTC', () => {
-    expect(localDateString(new Date('2026-11-02T02:00:00+06:00'))).toBe('2026-11-02');
+    expect(localDateString(new Date(2026, 10, 2, 2, 0))).toBe('2026-11-02');
   });
 });
