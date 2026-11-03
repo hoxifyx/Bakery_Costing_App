@@ -116,6 +116,7 @@ export function DataHealthPage({ onNavigate }: DataHealthPageProps) {
 
   const warningCodeLabels: Record<WarningCode, string> = {
     W_UNPRICED_INGREDIENT: 'Unpriced Ingredients',
+    W_UNKNOWN_RECIPE: 'Missing Recipe References',
     W_UNIT_MISMATCH: 'Ingredients Used in the Wrong Unit',
     W_TSP_UNCONVERTED: 'Teaspoon Ingredients Missing Weight Conversion',
     W_ZERO_WEIGHT_RECIPE: 'Recipes with Zero / Negative Weight',

@@ -235,6 +235,12 @@ function computeFlavourBase(
   if (flavour.cost_model.type === 'recipe') {
     const cakeRec = recipeResults.get(flavour.cost_model.cake_recipe_id);
     const frostRec = recipeResults.get(flavour.cost_model.frosting_recipe_id);
+    if (!cakeRec) {
+      warn(warnings, 'W_UNKNOWN_RECIPE', `Cake recipe "${flavour.cost_model.cake_recipe_id}" used by flavour "${flavour.name}" not found`, `flavour[${flavour.id}]`);
+    }
+    if (!frostRec) {
+      warn(warnings, 'W_UNKNOWN_RECIPE', `Frosting recipe "${flavour.cost_model.frosting_recipe_id}" used by flavour "${flavour.name}" not found`, `flavour[${flavour.id}]`);
+    }
     const cakePart = cakeRec ? D(cakeRec.cake_cost_per_kg) : D(0);
     const frostPart = frostRec ? D(frostRec.frosting_cost_per_kg_cake) : D(0);
     return cakePart.add(frostPart);
@@ -366,6 +372,9 @@ function computeBatchProduct(
   }
 
   const r = recipeResults.get(product.recipe_id);
+  if (!r) {
+    warn(prodWarnings, 'W_UNKNOWN_RECIPE', `Recipe "${product.recipe_id}" used by batch product "${product.name}" not found`, `batch_product[${product.id}].recipe_id`);
+  }
   const rawCost = r ? D(r.raw) : D(0);
   const rawAfterRecipeWaste = r ? D(r.raw_after_waste) : D(0);
   const weightG = r ? D(r.weight) : D(0);
@@ -407,7 +416,10 @@ function computeBatchProduct(
   let componentsCost = D(0);
   for (const comp of product.components) {
     const cr = recipeResults.get(comp.recipe_id);
-    if (!cr) continue;
+    if (!cr) {
+      warn(prodWarnings, 'W_UNKNOWN_RECIPE', `Component recipe "${comp.recipe_id}" used by batch product "${product.name}" not found`, `batch_product[${product.id}].components`);
+      continue;
+    }
     const pgCwo = D(cr.per_gram_cwo);
     componentsCost = componentsCost.add(pgCwo.mul(D(comp.grams)));
   }
@@ -557,19 +569,28 @@ function computeAssembledProduct(
     let compCost = D(0);
     if (comp.type === 'cake_recipe_grams') {
       const rr = recipeResults.get(comp.recipe_id);
-      if (!rr) continue;
+      if (!rr) {
+        warn(prodWarnings, 'W_UNKNOWN_RECIPE', `Cake recipe "${comp.recipe_id}" used by assembled product "${product.name}" not found`, `assembled[${product.id}]`);
+        continue;
+      }
       // cake_cost_per_gram = cwo * cake_batches_per_kg / 1000
       const cakeCostPerGram = D(rr.cwo).mul(D(settings.cake_batches_per_kg)).div(D(1000));
       compCost = cakeCostPerGram.mul(D(comp.grams));
       audit.push(step(`Cake (${comp.recipe_id}) ${comp.grams}g`, 'cake_cost_per_gram × grams', compCost));
     } else if (comp.type === 'recipe_per_gram') {
       const rr = recipeResults.get(comp.recipe_id);
-      if (!rr) continue;
+      if (!rr) {
+        warn(prodWarnings, 'W_UNKNOWN_RECIPE', `Recipe "${comp.recipe_id}" used by assembled product "${product.name}" not found`, `assembled[${product.id}]`);
+        continue;
+      }
       compCost = D(rr.per_gram_cwo).mul(D(comp.grams));
       audit.push(step(`Recipe (${comp.recipe_id}) ${comp.grams}g`, 'per_gram_cwo × grams', compCost));
     } else if (comp.type === 'ingredient_grams') {
       const ing = ingMap.get(comp.ingredient_id);
-      if (!ing) continue;
+      if (!ing) {
+        warn(prodWarnings, 'W_UNPRICED_INGREDIENT', `Ingredient "${comp.ingredient_id}" not found in assembled product "${product.name}"`, `assembled[${product.id}]`);
+        continue;
+      }
       if (unpriced(ing)) {
         warn(prodWarnings, 'W_UNPRICED_INGREDIENT', `Ingredient "${ing.name}" unpriced in assembled product`, `assembled[${product.id}]`);
       }
@@ -750,6 +771,8 @@ function computeQuote(
           warn(quoteWarnings, 'W_UNIT_MISMATCH', `Fondant ingredient "${fondantIng.name}" is typed as piece but used as grams for fondant`, 'settings.fondant_ingredient_id');
         }
         fondant = D(dec.fondant_kg).mul(ppu(fondantIng)).mul(D(1000));
+      } else {
+        warn(quoteWarnings, 'W_ROLE_NOT_SET', `Fondant ingredient "${settings.fondant_ingredient_id}" not found in settings`, 'settings.fondant_ingredient_id');
       }
     }
   }
@@ -760,7 +783,11 @@ function computeQuote(
       warn(quoteWarnings, 'W_ROLE_NOT_SET', 'Edible print item role not set in settings', 'settings.edible_print_item_id');
     } else {
       const printItem = packMap.get(settings.edible_print_item_id);
-      printCost = printItem ? D(dec.prints).mul(D(printItem.price)) : D(0);
+      if (printItem) {
+        printCost = D(dec.prints).mul(D(printItem.price));
+      } else {
+        warn(quoteWarnings, 'W_ROLE_NOT_SET', `Edible print item "${settings.edible_print_item_id}" not found in settings`, 'settings.edible_print_item_id');
+      }
     }
   }
 
@@ -783,6 +810,17 @@ function computeQuote(
   const mdfItem = settings.mdf_board_item_id ? packMap.get(settings.mdf_board_item_id) : null;
   const wallpaperItem = settings.wallpaper_item_id ? packMap.get(settings.wallpaper_item_id) : null;
   const stdBoardItem = settings.standard_board_item_id ? packMap.get(settings.standard_board_item_id) : null;
+
+  for (const [role, id] of [
+    ['cake_box_item_id', settings.cake_box_item_id],
+    ['mdf_board_item_id', settings.mdf_board_item_id],
+    ['wallpaper_item_id', settings.wallpaper_item_id],
+    ['standard_board_item_id', settings.standard_board_item_id],
+  ] as const) {
+    if (id && !packMap.has(id)) {
+      warn(quoteWarnings, 'W_ROLE_NOT_SET', `Packaging item "${id}" for ${role} not found in settings`, `settings.${role}`);
+    }
+  }
 
   const cakeBoxPrice = cakeBoxItem ? D(cakeBoxItem.price) : D(0);
   const mdfPrice = mdfItem ? D(mdfItem.price) : D(0);

@@ -277,6 +277,7 @@ export interface Order {
 
 export type WarningCode =
   | 'W_UNPRICED_INGREDIENT'
+  | 'W_UNKNOWN_RECIPE'
   | 'W_UNIT_MISMATCH'
   | 'W_TSP_UNCONVERTED'
   | 'W_ZERO_WEIGHT_RECIPE'
