@@ -9,11 +9,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - **Product quote reopening:** Orders now open saved product quotes in Product Quote, and cake quote pages safely pad short tier inputs.
-
-### Tests
-- Added regression coverage for CSV parser edge cases already handled by the parser.
-
-### Fixed
 - **Data Health navigation:** Warning paths emitted for flavours, fillings, assembled products, and product-quote discounts now route to the relevant page.
 - **Product pricing overrides:** Percentage inputs display percents, store fractional values, and block invalid overhead, margin, or labour overrides.
 - **Import references:** Validation now follows import mode and verifies the actual selected-group result before applying it.
@@ -25,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Product warning context:** Product warning messages now use display names while retaining IDs in their navigable paths.
 
 ### Tests
+- Added regression coverage for CSV parser edge cases already handled by the parser.
 - Made the local-date regression assertion independent of the test runner's timezone.
 
 ## [1.6.3] — 2026-11-03
