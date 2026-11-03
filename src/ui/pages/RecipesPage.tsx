@@ -35,6 +35,7 @@ export function RecipesPage() {
   const [kindFilter, setKindFilter] = useState<string>('all');
   const [editing, setEditing] = useState<Recipe | null>(null);
   const [isNew, setIsNew] = useState(false);
+  const [saveErrors, setSaveErrors] = useState<string[]>([]);
   const [deleteTarget, setDeleteTarget] = useState<Recipe | null>(null);
   const [explainTarget, setExplainTarget] = useState<Recipe | null>(null);
   const [scales, setScales] = useState<Record<string, number>>({});
@@ -64,6 +65,7 @@ export function RecipesPage() {
   };
 
   const openNew = () => {
+    setSaveErrors([]);
     setIsNew(true);
     setEditing({
       id: generateId('recipe'),
@@ -75,24 +77,28 @@ export function RecipesPage() {
     });
   };
 
-  const openEdit = (r: Recipe) => { setIsNew(false); setEditing(JSON.parse(JSON.stringify(r))); };
+  const openEdit = (r: Recipe) => { setSaveErrors([]); setIsNew(false); setEditing(JSON.parse(JSON.stringify(r))); };
 
   const duplicate = (r: Recipe) => {
+    setSaveErrors([]);
     setIsNew(true);
     setEditing({ ...JSON.parse(JSON.stringify(r)), id: generateId('recipe'), name: r.name + ' (copy)' });
   };
 
   const save = () => {
     if (!editing || !editing.name.trim()) return;
-    const normalized = {
-      ...editing,
-      lines: editing.lines.map(line => {
-        const validUnits = validUnitsForIng(line.ingredient_id);
-        return validUnits.includes(line.unit) ? line : { ...line, unit: validUnits[0] };
-      }),
-    };
-    if (isNew) dispatch({ type: 'ADD_RECIPE', item: normalized });
-    else dispatch({ type: 'UPDATE_RECIPE', item: normalized });
+    const invalidLines = editing.lines.flatMap((line, index) => {
+      if (validUnitsForIng(line.ingredient_id).includes(line.unit)) return [];
+      const ingredient = data.ingredients.find(item => item.id === line.ingredient_id);
+      return [`${editing.name} — line ${index + 1}: ${ingredient?.name ?? line.ingredient_id ?? 'Unlinked ingredient'} uses unit "${line.unit}", which is not valid for that ingredient.`];
+    });
+    if (invalidLines.length > 0) {
+      setSaveErrors(invalidLines);
+      return;
+    }
+    setSaveErrors([]);
+    if (isNew) dispatch({ type: 'ADD_RECIPE', item: editing });
+    else dispatch({ type: 'UPDATE_RECIPE', item: editing });
     setEditing(null);
   };
 
@@ -126,6 +132,7 @@ export function RecipesPage() {
 
   // Editing helpers
   const updateLine = (idx: number, update: Partial<RecipeLine>) => {
+    setSaveErrors([]);
     setEditing(r => {
       if (!r) return r;
       const lines = r.lines.map((l, i) => i === idx ? { ...l, ...update } : l);
@@ -297,6 +304,14 @@ export function RecipesPage() {
                 <span className="material-symbols-outlined ms-16" aria-hidden>close</span>
               </button>
             </div>
+            {saveErrors.length > 0 && (
+              <div role="alert" className="form-error" style={{ margin: '0 24px' }}>
+                <strong>Recipe was not saved. Correct these ingredient units:</strong>
+                <ul>
+                  {saveErrors.map(error => <li key={error}>{error}</li>)}
+                </ul>
+              </div>
+            )}
             <div className="modal-body" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 260px), 1fr))', gap: 20 }}>
               {/* Left: recipe form */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
@@ -328,7 +343,7 @@ export function RecipesPage() {
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                     {editing.lines.map((line, li) => {
                       const validUnits = validUnitsForIng(line.ingredient_id);
-                      const curUnit = validUnits.includes(line.unit) ? line.unit : validUnits[0];
+                      const unitOptions = validUnits.includes(line.unit) ? validUnits : [line.unit, ...validUnits];
                       return (
                         <div key={li} style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 64px 64px 32px 32px', gap: 6, alignItems: 'center' }}>
                           <select
@@ -348,10 +363,10 @@ export function RecipesPage() {
                           <select
                             className="select"
                             style={{ minWidth: 0 }}
-                            value={curUnit}
+                            value={line.unit}
                             onChange={e => updateLine(li, { unit: e.target.value as RecipeLine['unit'] })}
                           >
-                            {validUnits.map(u => <option key={u} value={u}>{u}</option>)}
+                            {unitOptions.map(u => <option key={u} value={u}>{u}</option>)}
                           </select>
                           <button
                             className="quote-toolbar-btn"
