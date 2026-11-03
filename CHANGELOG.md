@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Product pricing overrides:** Percentage inputs display percents, store fractional values, and block invalid overhead, margin, or labour overrides.
 - **Import references:** Validation now follows import mode and verifies the actual selected-group result before applying it.
 - **Missing references:** The engine warns about missing recipe, product-component, ingredient, and settings-role references; imports validate batch components and role mappings.
+- **Saved-quote references:** Flavours and products used by saved quotes cannot be deleted from either the UI or reducer.
 
 ## [1.6.3] — 2026-11-03
 

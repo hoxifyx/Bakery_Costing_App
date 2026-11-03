@@ -220,6 +220,14 @@ function remove<T extends { id: Id }>(list: T[], id: Id): T[] {
   return list.filter(x => x.id !== id);
 }
 
+function quoteUsesFlavour(quote: SavedQuote, id: Id): boolean {
+  return quote.input?.tiers?.some(tier => tier.flavour_id === id) ?? false;
+}
+
+function quoteUsesProduct(quote: SavedQuote, kind: 'batch' | 'assembled', id: Id): boolean {
+  return quote.product_quote_input?.lines?.some(line => line.product_kind === kind && line.product_id === id) ?? false;
+}
+
 // oxlint-disable-next-line react/only-export-components -- exported for reducer unit tests
 export function reducer(state: StoreState, action: Action): StoreState {
   switch (action.type) {
@@ -260,6 +268,7 @@ export function reducer(state: StoreState, action: Action): StoreState {
     case 'UPDATE_FLAVOUR':
       return { ...state, data: { ...state.data, flavours: upsert(state.data.flavours, action.item) } };
     case 'DELETE_FLAVOUR':
+      if (state.data.saved_quotes.some(quote => quoteUsesFlavour(quote, action.id))) return state;
       return { ...state, data: { ...state.data, flavours: remove(state.data.flavours, action.id) } };
     case 'ADD_FILLING':
     case 'UPDATE_FILLING':
@@ -270,11 +279,13 @@ export function reducer(state: StoreState, action: Action): StoreState {
     case 'UPDATE_BATCH_PRODUCT':
       return { ...state, data: { ...state.data, batch_products: upsert(state.data.batch_products, action.item) } };
     case 'DELETE_BATCH_PRODUCT':
+      if (state.data.saved_quotes.some(quote => quoteUsesProduct(quote, 'batch', action.id))) return state;
       return { ...state, data: { ...state.data, batch_products: remove(state.data.batch_products, action.id) } };
     case 'ADD_ASSEMBLED_PRODUCT':
     case 'UPDATE_ASSEMBLED_PRODUCT':
       return { ...state, data: { ...state.data, assembled_products: upsert(state.data.assembled_products, action.item) } };
     case 'DELETE_ASSEMBLED_PRODUCT':
+      if (state.data.saved_quotes.some(quote => quoteUsesProduct(quote, 'assembled', action.id))) return state;
       return { ...state, data: { ...state.data, assembled_products: remove(state.data.assembled_products, action.id) } };
     case 'SET_QUOTE_INPUT':
       return { ...state, quoteInput: action.input };

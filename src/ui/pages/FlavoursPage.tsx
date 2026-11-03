@@ -95,8 +95,17 @@ export function FlavoursPage() {
 
   const doDelete = () => {
     if (!deleteTarget) return;
-    if (deleteTarget.type === 'flavour') dispatch({ type: 'DELETE_FLAVOUR', id: deleteTarget.id });
-    else {
+    if (deleteTarget.type === 'flavour') {
+      const usedIn = data.saved_quotes.filter(quote =>
+        quote.input?.tiers?.some(tier => tier.flavour_id === deleteTarget.id),
+      );
+      if (usedIn.length > 0) {
+        alert(`Cannot delete "${deleteTarget.name}" — used in saved quotes:\n${usedIn.map(quote => quote.name).join('\n')}`);
+        setDeleteTarget(null);
+        return;
+      }
+      dispatch({ type: 'DELETE_FLAVOUR', id: deleteTarget.id });
+    } else {
       const filling = data.fillings.find(item => item.id === deleteTarget.id);
       const usedIn = getFillingUsedIn(deleteTarget.id, data.saved_quotes);
       if (filling && usedIn.length > 0) {

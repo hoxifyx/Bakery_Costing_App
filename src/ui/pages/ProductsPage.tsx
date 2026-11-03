@@ -153,6 +153,17 @@ export function ProductsPage() {
 
   const doDelete = () => {
     if (!deleteTarget) return;
+    const productKind = deleteTarget.type;
+    const references = data.saved_quotes.filter(quote =>
+      quote.product_quote_input?.lines?.some(line =>
+        line.product_kind === productKind && line.product_id === deleteTarget.id,
+      ),
+    );
+    if (references.length > 0) {
+      alert(`Cannot delete "${deleteTarget.name}" — used in saved quotes:\n${references.map(quote => quote.name).join('\n')}`);
+      setDeleteTarget(null);
+      return;
+    }
     if (deleteTarget.type === 'batch') dispatch({ type: 'DELETE_BATCH_PRODUCT', id: deleteTarget.id });
     else dispatch({ type: 'DELETE_ASSEMBLED_PRODUCT', id: deleteTarget.id });
     setDeleteTarget(null);
