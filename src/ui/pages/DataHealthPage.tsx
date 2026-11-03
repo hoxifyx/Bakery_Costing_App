@@ -10,8 +10,8 @@ interface DataHealthPageProps {
 }
 
 export function DataHealthPage({ onNavigate }: DataHealthPageProps) {
-  const { state } = useStore();
-  const { ingredients, recipes, flavours, batch_products, assembled_products } = state.data;
+  const { state, dispatch } = useStore();
+  const { ingredients, recipes, flavours, batch_products, assembled_products, orders, saved_quotes } = state.data;
 
   // Run engine to compute global warnings
   const engineResult = useMemo(() => compute(state.data), [state.data]);
@@ -31,6 +31,10 @@ export function DataHealthPage({ onNavigate }: DataHealthPageProps) {
   const missingAllergenIngredients = useMemo(
     () => ingredients.filter(ingredient => usedIngredientIds.has(ingredient.id) && ingredient.allergens === undefined),
     [ingredients, usedIngredientIds],
+  );
+  const danglingOrders = useMemo(
+    () => orders.filter(order => order.quote_id && !saved_quotes.some(quote => quote.id === order.quote_id)),
+    [orders, saved_quotes],
   );
   const healthWarnings = useMemo(() => {
     const additional = recipes.flatMap(recipe => [
@@ -251,6 +255,34 @@ export function DataHealthPage({ onNavigate }: DataHealthPageProps) {
             </div>
           </div>
         </div>
+
+        {danglingOrders.length > 0 && (
+          <section className="quote-section-card" aria-label="Orders linked to missing quotes">
+            <div className="decorations-section-header">
+              <div className="decorations-header-left">
+                <span className="material-symbols-outlined ms-20" aria-hidden>link_off</span>
+                <h2 className="decorations-header-title">Orders linked to missing quotes</h2>
+              </div>
+              <span className="decorations-header-right">{danglingOrders.length} order{danglingOrders.length !== 1 ? 's' : ''}</span>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {danglingOrders.map(order => (
+                <div key={order.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+                  <span>
+                    Order {order.id} references missing quote {order.quote_id}
+                  </span>
+                  <button
+                    type="button"
+                    className="quote-toolbar-btn"
+                    onClick={() => dispatch({ type: 'UPDATE_ORDER', item: { ...order, quote_id: null } })}
+                  >
+                    Unlink
+                  </button>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
 
         <div className="quote-section-card">
           <div className="decorations-section-header">
