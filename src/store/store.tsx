@@ -32,6 +32,8 @@ const DB_NAME = 'bakery-costing';
 const STORE_NAME = 'app-data';
 const KEY = 'main';
 const REVISION_KEY = 'main-revision';
+const QUOTE_DRAFT_KEY = 'quote-input-draft';
+const PRODUCT_QUOTE_DRAFT_KEY = 'product-quote-input-draft';
 const DB_VERSION = 1;
 let dbPromise: Promise<IDBDatabase> | null = null;
 
@@ -66,6 +68,11 @@ function openDB(): Promise<IDBDatabase> {
 interface LoadedData {
   data: AppData | null;
   revision: number;
+}
+
+interface LoadedDrafts {
+  quoteInput: unknown;
+  productQuoteInput: unknown;
 }
 
 class DataRevisionConflictError extends Error {
@@ -110,6 +117,57 @@ async function loadFromDB(): Promise<LoadedData> {
     tx.onerror = () => fail(tx.error as DOMException | null);
     tx.onabort = () => fail(tx.error as DOMException | null);
     tx.oncomplete = () => settle();
+  });
+}
+
+async function loadDraftsFromDB(): Promise<LoadedDrafts> {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_NAME, 'readonly');
+    const store = tx.objectStore(STORE_NAME);
+    const quoteReq = store.get(QUOTE_DRAFT_KEY);
+    const productReq = store.get(PRODUCT_QUOTE_DRAFT_KEY);
+    let quoteInput: unknown;
+    let productQuoteInput: unknown;
+    let completed = 0;
+    const settle = () => {
+      completed += 1;
+      if (completed === 2) resolve({ quoteInput, productQuoteInput });
+    };
+    quoteReq.onsuccess = () => {
+      quoteInput = quoteReq.result;
+      settle();
+    };
+    productReq.onsuccess = () => {
+      productQuoteInput = productReq.result;
+      settle();
+    };
+    quoteReq.onerror = () => reject(quoteReq.error ?? new Error('Unable to load quote draft'));
+    productReq.onerror = () => reject(productReq.error ?? new Error('Unable to load product quote draft'));
+    tx.onerror = () => reject(tx.error ?? new Error('Unable to load quote drafts'));
+    tx.onabort = () => reject(tx.error ?? new Error('Quote draft load aborted'));
+  });
+}
+
+async function saveDraftToDB(key: string, value: QuoteInput | ProductQuoteInput): Promise<void> {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_NAME, 'readwrite');
+    tx.objectStore(STORE_NAME).put(value, key);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error ?? new Error('Unable to save quote draft'));
+    tx.onabort = () => reject(tx.error ?? new Error('Quote draft save aborted'));
+  });
+}
+
+async function clearDraftFromDB(key: string): Promise<void> {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_NAME, 'readwrite');
+    tx.objectStore(STORE_NAME).delete(key);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error ?? new Error('Unable to clear quote draft'));
+    tx.onabort = () => reject(tx.error ?? new Error('Quote draft clear aborted'));
   });
 }
 
@@ -187,6 +245,7 @@ export interface ActiveSavedQuoteInfo {
 export interface StoreState {
   data: AppData;
   undoSnapshot: AppData | null;  // snapshot before last import
+  draftClearRevision: { quote: number; product: number };
   quoteInput: QuoteInput;
   productQuoteInput: ProductQuoteInput;
   activeSavedQuote: ActiveSavedQuoteInfo | null;
@@ -207,7 +266,7 @@ export interface StoreState {
   };
 }
 
-export const DEFAULT_PRODUCT_QUOTE_INPUT: ProductQuoteInput = {
+const DEFAULT_PRODUCT_QUOTE_INPUT: ProductQuoteInput = {
   lines: [],
   delivery: 0,
   discount: 0,
@@ -234,13 +293,89 @@ const DEFAULT_QUOTE_INPUT: QuoteInput = {
   },
 };
 
+function recordValue(value: unknown): Record<string, unknown> | null {
+  return value !== null && typeof value === 'object' && !Array.isArray(value)
+    ? value as Record<string, unknown>
+    : null;
+}
+
+function draftNumber(value: unknown, fallback: number): number {
+  return typeof value === 'number' && Number.isFinite(value) && value >= 0 ? value : fallback;
+}
+
+function normalizeQuoteDraft(raw: unknown, data: AppData): QuoteInput {
+  const source = recordValue(raw);
+  if (!source) return DEFAULT_QUOTE_INPUT;
+  const tiers = Array.isArray(source.tiers) ? source.tiers : [];
+  const flavourIds = new Set(data.flavours.map(item => item.id));
+  const fillingIds = new Set(data.fillings.map(item => item.id));
+  const decoration = recordValue(source.decoration) ?? {};
+  return {
+    tiers: Array.from({ length: 6 }, (_, index) => {
+      const tier = recordValue(tiers[index]) ?? {};
+      return {
+        size_kg: draftNumber(tier.size_kg, 0),
+        flavour_id: typeof tier.flavour_id === 'string' && flavourIds.has(tier.flavour_id)
+          ? tier.flavour_id
+          : null,
+        filling_id: typeof tier.filling_id === 'string' && fillingIds.has(tier.filling_id)
+          ? tier.filling_id
+          : null,
+      };
+    }),
+    decoration: {
+      fondant_kg: draftNumber(decoration.fondant_kg, 0),
+      prints: draftNumber(decoration.prints, 0),
+      flowers: draftNumber(decoration.flowers, 0),
+      toppers: draftNumber(decoration.toppers, 0),
+      time_hours: draftNumber(decoration.time_hours, 0),
+      others: draftNumber(decoration.others, 0),
+      delivery: draftNumber(decoration.delivery, 0),
+      discount: draftNumber(decoration.discount, 0),
+    },
+  };
+}
+
+function normalizeProductQuoteDraft(raw: unknown, data: AppData): ProductQuoteInput {
+  const source = recordValue(raw);
+  if (!source) return DEFAULT_PRODUCT_QUOTE_INPUT;
+  const lines = Array.isArray(source.lines) ? source.lines : [];
+  const batchIds = new Set(data.batch_products.map(item => item.id));
+  const assembledIds = new Set(data.assembled_products.map(item => item.id));
+  return {
+    lines: lines.flatMap(lineValue => {
+      const line = recordValue(lineValue);
+      if (!line || (line.product_kind !== 'batch' && line.product_kind !== 'assembled')) return [];
+      const ids = line.product_kind === 'batch' ? batchIds : assembledIds;
+      if (typeof line.product_id !== 'string' || !ids.has(line.product_id)) return [];
+      if (typeof line.quantity !== 'number' || !Number.isFinite(line.quantity) || line.quantity < 0) return [];
+      if (line.unit !== 'piece' && line.unit !== 'box') return [];
+      if (line.product_kind === 'assembled' && line.unit !== 'piece') return [];
+      const priceOverride = line.price_override;
+      return [{
+        product_kind: line.product_kind,
+        product_id: line.product_id,
+        quantity: line.quantity,
+        unit: line.unit,
+        price_override: priceOverride === null
+          ? null
+          : typeof priceOverride === 'number' && Number.isFinite(priceOverride) && priceOverride >= 0
+            ? priceOverride
+            : undefined,
+      }];
+    }),
+    delivery: draftNumber(source.delivery, 0),
+    discount: draftNumber(source.discount, 0),
+  };
+}
+
 // ---------------------------------------------------------------------------
 // Actions
 // ---------------------------------------------------------------------------
 
 type Action =
   | { type: 'LOAD_STARTED' }
-  | { type: 'LOADED'; data: AppData }
+  | { type: 'LOADED'; data: AppData; quoteInput?: QuoteInput; productQuoteInput?: ProductQuoteInput }
   | { type: 'LOAD_FAILED'; error: string }
   | { type: 'SAVING' }
   | { type: 'SAVED'; at: Date }
@@ -324,7 +459,15 @@ export function reducer(state: StoreState, action: Action): StoreState {
     case 'LOAD_STARTED':
       return { ...state, loading: true, loadError: null };
     case 'LOADED':
-      return { ...state, data: action.data, loading: false, loadError: null, dataConflict: false };
+      return {
+        ...state,
+        data: action.data,
+        quoteInput: action.quoteInput ?? state.quoteInput,
+        productQuoteInput: action.productQuoteInput ?? state.productQuoteInput,
+        loading: false,
+        loadError: null,
+        dataConflict: false,
+      };
     case 'LOAD_FAILED':
       return { ...state, loading: false, loadError: action.error, saving: false };
     case 'SAVING':
@@ -386,11 +529,21 @@ export function reducer(state: StoreState, action: Action): StoreState {
     case 'SET_QUOTE_INPUT':
       return { ...state, quoteInput: action.input };
     case 'RESET_QUOTE':
-      return { ...state, quoteInput: DEFAULT_QUOTE_INPUT, activeSavedQuote: null };
+      return {
+        ...state,
+        quoteInput: DEFAULT_QUOTE_INPUT,
+        activeSavedQuote: null,
+        draftClearRevision: { ...state.draftClearRevision, quote: state.draftClearRevision.quote + 1 },
+      };
     case 'SET_PRODUCT_QUOTE_INPUT':
       return { ...state, productQuoteInput: action.input };
     case 'RESET_PRODUCT_QUOTE':
-      return { ...state, productQuoteInput: DEFAULT_PRODUCT_QUOTE_INPUT, activeSavedQuote: null };
+      return {
+        ...state,
+        productQuoteInput: DEFAULT_PRODUCT_QUOTE_INPUT,
+        activeSavedQuote: null,
+        draftClearRevision: { ...state.draftClearRevision, product: state.draftClearRevision.product + 1 },
+      };
     case 'CLEAR_ACTIVE_SAVED_QUOTE':
       return { ...state, activeSavedQuote: null };
     case 'LOAD_SAVED_QUOTE':
@@ -447,16 +600,39 @@ export function reducer(state: StoreState, action: Action): StoreState {
           ingredients: recordImportedIngredientPriceChanges(state.data.ingredients, next.ingredients),
         };
       }
-      return { ...state, data: next, undoSnapshot: snapshot };
+      return {
+        ...state,
+        data: next,
+        undoSnapshot: snapshot,
+      };
     }
     case 'UNDO_IMPORT':
       if (!state.undoSnapshot) return state;
       return { ...state, data: state.undoSnapshot, undoSnapshot: null };
     case 'ADD_SAVED_QUOTE':
+      return {
+        ...state,
+        data: { ...state.data, saved_quotes: upsert(state.data.saved_quotes, action.item) },
+        draftClearRevision: action.item.product_quote_input
+          ? { ...state.draftClearRevision, product: state.draftClearRevision.product + 1 }
+          : { ...state.draftClearRevision, quote: state.draftClearRevision.quote + 1 },
+        activeSavedQuote: {
+          id: action.item.id,
+          name: action.item.name,
+          created_at: action.item.created_at,
+          updated_at: action.item.updated_at,
+          notes: action.item.notes,
+          snapshot: action.item.result_snapshot,
+          isRecalculated: false,
+        },
+      };
     case 'UPDATE_SAVED_QUOTE':
       return {
         ...state,
         data: { ...state.data, saved_quotes: upsert(state.data.saved_quotes, action.item) },
+        draftClearRevision: action.item.product_quote_input
+          ? { ...state.draftClearRevision, product: state.draftClearRevision.product + 1 }
+          : { ...state.draftClearRevision, quote: state.draftClearRevision.quote + 1 },
         activeSavedQuote: {
           id: action.item.id,
           name: action.item.name,
@@ -549,6 +725,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = useReducer(reducer, {
     data: { ...EMPTY_APP_DATA },
     undoSnapshot: null,
+    draftClearRevision: { quote: 0, product: 0 },
     quoteInput: DEFAULT_QUOTE_INPUT,
     productQuoteInput: DEFAULT_PRODUCT_QUOTE_INPUT,
     activeSavedQuote: null,
@@ -584,7 +761,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     Promise.all([
       loadFromDB(),
       loadCloudStateDB(),
-    ]).then(([loaded, cloudState]) => {
+      loadDraftsFromDB().catch(() => null),
+    ]).then(([loaded, cloudState, drafts]) => {
       if (cancelled) return;
       expectedRevision.current = loaded.revision;
       dataConflictRef.current = false;
@@ -592,6 +770,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       dispatch({
         type: 'LOADED',
         data: loadedData,
+        quoteInput: normalizeQuoteDraft(drafts?.quoteInput, loadedData),
+        productQuoteInput: normalizeProductQuoteDraft(drafts?.productQuoteInput, loadedData),
       });
       import('../cloud/drive').then(drive => {
         if (cancelled) return;
@@ -649,6 +829,37 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       }
     });
   }, [state.data, state.loading, state.loadError, state.dataConflict, saveAttempt]);
+
+  const previousQuoteDraftClearRevision = useRef(0);
+  useEffect(() => {
+    if (state.loading) return;
+    if (previousQuoteDraftClearRevision.current !== state.draftClearRevision.quote) {
+      previousQuoteDraftClearRevision.current = state.draftClearRevision.quote;
+      clearDraftFromDB(QUOTE_DRAFT_KEY).catch(error => console.error('Unable to clear quote draft', error));
+      return;
+    }
+    const timer = setTimeout(() => {
+      saveDraftToDB(QUOTE_DRAFT_KEY, state.quoteInput)
+        .catch(error => console.error('Unable to save quote draft', error));
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [state.loading, state.quoteInput, state.draftClearRevision.quote]);
+
+  const previousProductDraftClearRevision = useRef(0);
+  useEffect(() => {
+    if (state.loading) return;
+    if (previousProductDraftClearRevision.current !== state.draftClearRevision.product) {
+      previousProductDraftClearRevision.current = state.draftClearRevision.product;
+      clearDraftFromDB(PRODUCT_QUOTE_DRAFT_KEY)
+        .catch(error => console.error('Unable to clear product quote draft', error));
+      return;
+    }
+    const timer = setTimeout(() => {
+      saveDraftToDB(PRODUCT_QUOTE_DRAFT_KEY, state.productQuoteInput)
+        .catch(error => console.error('Unable to save product quote draft', error));
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [state.loading, state.productQuoteInput, state.draftClearRevision.product]);
 
   // Autosave cloud backup metadata
   const prevCloud = useRef<{ at: string | null; id: string | null }>({ at: null, id: null });
