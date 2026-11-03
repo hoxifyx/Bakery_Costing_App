@@ -1,7 +1,7 @@
 import { useState, useCallback, useMemo, useEffect } from 'react';
 import { useStore } from '../../store/store';
 import { compute } from '../../engine/engine';
-import type { TierInput, SavedQuote } from '../../engine/types';
+import type { TierInput, SavedQuote, QuoteResult } from '../../engine/types';
 import { ExplainPanel } from '../components/ExplainPanel';
 import { WarningsList } from '../components/WarningsList';
 import { NumberInput } from '../components/Shared';
@@ -9,6 +9,27 @@ import { localDateString } from '../../engine/utils';
 
 function fmt(n: number, cur: string): string {
   return `${cur} ${n.toFixed(2)}`;
+}
+
+type QuoteResultSnapshot = QuoteResult & { target_margin?: number };
+
+function isQuoteResultSnapshot(value: unknown): value is QuoteResultSnapshot {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+  const snapshot = value as Record<string, unknown>;
+  const fields = [
+    'tier_cost', 'tiers_used', 'decoration_sum', 'fondant', 'print', 'flowers', 'topper',
+    'time', 'others', 'delivery', 'overhead', 'packaging', 'total_cost', 'profit',
+    'discount', 'total_price', 'margin_check',
+  ];
+  return fields.every(field => typeof snapshot[field] === 'number' && Number.isFinite(snapshot[field]))
+    && Array.isArray(snapshot.tier_details)
+    && Array.isArray(snapshot.warnings)
+    && Array.isArray(snapshot.audit)
+    && (snapshot.target_margin === undefined
+      || (typeof snapshot.target_margin === 'number'
+        && Number.isFinite(snapshot.target_margin)
+        && snapshot.target_margin >= 0
+        && snapshot.target_margin < 1));
 }
 
 export function QuotePage() {
@@ -33,18 +54,18 @@ export function QuotePage() {
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [saveName, setSaveName] = useState('');
   const [saveNotes, setSaveNotes] = useState('');
-
   // Live calculation from current catalog
   const result = useMemo(() => compute(data, quoteInput), [data, quoteInput]);
   const liveQ = result.quote;
 
   // Displayed quote: if viewing a saved quote snapshot without recalculation, show snapshot
-  const displayQ = useMemo(() => {
-    if (activeSavedQuote && !activeSavedQuote.isRecalculated && activeSavedQuote.snapshot) {
-      return activeSavedQuote.snapshot as typeof liveQ;
-    }
-    return liveQ;
-  }, [activeSavedQuote, liveQ]);
+  const savedSnapshot = activeSavedQuote
+    && !activeSavedQuote.isRecalculated
+    && isQuoteResultSnapshot(activeSavedQuote.snapshot)
+    ? activeSavedQuote.snapshot
+    : null;
+  const displayQ = useMemo(() => savedSnapshot ?? liveQ, [savedSnapshot, liveQ]);
+  const displayTargetMargin = savedSnapshot ? savedSnapshot.target_margin : settings.target_margin;
 
   // Phase 5 — detect ingredient price changes since the quote was saved
   const priceChangedIngredients = useMemo(() => {
@@ -141,7 +162,11 @@ export function QuotePage() {
       pack_quantity: i.pack_quantity,
     }));
     const snapshot = liveQ
-      ? { ...JSON.parse(JSON.stringify(liveQ)), ingredient_prices: ingredientPrices }
+      ? {
+          ...JSON.parse(JSON.stringify(liveQ)),
+          ingredient_prices: ingredientPrices,
+          target_margin: data.settings.target_margin,
+        }
       : null;
     const quoteToSave: SavedQuote = {
       id: activeSavedQuote?.id || (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `sq-${Date.now()}`),
@@ -162,10 +187,13 @@ export function QuotePage() {
     : 0;
 
   // Margin progress ratio
-  const marginRatio = displayQ && settings.target_margin > 0
-    ? displayQ.margin_check / settings.target_margin
+  const marginRatio = displayQ && displayTargetMargin !== undefined && displayTargetMargin > 0
+    ? displayQ.margin_check / displayTargetMargin
     : 0;
-  const isMarginMet = displayQ ? displayQ.margin_check >= settings.target_margin : false;
+  const hasMarginTarget = displayTargetMargin !== undefined;
+  const isMarginMet = displayQ && hasMarginTarget
+    ? displayQ.margin_check >= displayTargetMargin
+    : false;
 
   return (
     <div className="quote-page-root">
@@ -443,7 +471,7 @@ export function QuotePage() {
                 <button
                   type="button"
                   className="btn-add-tier"
-                  onClick={() => setActiveTiers(t => Math.min(t + 1, 6))}
+                  onClick={() => setActiveTiers(Math.min(activeTiers + 1, 6))}
                   aria-label="Add another tier"
                 >
                   + Add Tier {activeTiers + 1}
@@ -652,11 +680,11 @@ export function QuotePage() {
               <div className="summary-price-box">
                 <div className="summary-price-box-header">
                   <span className="summary-price-caption">Total Price</span>
-                  <span
-                    className={`status-pill ${isMarginMet ? 'status-pill-ready' : 'status-pill-below'}`}
-                  >
-                    {isMarginMet ? 'Ready' : 'Below Target'}
-                  </span>
+                  {hasMarginTarget && (
+                    <span className={`status-pill ${isMarginMet ? 'status-pill-ready' : 'status-pill-below'}`}>
+                      {isMarginMet ? 'Ready' : 'Below Target'}
+                    </span>
+                  )}
                 </div>
 
                 <div className="summary-price-val">
@@ -729,28 +757,35 @@ export function QuotePage() {
               <div className="net-yield-box">
                 <div className="net-yield-top">
                   <span className="net-yield-label">Calculated Net Yield</span>
-                  <span className={isMarginMet ? 'status-badge-ready' : 'status-badge-below'}>
-                    {isMarginMet ? 'Healthy Margin' : 'Under Target'}
-                  </span>
+                  {hasMarginTarget && (
+                    <span className={isMarginMet ? 'status-badge-ready' : 'status-badge-below'}>
+                      {isMarginMet ? 'Healthy Margin' : 'Under Target'}
+                    </span>
+                  )}
                 </div>
                 <div className="net-yield-mid">
                   <span className="net-yield-profit">{fmt(displayQ.profit, cur)}</span>
                   <span className="net-yield-target">
-                    {(displayQ.margin_check * 100).toFixed(1)}% / {(settings.target_margin * 100).toFixed(0)}%
+                    {(displayQ.margin_check * 100).toFixed(1)}%
+                    {displayTargetMargin !== undefined && ` / ${(displayTargetMargin * 100).toFixed(0)}%`}
                   </span>
                 </div>
-                <div className="net-yield-bar-track">
-                  <div
-                    className="net-yield-bar-fill"
-                    style={{
-                      width: `${Math.min(100, Math.max(0, marginRatio * 100))}%`,
-                      background: isMarginMet ? 'var(--tertiary)' : 'var(--accent)',
-                    }}
-                  />
-                </div>
-                <div className="net-yield-footer">
-                  Target margin {(settings.target_margin * 100).toFixed(0)}% applied on non-delivery revenue.
-                </div>
+                {hasMarginTarget && (
+                  <>
+                    <div className="net-yield-bar-track">
+                      <div
+                        className="net-yield-bar-fill"
+                        style={{
+                          width: `${Math.min(100, Math.max(0, marginRatio * 100))}%`,
+                          background: isMarginMet ? 'var(--tertiary)' : 'var(--accent)',
+                        }}
+                      />
+                    </div>
+                    <div className="net-yield-footer">
+                      Target margin {(displayTargetMargin * 100).toFixed(0)}% applied on non-delivery revenue.
+                    </div>
+                  </>
+                )}
               </div>
 
               {/* 5. Total Cost Row */}

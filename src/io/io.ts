@@ -571,9 +571,69 @@ function validateSavedQuote(raw: unknown, idx: number, errors: ImportError[]): S
     kind,
     input: { tiers, decoration },
     product_quote_input,
-    result_snapshot: r.result_snapshot ?? null,
+    result_snapshot: validateResultSnapshot(r.result_snapshot, kind, `${p}.result_snapshot`, errors),
     notes: typeof r.notes === 'string' ? r.notes : undefined,
   };
+}
+
+function validateResultSnapshot(
+  raw: unknown,
+  kind: 'cake' | 'products',
+  path: string,
+  errors: ImportError[],
+): unknown {
+  if (raw === undefined || raw === null) return null;
+  if (typeof raw !== 'object' || Array.isArray(raw)) {
+    errors.push({ path, message: 'Expected a quote result object or null' });
+    return null;
+  }
+  const snapshot = raw as Record<string, unknown>;
+  const numericFields = kind === 'products'
+    ? ['subtotal', 'cost_total', 'delivery', 'profit', 'discount', 'total_price', 'effective_margin']
+    : [
+        'tier_cost', 'tiers_used', 'decoration_sum', 'fondant', 'print', 'flowers', 'topper',
+        'time', 'others', 'delivery', 'overhead', 'packaging', 'total_cost', 'profit',
+        'discount', 'total_price', 'margin_check',
+      ];
+  for (const field of numericFields) {
+    if (typeof snapshot[field] !== 'number' || !Number.isFinite(snapshot[field])) {
+      errors.push({ path: `${path}.${field}`, message: 'Expected a finite number in the quote result snapshot' });
+    }
+  }
+  if (!Array.isArray(snapshot.warnings) || !Array.isArray(snapshot.audit)) {
+    errors.push({ path, message: 'Quote result snapshot must include warnings and audit arrays' });
+  }
+  if (kind === 'products' && !Array.isArray(snapshot.lines)) {
+    errors.push({ path: `${path}.lines`, message: 'Product quote result snapshot must include a lines array' });
+  }
+  if (kind === 'cake' && !Array.isArray(snapshot.tier_details)) {
+    errors.push({ path: `${path}.tier_details`, message: 'Cake quote result snapshot must include tier_details' });
+  }
+  if (snapshot.target_margin !== undefined && snapshot.target_margin !== null) {
+    if (typeof snapshot.target_margin !== 'number'
+      || !Number.isFinite(snapshot.target_margin)
+      || snapshot.target_margin < 0
+      || snapshot.target_margin >= 1) {
+      errors.push({ path: `${path}.target_margin`, message: 'target_margin must be a finite number from 0 up to (but not including) 1' });
+    }
+  }
+  if (snapshot.suggested_price !== undefined
+    && (typeof snapshot.suggested_price !== 'number' || !Number.isFinite(snapshot.suggested_price))) {
+    errors.push({ path: `${path}.suggested_price`, message: 'suggested_price must be a finite number' });
+  }
+  return raw;
+}
+
+function validateSizeGuideEntry(raw: unknown, idx: number, errors: ImportError[]): SizeGuideEntry | null {
+  const path = `size_guide[${idx}]`;
+  const entry = (raw ?? {}) as Record<string, unknown>;
+  if (typeof entry.label !== 'string') {
+    errors.push({ path: `${path}.label`, message: 'Expected a string label' });
+  }
+  const kg = requireNumber(entry.kg, `${path}.kg`, errors);
+  const servings = requireNumber(entry.servings, `${path}.servings`, errors);
+  if (typeof entry.label !== 'string') return null;
+  return { label: entry.label, kg, servings };
 }
 
 function validateCustomer(raw: unknown, idx: number, errors: ImportError[]): Customer | null {
@@ -891,7 +951,9 @@ export function parseImportFile(
     parsed.assembled_products = raw.assembled_products.map((x, i) => validateAssembledProduct(x, i, errors)).filter(Boolean) as AssembledProduct[];
   }
   if (Array.isArray(raw.size_guide)) {
-    parsed.size_guide = raw.size_guide as SizeGuideEntry[];
+    parsed.size_guide = raw.size_guide
+      .map((entry, idx) => validateSizeGuideEntry(entry, idx, errors))
+      .filter((entry): entry is SizeGuideEntry => entry !== null);
   }
   if (Array.isArray(raw.saved_quotes)) {
     parsed.saved_quotes = raw.saved_quotes.map((x, i) => validateSavedQuote(x, i, errors)).filter(Boolean) as SavedQuote[];
