@@ -11,7 +11,15 @@ interface DataHealthPageProps {
 
 export function DataHealthPage({ onNavigate }: DataHealthPageProps) {
   const { state, dispatch } = useStore();
-  const { ingredients, recipes, flavours, batch_products, assembled_products, orders, saved_quotes } = state.data;
+  const {
+    ingredients,
+    recipes,
+    flavours,
+    batch_products,
+    assembled_products,
+    orders = [],
+    saved_quotes = [],
+  } = state.data;
 
   // Run engine to compute global warnings
   const engineResult = useMemo(() => compute(state.data), [state.data]);
