@@ -38,8 +38,8 @@ export function DataHealthPage({ onNavigate }: DataHealthPageProps) {
   );
   const healthWarnings = useMemo(() => {
     const additional = recipes.flatMap(recipe => [
-      ...computeNutrition(state.data, recipe.id).warnings,
-      ...computeAllergens(state.data, recipe.id).warnings,
+      ...computeNutrition(state.data, recipe.id, engineResult).warnings,
+      ...computeAllergens(state.data, recipe.id, engineResult).warnings,
     ]);
     const productLines = [
       ...batch_products.map(product => ({ product_kind: 'batch' as const, product_id: product.id, quantity: 1, unit: 'piece' as const })),
@@ -54,7 +54,7 @@ export function DataHealthPage({ onNavigate }: DataHealthPageProps) {
         input: { tiers: [], decoration: { fondant_kg: 0, prints: 0, flowers: 0, toppers: 0, time_hours: 0, others: 0, delivery: 0 } },
         product_quote_input: { lines: productLines, delivery: 0 },
         result_snapshot: null,
-      }).warnings);
+      }, engineResult).warnings);
     }
     const uniqueAdditional = new Map(additional.map(warning => [`${warning.code}:${warning.path ?? warning.context}`, warning]));
     return [...all_warnings, ...uniqueAdditional.values()];
@@ -62,13 +62,13 @@ export function DataHealthPage({ onNavigate }: DataHealthPageProps) {
 
   // Specific counts required by spec §5.9:
   const unpricedIngredients = useMemo(
-    () => ingredients.filter(i => i.pack_price <= 0),
+    () => ingredients.filter(i => i.pack_price <= 0 || i.pack_quantity <= 0),
     [ingredients]
   );
 
   const zeroLabourProducts = useMemo(() => {
-    const batch = batch_products.filter(p => p.labour_hours_per_batch <= 0).map(p => ({ id: p.id, name: p.id, type: 'Batch' }));
-    const assembled = assembled_products.filter(p => p.labour_hours_per_batch <= 0).map(p => ({ id: p.id, name: p.id, type: 'Assembled' }));
+    const batch = batch_products.filter(p => p.labour_hours_per_batch <= 0).map(p => ({ id: p.id, name: p.name, type: 'Batch' }));
+    const assembled = assembled_products.filter(p => p.labour_hours_per_batch <= 0).map(p => ({ id: p.id, name: p.name, type: 'Assembled' }));
     return [...batch, ...assembled];
   }, [batch_products, assembled_products]);
 
@@ -206,7 +206,13 @@ export function DataHealthPage({ onNavigate }: DataHealthPageProps) {
             <div className="text-headline-xl" style={{ color: zeroLabourProducts.length > 0 ? 'var(--accent-amber)' : 'var(--text-primary)', fontVariantNumeric: 'tabular-nums' }}>
               {zeroLabourProducts.length}
             </div>
-            <div className="text-body-md">{zeroLabourProducts.length > 0 ? 'Labour hours set to 0' : 'All products have labour'}</div>
+            <div className="text-body-md">
+              {zeroLabourProducts.length > 0 ? (
+                <ul>
+                  {zeroLabourProducts.map(product => <li key={`${product.type}-${product.id}`}>{product.type}: {product.name}</li>)}
+                </ul>
+              ) : 'All products have labour'}
+            </div>
           </div>
 
           <div className="quote-section-card" style={{ padding: 16, gap: 6, borderLeft: '3px solid var(--border)' }}>

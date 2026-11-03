@@ -1,6 +1,6 @@
 import Decimal from 'decimal.js';
 import { compute } from './engine';
-import type { AllergenCode, AppData, Id, RecipeLine, SavedQuote, Warning } from './types';
+import type { AllergenCode, AppData, EngineResult, Id, RecipeLine, SavedQuote, Warning } from './types';
 
 export interface NutritionValues {
   kcal: number;
@@ -59,8 +59,8 @@ function lineGrams(line: RecipeLine, data: AppData): Decimal | null {
     : D(line.quantity).mul(D(gramsPerTeaspoon));
 }
 
-export function computeNutrition(data: AppData, recipeId: Id): NutritionResult {
-  const engineResult = compute(data);
+export function computeNutrition(data: AppData, recipeId: Id, precomputedResult?: EngineResult): NutritionResult {
+  const engineResult = precomputedResult ?? compute(data);
   const recipe = data.recipes.find(item => item.id === recipeId);
   const result = engineResult.recipes[recipeId];
   if (!recipe || !result) {
@@ -155,8 +155,8 @@ function addProductIngredients(data: AppData, productKind: 'batch' | 'assembled'
   }
 }
 
-function targetIngredientIds(data: AppData, target: Id | SavedQuote): Id[] {
-  const engineResult = compute(data);
+function targetIngredientIds(data: AppData, target: Id | SavedQuote, precomputedResult?: EngineResult): Id[] {
+  const engineResult = precomputedResult ?? compute(data);
   const ids = new Set<Id>();
   const addRecipe = (id: Id) => addRecipeIngredients(data, id, ids, engineResult.recipes);
   const addFlavour = (id: Id, visited = new Set<Id>()) => {
@@ -204,12 +204,12 @@ function targetIngredientIds(data: AppData, target: Id | SavedQuote): Id[] {
   return [...ids];
 }
 
-export function computeAllergens(data: AppData, recipeProductIdOrQuote: Id | SavedQuote): AllergenResult {
+export function computeAllergens(data: AppData, recipeProductIdOrQuote: Id | SavedQuote, precomputedResult?: EngineResult): AllergenResult {
   const ingredients = new Map(data.ingredients.map(ingredient => [ingredient.id, ingredient]));
   const allergens = new Set<AllergenCode>();
   const warnings: Warning[] = [];
 
-  for (const ingredientId of targetIngredientIds(data, recipeProductIdOrQuote)) {
+  for (const ingredientId of targetIngredientIds(data, recipeProductIdOrQuote, precomputedResult)) {
     const ingredient = ingredients.get(ingredientId);
     if (!ingredient?.allergens) {
       warnings.push({
