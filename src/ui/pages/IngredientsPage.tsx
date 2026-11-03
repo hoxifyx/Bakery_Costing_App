@@ -4,8 +4,9 @@ import { computeIngredientPriceImpact } from '../../engine';
 import type { ImpactItem, ImpactMetric } from '../../engine/impact';
 import type { AllergenCode, Ingredient, NutritionPer100g, PriceHistoryEntry } from '../../engine/types';
 import { NumberInput, SearchBar, ConfirmDialog, fmtMoney } from '../components/Shared';
-import { exportIngredientsCSV, importIngredientsCSV } from '../../io/io';
+import { downloadBlob, exportIngredientsCSV, importIngredientsCSV } from '../../io/io';
 import { generateId, localDateString } from '../../engine/utils';
+import { displayPriceHistoryDate } from '../../store/ingredientPriceHistory';
 
 const EMPTY_ING: Omit<Ingredient, 'id'> = {
   name: '',
@@ -192,11 +193,7 @@ export function IngredientsPage() {
 
   const exportCSV = () => {
     const csv = exportIngredientsCSV(data.ingredients);
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = 'ingredients.csv'; a.click();
-    URL.revokeObjectURL(url);
+    downloadBlob(new Blob([csv], { type: 'text/csv' }), 'ingredients.csv');
   };
 
   const importCSV = (e: React.ChangeEvent<HTMLInputElement>, pricesOnly = false) => {
@@ -559,7 +556,7 @@ export function IngredientsPage() {
                             : 0;
                           return (
                             <tr key={i}>
-                              <td className="td-mono">{h.date}</td>
+                              <td className="td-mono">{displayPriceHistoryDate(h.date)}</td>
                               <td className="td-mono">{h.pack_quantity}</td>
                               <td className="td-mono">{fmtMoney(h.pack_price, cur)}</td>
                               <td className="td-mono text-green">{fmtMoney(perUnit, cur, 4)}</td>

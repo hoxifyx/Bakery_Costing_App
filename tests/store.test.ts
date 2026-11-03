@@ -17,6 +17,8 @@ describe('ingredient price history', () => {
   const importState = (currentIngredient: Ingredient): StoreState => ({
     data: { ...EMPTY_APP_DATA, ingredients: [currentIngredient] },
     undoSnapshot: null,
+    undoDescription: null,
+    draftClearRevision: { quote: 0, product: 0 },
     quoteInput: { tiers: [], decoration: { fondant_kg: 0, prints: 0, flowers: 0, toppers: 0, time_hours: 0, others: 0, delivery: 0 } },
     productQuoteInput: { lines: [], delivery: 0 },
     activeSavedQuote: null,
@@ -84,7 +86,7 @@ describe('ingredient price history', () => {
 
     expect(history).toHaveLength(2);
     expect(history.map(entry => [entry.pack_quantity, entry.pack_price])).toEqual([[1000, 100], [1000, 200]]);
-    expect(history.map(entry => entry.date)).toEqual([localDateString(), localDateString()]);
+    expect(history.map(entry => entry.date)).toEqual(['', localDateString()]);
 
     const impact = computeIngredientPriceImpact({
       ...data,

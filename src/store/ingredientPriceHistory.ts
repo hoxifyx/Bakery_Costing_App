@@ -5,7 +5,7 @@ export function recordIngredientPriceChange(previous: Ingredient, incoming: Ingr
   const history = [...(incoming.price_history ?? previous.price_history ?? [])];
   if (history.length === 0) {
     history.push({
-      date: localDateString(),
+      date: '',
       pack_quantity: previous.pack_quantity,
       pack_price: previous.pack_price,
     });
@@ -19,6 +19,10 @@ export function recordIngredientPriceChange(previous: Ingredient, incoming: Ingr
     });
   }
   return { ...incoming, price_history: history };
+}
+
+export function displayPriceHistoryDate(date: string | undefined): string {
+  return date?.trim() ? date : 'Earlier';
 }
 
 export function recordImportedIngredientPriceChanges(
