@@ -1132,6 +1132,17 @@ export function importIngredientsCSV(
   const existingByName = new Map(existing.map(i => [i.name.toLowerCase(), i]));
   const result: Ingredient[] = [...existing];
   const resultMap = new Map(result.map((i, idx) => [i.id, idx]));
+  const usedIds = new Set(result.map(item => item.id));
+  const makeUniqueId = (base: string): string => {
+    let candidate = base.slice(0, 64);
+    let suffix = 2;
+    while (usedIds.has(candidate)) {
+      const ending = `_${suffix++}`;
+      candidate = `${base.slice(0, 64 - ending.length)}${ending}`;
+    }
+    usedIds.add(candidate);
+    return candidate;
+  };
 
   for (const [ri, row] of rows.entries()) {
     const numericFields = ['pack_quantity', 'pack_price', 'piece_weight_g', 'grams_per_tsp'] as const;
@@ -1179,7 +1190,7 @@ export function importIngredientsCSV(
           notes: row.notes || result[idx].notes,
         };
       } else {
-        const newId = row.id && ID_PATTERN.test(row.id) ? row.id : slugify(row.name || 'ingredient');
+        const newId = makeUniqueId(row.id && ID_PATTERN.test(row.id) ? row.id : slugify(row.name || 'ingredient'));
         const newItem: Ingredient = {
           id: newId,
           name: row.name || newId,
