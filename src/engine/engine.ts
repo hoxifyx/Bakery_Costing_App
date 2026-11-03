@@ -935,10 +935,15 @@ export function compute(data: AppData, quoteInput?: QuoteInput | null, recipeMul
 
   // §4.3 Recipes
   const recipeResults = new Map<Id, RecipeResult>();
+  const previewRecipeResults = new Map<Id, RecipeResult>();
   for (const recipe of recipes) {
     const mult = recipeMultipliers?.[recipe.id] ?? 1;
-    const res = computeRecipe(recipe, ingMap, settings, allWarnings, mult);
-    recipeResults.set(recipe.id, res);
+    const baseResult = computeRecipe(recipe, ingMap, settings, allWarnings);
+    recipeResults.set(recipe.id, baseResult);
+    previewRecipeResults.set(
+      recipe.id,
+      mult === 1 ? baseResult : computeRecipe(recipe, ingMap, settings, [], mult),
+    );
   }
 
   // §4.5 Flavours
@@ -1007,7 +1012,7 @@ export function compute(data: AppData, quoteInput?: QuoteInput | null, recipeMul
   }
 
   return {
-    recipes: Object.fromEntries(recipeResults),
+    recipes: Object.fromEntries(previewRecipeResults),
     flavours: Object.fromEntries(flavourResults),
     fillings: Object.fromEntries(fillingResults),
     batch_products: Object.fromEntries(batchProductResults),
