@@ -7,6 +7,27 @@ import { ExplainPanel } from '../components/ExplainPanel';
 import { WarningsList } from '../components/WarningsList';
 import { generateId } from '../../engine/utils';
 
+export function parsePercentToFraction(percent: number): number {
+  return percent / 100;
+}
+
+export function validatePricingOverrides(
+  overheadPct: number | null | undefined,
+  targetMargin: number | null | undefined,
+  labourRate: number | null | undefined,
+): string | null {
+  if (overheadPct != null && (!Number.isFinite(overheadPct) || overheadPct < 0)) {
+    return 'Overhead percentage must be a finite, non-negative number.';
+  }
+  if (targetMargin != null && (!Number.isFinite(targetMargin) || targetMargin < 0 || targetMargin >= 1)) {
+    return 'Target margin must be a finite percentage below 100%.';
+  }
+  if (labourRate != null && (!Number.isFinite(labourRate) || labourRate < 0)) {
+    return 'Labour rate must be a finite, non-negative number.';
+  }
+  return null;
+}
+
 export function ProductsPage() {
   const { state, dispatch } = useStore();
   const { data } = state;
@@ -22,6 +43,7 @@ export function ProductsPage() {
   const [explainAssembled, setExplainAssembled] = useState<string | null>(null);
   const [showBatchOverrides, setShowBatchOverrides] = useState(false);
   const [showAssembledOverrides, setShowAssembledOverrides] = useState(false);
+  const [overrideError, setOverrideError] = useState<string | null>(null);
 
   const [batchMultipliers, setBatchMultipliers] = useState<Record<string, number>>({});
 
@@ -65,6 +87,17 @@ export function ProductsPage() {
 
   const saveBatch = () => {
     if (!editingBatch || !editingBatch.name.trim()) return;
+    const error = validatePricingOverrides(
+      editingBatch.overhead_pct,
+      editingBatch.target_margin,
+      editingBatch.labour_rate_per_hour,
+    );
+    if (error) {
+      setOverrideError(error);
+      setShowBatchOverrides(true);
+      return;
+    }
+    setOverrideError(null);
     if (isNew) dispatch({ type: 'ADD_BATCH_PRODUCT', item: editingBatch });
     else dispatch({ type: 'UPDATE_BATCH_PRODUCT', item: editingBatch });
     setEditingBatch(null);
@@ -97,6 +130,17 @@ export function ProductsPage() {
 
   const saveAssembled = () => {
     if (!editingAssembled || !editingAssembled.name.trim()) return;
+    const error = validatePricingOverrides(
+      editingAssembled.overhead_pct,
+      editingAssembled.target_margin,
+      editingAssembled.labour_rate_per_hour,
+    );
+    if (error) {
+      setOverrideError(error);
+      setShowAssembledOverrides(true);
+      return;
+    }
+    setOverrideError(null);
     if (isNew) dispatch({ type: 'ADD_ASSEMBLED_PRODUCT', item: editingAssembled });
     else dispatch({ type: 'UPDATE_ASSEMBLED_PRODUCT', item: editingAssembled });
     setEditingAssembled(null);
@@ -606,13 +650,14 @@ export function ProductsPage() {
                         <input
                           type="number"
                           className="input"
-                          value={editingBatch.overhead_pct !== null && editingBatch.overhead_pct !== undefined ? editingBatch.overhead_pct : ''}
-                          placeholder={String(data.settings.overhead_pct)}
-                          step={0.01}
+                          value={editingBatch.overhead_pct !== null && editingBatch.overhead_pct !== undefined && Number.isFinite(editingBatch.overhead_pct) ? editingBatch.overhead_pct * 100 : ''}
+                          placeholder={(data.settings.overhead_pct * 100).toFixed(0)}
+                          step={0.1}
                           min={0}
                           onChange={e => {
                             const val = e.target.value.trim();
-                            setEditingBatch(p => p && ({ ...p, overhead_pct: val === '' ? null : parseFloat(val) }));
+                            setOverrideError(null);
+                            setEditingBatch(p => p && ({ ...p, overhead_pct: val === '' ? null : parsePercentToFraction(parseFloat(val)) }));
                           }}
                         />
                         <span className="input-hint">Applies to labour and the base recipe; component costs already include the global overhead.</span>
@@ -622,16 +667,18 @@ export function ProductsPage() {
                         <input
                           type="number"
                           className="input"
-                          value={editingBatch.target_margin !== null && editingBatch.target_margin !== undefined ? editingBatch.target_margin : ''}
-                          placeholder={String(data.settings.target_margin)}
-                          step={0.01}
+                          value={editingBatch.target_margin !== null && editingBatch.target_margin !== undefined && Number.isFinite(editingBatch.target_margin) ? editingBatch.target_margin * 100 : ''}
+                          placeholder={(data.settings.target_margin * 100).toFixed(0)}
+                          step={0.1}
                           min={0}
-                          max={0.999}
+                          max={99.9}
                           onChange={e => {
                             const val = e.target.value.trim();
-                            setEditingBatch(p => p && ({ ...p, target_margin: val === '' ? null : parseFloat(val) }));
+                            setOverrideError(null);
+                            setEditingBatch(p => p && ({ ...p, target_margin: val === '' ? null : parsePercentToFraction(parseFloat(val)) }));
                           }}
                         />
+                        {overrideError && <span className="input-error">{overrideError}</span>}
                       </div>
                     </div>
                     <div className="form-row form-row-2">
@@ -646,6 +693,7 @@ export function ProductsPage() {
                           min={0}
                           onChange={e => {
                             const val = e.target.value.trim();
+                            setOverrideError(null);
                             setEditingBatch(p => p && ({ ...p, labour_rate_per_hour: val === '' ? null : parseFloat(val) }));
                           }}
                         />
@@ -865,13 +913,14 @@ export function ProductsPage() {
                         <input
                           type="number"
                           className="input"
-                          value={editingAssembled.overhead_pct !== null && editingAssembled.overhead_pct !== undefined ? editingAssembled.overhead_pct : ''}
-                          placeholder={String(data.settings.overhead_pct)}
-                          step={0.01}
+                          value={editingAssembled.overhead_pct !== null && editingAssembled.overhead_pct !== undefined && Number.isFinite(editingAssembled.overhead_pct) ? editingAssembled.overhead_pct * 100 : ''}
+                          placeholder={(data.settings.overhead_pct * 100).toFixed(0)}
+                          step={0.1}
                           min={0}
                           onChange={e => {
                             const val = e.target.value.trim();
-                            setEditingAssembled(p => p && ({ ...p, overhead_pct: val === '' ? null : parseFloat(val) }));
+                            setOverrideError(null);
+                            setEditingAssembled(p => p && ({ ...p, overhead_pct: val === '' ? null : parsePercentToFraction(parseFloat(val)) }));
                           }}
                         />
                         <span className="input-hint">Applies to labour and the base recipe; component costs already include the global overhead.</span>
@@ -881,16 +930,18 @@ export function ProductsPage() {
                         <input
                           type="number"
                           className="input"
-                          value={editingAssembled.target_margin !== null && editingAssembled.target_margin !== undefined ? editingAssembled.target_margin : ''}
-                          placeholder={String(data.settings.target_margin)}
-                          step={0.01}
+                          value={editingAssembled.target_margin !== null && editingAssembled.target_margin !== undefined && Number.isFinite(editingAssembled.target_margin) ? editingAssembled.target_margin * 100 : ''}
+                          placeholder={(data.settings.target_margin * 100).toFixed(0)}
+                          step={0.1}
                           min={0}
-                          max={0.999}
+                          max={99.9}
                           onChange={e => {
                             const val = e.target.value.trim();
-                            setEditingAssembled(p => p && ({ ...p, target_margin: val === '' ? null : parseFloat(val) }));
+                            setOverrideError(null);
+                            setEditingAssembled(p => p && ({ ...p, target_margin: val === '' ? null : parsePercentToFraction(parseFloat(val)) }));
                           }}
                         />
+                        {overrideError && <span className="input-error">{overrideError}</span>}
                       </div>
                     </div>
                     <div className="form-row form-row-2">
@@ -905,6 +956,7 @@ export function ProductsPage() {
                           min={0}
                           onChange={e => {
                             const val = e.target.value.trim();
+                            setOverrideError(null);
                             setEditingAssembled(p => p && ({ ...p, labour_rate_per_hour: val === '' ? null : parseFloat(val) }));
                           }}
                         />
