@@ -975,13 +975,70 @@ export function exportPackagingCSV(items: PackagingItem[]): string {
 }
 
 export function parseCSV(content: string): Record<string, string>[] {
-  const lines = content.trim().split('\n');
-  if (lines.length === 0) return [];
-  const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, ''));
-  return lines.slice(1).map(line => {
-    const cells = line.split(',').map(c => c.trim().replace(/^"|"$/g, ''));
+  const text = content.replace(/^\uFEFF/, '').trim();
+  if (!text) return [];
+
+  const rows: string[][] = [];
+  let currentRow: string[] = [];
+  let currentCell = '';
+  let inQuotes = false;
+
+  const pushCell = () => {
+    currentRow.push(currentCell);
+    currentCell = '';
+  };
+
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (inQuotes) {
+      if (ch === '"') {
+        if (text[i + 1] === '"') {
+          currentCell += '"';
+          i += 1;
+        } else {
+          inQuotes = false;
+        }
+      } else {
+        currentCell += ch;
+      }
+      continue;
+    }
+
+    if (ch === '"') {
+      inQuotes = true;
+      continue;
+    }
+    if (ch === ',') {
+      pushCell();
+      continue;
+    }
+    if (ch === '\n' || ch === '\r') {
+      pushCell();
+      if (currentRow.length > 0 && currentRow.some(cell => cell !== '')) {
+        rows.push(currentRow);
+      }
+      currentRow = [];
+      if (ch === '\r' && text[i + 1] === '\n') {
+        i += 1;
+      }
+      continue;
+    }
+    currentCell += ch;
+  }
+
+  pushCell();
+  if (currentRow.length > 0 && currentRow.some(cell => cell !== '')) {
+    rows.push(currentRow);
+  }
+
+  if (rows.length === 0) return [];
+
+  const headers = rows[0].map(h => h.trim().replace(/^"|"$/g, ''));
+  return rows.slice(1).map(row => {
     const obj: Record<string, string> = {};
-    headers.forEach((h, i) => obj[h] = cells[i] ?? '');
+    headers.forEach((h, i) => {
+      obj[h] = row[i] ?? '';
+    });
     return obj;
   });
 }

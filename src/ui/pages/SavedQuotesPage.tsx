@@ -28,11 +28,18 @@ export function SavedQuotesPage({ onNavigate }: SavedQuotesPageProps) {
 
   const handleOpen = (quote: SavedQuote, recalculate = false) => {
     dispatch({ type: 'LOAD_SAVED_QUOTE', quote, recalculate });
-    onNavigate('quote');
+    onNavigate(quote.kind === 'products' ? 'product_quote' : 'quote');
   };
 
   const confirmDelete = () => {
     if (!deleteTarget) return;
+    const references = state.data.orders.filter(o => o.quote_id === deleteTarget.id);
+    if (references.length > 0) {
+      const names = references.map(o => o.id).join(', ');
+      window.alert(`This quote is still linked to order(s): ${names}. Unlink or delete the orders before deleting the quote.`);
+      setDeleteTarget(null);
+      return;
+    }
     dispatch({ type: 'DELETE_SAVED_QUOTE', id: deleteTarget.id });
     setDeleteTarget(null);
   };

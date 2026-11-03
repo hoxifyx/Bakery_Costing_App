@@ -116,6 +116,7 @@ export function DataHealthPage({ onNavigate }: DataHealthPageProps) {
 
   const warningCodeLabels: Record<WarningCode, string> = {
     W_UNPRICED_INGREDIENT: 'Unpriced Ingredients',
+    W_UNIT_MISMATCH: 'Ingredients Used in the Wrong Unit',
     W_TSP_UNCONVERTED: 'Teaspoon Ingredients Missing Weight Conversion',
     W_ZERO_WEIGHT_RECIPE: 'Recipes with Zero / Negative Weight',
     W_ZERO_PIECES: 'Batch Products with Zero Pieces',
@@ -143,6 +144,10 @@ export function DataHealthPage({ onNavigate }: DataHealthPageProps) {
 
   const getPageForItem = (warning: typeof all_warnings[0]): string => {
     const p = warning.path || '';
+    if (warning.code === 'W_UNIT_MISMATCH') {
+      if (p.startsWith('settings.fondant_ingredient_id')) return 'ingredients';
+      if (p.startsWith('assembled[')) return 'products';
+    }
     if (warning.code === 'W_UNPRICED_INGREDIENT' || warning.code === 'W_ALLERGEN_UNKNOWN') return 'ingredients';
     if (p.startsWith('recipes') || p.startsWith('recipe[')) return 'recipes';
     if (p.startsWith('flavours') || p.startsWith('fillings')) return 'flavours';

@@ -21,7 +21,7 @@ import type {
   Order,
   Id,
 } from '../engine/types';
-import { EMPTY_APP_DATA } from '../engine/types';
+import { DEFAULT_SETTINGS, DEFAULT_SIZE_GUIDE, EMPTY_APP_DATA } from '../engine/types';
 import { recordImportedIngredientPriceChanges, recordIngredientPriceChange } from './ingredientPriceHistory';
 
 // ---------------------------------------------------------------------------
@@ -106,6 +106,7 @@ export interface StoreState {
   productQuoteInput: ProductQuoteInput;
   activeSavedQuote: ActiveSavedQuoteInfo | null;
   loading: boolean;
+  loadError: string | null;
   saving: boolean;
   lastSaved: Date | null;
   cloud: {
@@ -152,6 +153,7 @@ const DEFAULT_QUOTE_INPUT: QuoteInput = {
 
 type Action =
   | { type: 'LOADED'; data: AppData }
+  | { type: 'LOAD_FAILED'; error: string }
   | { type: 'SAVING' }
   | { type: 'SAVED'; at: Date }
   | { type: 'SET_SETTINGS'; settings: Settings }
@@ -222,7 +224,9 @@ function remove<T extends { id: Id }>(list: T[], id: Id): T[] {
 export function reducer(state: StoreState, action: Action): StoreState {
   switch (action.type) {
     case 'LOADED':
-      return { ...state, data: action.data, loading: false };
+      return { ...state, data: action.data, loading: false, loadError: null };
+    case 'LOAD_FAILED':
+      return { ...state, loading: false, loadError: action.error, saving: false };
     case 'SAVING':
       return { ...state, saving: true };
     case 'SAVED':
@@ -401,6 +405,24 @@ function mergeList<T extends { id: Id }>(existing: T[], incoming?: T[]): T[] {
   return Array.from(map.values());
 }
 
+function normalizeLoadedData(raw: Partial<AppData> | null | undefined): AppData {
+  const settings = { ...DEFAULT_SETTINGS, ...(raw?.settings ?? {}) } as Settings;
+  return {
+    settings,
+    ingredients: raw?.ingredients ?? [],
+    packaging_items: raw?.packaging_items ?? [],
+    recipes: raw?.recipes ?? [],
+    flavours: raw?.flavours ?? [],
+    fillings: raw?.fillings ?? [],
+    batch_products: raw?.batch_products ?? [],
+    assembled_products: raw?.assembled_products ?? [],
+    size_guide: Array.isArray(raw?.size_guide) && raw!.size_guide.length > 0 ? raw!.size_guide : [...DEFAULT_SIZE_GUIDE],
+    saved_quotes: raw?.saved_quotes ?? [],
+    customers: raw?.customers ?? [],
+    orders: raw?.orders ?? [],
+  };
+}
+
 // ---------------------------------------------------------------------------
 // Context
 // ---------------------------------------------------------------------------
@@ -420,6 +442,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     productQuoteInput: DEFAULT_PRODUCT_QUOTE_INPUT,
     activeSavedQuote: null,
     loading: true,
+    loadError: null,
     saving: false,
     lastSaved: null,
     cloud: {
@@ -435,42 +458,43 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
   // Load from IndexedDB on mount
   useEffect(() => {
+    let cancelled = false;
     Promise.all([
       loadFromDB(),
       loadCloudStateDB()
     ]).then(([saved, cloudState]) => {
-      // Merge on top of EMPTY_APP_DATA so new fields added in later phases
-      // (e.g. customers, orders) always have defaults even if missing from stored data.
-      if (saved) dispatch({ type: 'LOADED', data: { ...EMPTY_APP_DATA, ...saved } });
-      else dispatch({ type: 'LOADED', data: { ...EMPTY_APP_DATA } });
-      
-      // Load cloud state
+      if (cancelled) return;
+      const loadedData = normalizeLoadedData(saved ?? EMPTY_APP_DATA);
+      dispatch({ type: 'LOADED', data: loadedData });
       import('../cloud/drive').then(drive => {
-        dispatch({ 
-          type: 'CLOUD_STATUS_LOADED', 
-          configured: drive.isConfigured(), 
+        if (cancelled) return;
+        dispatch({
+          type: 'CLOUD_STATUS_LOADED',
+          configured: drive.isConfigured(),
           signedIn: drive.isSignedIn(),
           user: drive.getSignedInUser(),
           lastBackupAt: cloudState.lastBackupAt,
           lastBackupFileId: cloudState.lastBackupFileId
         });
-      });
-    }).catch(() => {
-      dispatch({ type: 'LOADED', data: { ...EMPTY_APP_DATA } });
+      }).catch(() => undefined);
+    }).catch((err) => {
+      if (cancelled) return;
+      dispatch({ type: 'LOAD_FAILED', error: err instanceof Error ? err.message : 'Database load failed' });
     });
+    return () => { cancelled = true; };
   }, []);
 
   // Autosave on data change
   const prevData = useRef<AppData | null>(null);
   useEffect(() => {
-    if (state.loading) return;
+    if (state.loading || state.loadError) return;
     if (prevData.current === state.data) return;
     prevData.current = state.data;
     dispatch({ type: 'SAVING' });
     saveToDB(state.data).then(() => {
       dispatch({ type: 'SAVED', at: new Date() });
     }).catch(console.error);
-  }, [state.data, state.loading]);
+  }, [state.data, state.loading, state.loadError]);
 
   // Autosave cloud backup metadata
   const prevCloud = useRef<{ at: string | null; id: string | null }>({ at: null, id: null });

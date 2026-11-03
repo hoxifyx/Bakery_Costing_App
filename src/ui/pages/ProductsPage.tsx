@@ -35,6 +35,9 @@ export function ProductsPage() {
 
   const allRecipesSorted = [...data.recipes].sort((a, b) => a.name.localeCompare(b.name));
   const frostingRecipes = allRecipesSorted.filter(r => r.kind === 'frosting_filling');
+  const gramIngredients = [...data.ingredients]
+    .filter(ing => ing.unit_type === 'g')
+    .sort((a, b) => a.name.localeCompare(b.name));
 
   // Batch product CRUD
   const openNewBatch = () => {
@@ -117,7 +120,7 @@ export function ProductsPage() {
     let comp: AssembledComponent;
     if (type === 'cake_recipe_grams') comp = { type, recipe_id: allRecipesSorted[0]?.id ?? '', grams: 60 };
     else if (type === 'recipe_per_gram') comp = { type, recipe_id: allRecipesSorted[0]?.id ?? '', grams: 30 };
-    else comp = { type: 'ingredient_grams', ingredient_id: data.ingredients[0]?.id ?? '', grams: 10 };
+    else comp = { type: 'ingredient_grams', ingredient_id: gramIngredients[0]?.id ?? '', grams: 10 };
     setEditingAssembled(p => p && ({ ...p, components: [...p.components, comp] }));
   };
 
@@ -957,7 +960,9 @@ export function ProductsPage() {
                         else updateComponent(ci, { recipe_id: e.target.value } as Partial<AssembledComponent>);
                       }} style={{ width: '100%', minWidth: 0 }}>
                         {comp.type === 'ingredient_grams'
-                          ? [...data.ingredients].sort((a, b) => a.name.localeCompare(b.name)).map(i => <option key={i.id} value={i.id}>Ingredient: {i.name}</option>)
+                          ? gramIngredients.length === 0
+                            ? <option value="" disabled>Add a gram-type ingredient first</option>
+                            : gramIngredients.map(i => <option key={i.id} value={i.id}>Ingredient: {i.name}</option>)
                           : allRecipesSorted.map(r => (
                               <option key={r.id} value={r.id}>
                                 Recipe: {r.name} ({r.kind})

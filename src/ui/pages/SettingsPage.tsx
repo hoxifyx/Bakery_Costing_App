@@ -8,6 +8,7 @@ export function SettingsPage() {
   const { state, dispatch } = useStore();
   const { settings, ingredients, packaging_items, size_guide } = state.data;
   const sortedIngredients = [...ingredients].sort((a, b) => a.name.localeCompare(b.name));
+  const gramIngredients = sortedIngredients.filter(ing => ing.unit_type === 'g');
   const sortedPackaging = [...packaging_items].sort((a, b) => a.name.localeCompare(b.name));
   const [localSettings, setLocalSettings] = useState<Settings>({ ...settings });
   const [localSizeGuide, setLocalSizeGuide] = useState<SizeGuideEntry[]>([...size_guide]);
@@ -268,9 +269,11 @@ export function SettingsPage() {
                 onChange={e => handleChange('fondant_ingredient_id', e.target.value || null)}
               >
                 <option value="">(None selected)</option>
-                {sortedIngredients.map(ing => (
+                {gramIngredients.length === 0
+                  ? <option value="__no-gram-ingredients__" disabled>Add a gram-type ingredient first</option>
+                  : gramIngredients.map(ing => (
                   <option key={ing.id} value={ing.id}>{ing.name} ({ing.unit_type})</option>
-                ))}
+                  ))}
               </select>
             </div>
 

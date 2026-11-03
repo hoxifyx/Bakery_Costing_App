@@ -167,41 +167,46 @@ function computeRecipe(
       lc,
     ));
   }
-  weightG = weightG.add(D(recipe.weight_adjustment_g));
+  const baseWeightG = weightG.add(D(recipe.weight_adjustment_g));
+  const baseWastePct = D(recipe.waste_pct ?? 0);
+  const baseRawAfterWaste = rawCost.mul(D(1).add(baseWastePct));
+  const baseCwo = baseRawAfterWaste.mul(D(1).add(OH));
 
+  let scaledRawCost = rawCost;
+  let scaledWeightG = baseWeightG;
   if (multiplier !== 1) {
-    rawCost = rawCost.mul(D(multiplier));
-    weightG = weightG.mul(D(multiplier));
+    scaledRawCost = scaledRawCost.mul(D(multiplier));
+    scaledWeightG = scaledWeightG.mul(D(multiplier));
   }
 
   const wastePct = D(recipe.waste_pct ?? 0);
-  const rawAfterWaste = rawCost.mul(D(1).add(wastePct));
+  const rawAfterWaste = scaledRawCost.mul(D(1).add(wastePct));
   if (wastePct.gte(0.5)) {
     warn(recipeWarnings, 'W_WASTE_HIGH', `Recipe "${recipe.name}" has a high waste / spoilage setting (${toNum(wastePct.mul(100)).toFixed(1)}%)`, `recipe[${recipe.id}].waste_pct`);
   }
   const cwo = rawAfterWaste.mul(D(1).add(OH));
-  const perGramCwo = weightG.gt(0) ? cwo.div(weightG) : D(0);
-  const cakeCostPerKg = cwo.mul(D(settings.cake_batches_per_kg));
-  const frostingCostPerKgCake = cwo.mul(D(settings.frosting_batches_per_kg));
+  const perGramCwo = baseWeightG.gt(0) ? baseCwo.div(baseWeightG) : D(0);
+  const cakeCostPerKg = baseCwo.mul(D(settings.cake_batches_per_kg));
+  const frostingCostPerKgCake = baseCwo.mul(D(settings.frosting_batches_per_kg));
 
   warnings.push(...recipeWarnings);
 
   const audit: AuditStep[] = [
-    step('Raw cost (Σ line costs)', 'Σ line_cost(l)', rawCost, lineAudit),
-    step('Waste adjustment', 'raw × (1 + waste_pct); added = raw × waste_pct', rawAfterWaste.minus(rawCost)),
+    step('Raw cost (Σ line costs)', 'Σ line_cost(l)', scaledRawCost, lineAudit),
+    step('Waste adjustment', 'raw × (1 + waste_pct); added = raw × waste_pct', rawAfterWaste.minus(scaledRawCost)),
     step('Raw cost after waste', 'raw_cost × (1 + waste_pct)', rawAfterWaste),
     step('Cost with overhead (cwo)', 'raw_after_waste × (1 + OH)', cwo),
-    step('Batch weight', 'Σ line_weight(l) + weight_adjustment_g', weightG),
+    step('Batch weight', 'Σ line_weight(l) + weight_adjustment_g', scaledWeightG),
     step('Per-gram cwo', 'cwo / weight_g', perGramCwo),
     step('Cake cost/kg', 'cwo × cake_batches_per_kg', cakeCostPerKg),
     step('Frosting cost/kg cake', 'cwo × frosting_batches_per_kg', frostingCostPerKgCake),
   ];
 
   return {
-    raw: toNum(rawCost),
+    raw: toNum(scaledRawCost),
     raw_after_waste: toNum(rawAfterWaste),
     cwo: toNum(cwo),
-    weight: toNum(weightG),
+    weight: toNum(scaledWeightG),
     per_gram_cwo: toNum(perGramCwo),
     cake_cost_per_kg: toNum(cakeCostPerKg),
     frosting_cost_per_kg_cake: toNum(frostingCostPerKgCake),
@@ -324,6 +329,9 @@ function computeFilling(
     } else {
       if (unpriced(ing)) {
         warn(fillingWarnings, 'W_UNPRICED_INGREDIENT', `Filling ingredient "${ing.name}" is unpriced`, `filling[${filling.id}]`);
+      }
+      if (ing.unit_type !== 'g') {
+        warn(fillingWarnings, 'W_UNIT_MISMATCH', `Filling ingredient "${ing.name}" is typed as piece but is being priced as grams`, `filling[${filling.id}]`);
       }
       const p = ppu(ing);
       costPerKg = p.mul(fillGrams).mul(D(1).add(OH));
@@ -565,6 +573,9 @@ function computeAssembledProduct(
       if (unpriced(ing)) {
         warn(prodWarnings, 'W_UNPRICED_INGREDIENT', `Ingredient "${ing.name}" unpriced in assembled product`, `assembled[${product.id}]`);
       }
+      if (ing.unit_type !== 'g') {
+        warn(prodWarnings, 'W_UNIT_MISMATCH', `Ingredient "${ing.name}" is typed as piece but used as grams in assembled product`, `assembled[${product.id}]`);
+      }
       compCost = ppu(ing).mul(D(comp.grams)).mul(D(1).add(OH));
       audit.push(step(`Ingredient (${ing.name}) ${comp.grams}g`, 'ppu × grams × (1+OH)', compCost));
     }
@@ -735,6 +746,9 @@ function computeQuote(
     } else {
       const fondantIng = ingMap.get(settings.fondant_ingredient_id);
       if (fondantIng) {
+        if (fondantIng.unit_type !== 'g') {
+          warn(quoteWarnings, 'W_UNIT_MISMATCH', `Fondant ingredient "${fondantIng.name}" is typed as piece but used as grams for fondant`, 'settings.fondant_ingredient_id');
+        }
         fondant = D(dec.fondant_kg).mul(ppu(fondantIng)).mul(D(1000));
       }
     }
