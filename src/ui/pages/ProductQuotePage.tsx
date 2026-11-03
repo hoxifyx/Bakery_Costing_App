@@ -78,7 +78,13 @@ export function ProductQuotePage() {
           discount: 0,
         },
       },
-      product_quote_input: { ...productQuoteInput, lines: productQuoteInput.lines.map(l => ({ ...l })) },
+      product_quote_input: {
+        ...productQuoteInput,
+        lines: productQuoteInput.lines.map(line => ({
+          ...line,
+          unit: line.product_kind === 'assembled' ? 'piece' : line.unit,
+        })),
+      },
       result_snapshot: { ...result },
       notes: saveNotes.trim() || undefined,
     };
@@ -141,7 +147,7 @@ export function ProductQuotePage() {
                     <div className="product-quote-line-primary">
                       <div className="form-group" style={{ marginBottom: 0 }}>
                         <label>Type</label>
-                        <select className="select" value={line.product_kind} onChange={e => updateLine(idx, { product_kind: e.target.value as 'batch' | 'assembled', product_id: lineOptions(e.target.value as 'batch' | 'assembled')[0]?.id ?? '' })}>
+                        <select className="select" value={line.product_kind} onChange={e => updateLine(idx, { product_kind: e.target.value as 'batch' | 'assembled', product_id: lineOptions(e.target.value as 'batch' | 'assembled')[0]?.id ?? '', unit: 'piece' })}>
                           <option value="batch">Batch</option>
                           <option value="assembled">Assembled</option>
                         </select>
@@ -163,7 +169,7 @@ export function ProductQuotePage() {
                     <div className="product-quote-line-secondary">
                       <div className="form-group" style={{ marginBottom: 0 }}>
                         <label>Unit</label>
-                        <select className="select" value={line.unit} onChange={e => updateLine(idx, { unit: e.target.value as 'piece' | 'box' })}>
+                        <select className="select" value={line.product_kind === 'assembled' ? 'piece' : line.unit} onChange={e => updateLine(idx, { unit: e.target.value as 'piece' | 'box' })}>
                           <option value="piece">Piece</option>
                           <option value="box" disabled={line.product_kind !== 'batch'}>Box</option>
                         </select>
