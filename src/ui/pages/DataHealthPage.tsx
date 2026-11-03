@@ -66,7 +66,7 @@ export function DataHealthPage({ onNavigate }: DataHealthPageProps) {
     }
     const uniqueAdditional = new Map(additional.map(warning => [`${warning.code}:${warning.path ?? warning.context}`, warning]));
     return [...all_warnings, ...uniqueAdditional.values()];
-  }, [all_warnings, recipes, state.data, batch_products, assembled_products]);
+  }, [all_warnings, recipes, state.data, batch_products, assembled_products, engineResult]);
 
   // Specific counts required by spec §5.9:
   const unpricedIngredients = useMemo(
