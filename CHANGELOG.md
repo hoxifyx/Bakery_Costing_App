@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Ingredient unit consistency:** Recipe costing warns on incompatible ingredient units, recipe edits persist compatible units, and used ingredients cannot change unit type.
 - **Import input shape:** JSON nulls and primitives now produce a clear invalid preview rather than throwing.
 - **Product quote units:** Switching a quote line to an assembled product resets its unit to Piece.
+- **Product warning context:** Product warning messages now use display names while retaining IDs in their navigable paths.
 
 ### Tests
 - Made the local-date regression assertion independent of the test runner's timezone.

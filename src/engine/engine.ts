@@ -372,7 +372,7 @@ function computeBatchProduct(
   const prodWarnings: Warning[] = [];
   const audit: AuditStep[] = [];
   if (product.pieces_per_box <= 0) {
-    warn(prodWarnings, 'W_ZERO_PACK_SIZE', `Product "${product.id}" has zero or negative pieces_per_box`, `batch_product[${product.id}].pieces_per_box`);
+    warn(prodWarnings, 'W_ZERO_PACK_SIZE', `Product "${product.name}" has zero or negative pieces_per_box`, `batch_product[${product.id}].pieces_per_box`);
   }
 
   const r = recipeResults.get(product.recipe_id);
@@ -392,7 +392,7 @@ function computeBatchProduct(
   if (product.pieces_mode === 'by_weight') {
     const pw = D(product.piece_weight_g ?? 0);
     if (pw.lte(0)) {
-      warn(prodWarnings, 'W_ZERO_PIECES', `Product "${product.id}" piece_weight_g is 0`, `batch_product[${product.id}]`);
+      warn(prodWarnings, 'W_ZERO_PIECES', `Product "${product.name}" piece_weight_g is 0`, `batch_product[${product.id}]`);
       pieces = D(0);
     } else {
       pieces = weightG.div(pw);
@@ -401,13 +401,13 @@ function computeBatchProduct(
   } else {
     pieces = D(product.fixed_pieces ?? 0);
     if (pieces.lte(0)) {
-      warn(prodWarnings, 'W_ZERO_PIECES', `Product "${product.id}" fixed_pieces is 0`, `batch_product[${product.id}]`);
+      warn(prodWarnings, 'W_ZERO_PIECES', `Product "${product.name}" fixed_pieces is 0`, `batch_product[${product.id}]`);
     }
     audit.push(step('Pieces (fixed)', 'fixed_pieces', pieces));
   }
 
   if (product.labour_hours_per_batch === 0) {
-    warn(prodWarnings, 'W_NO_LABOUR_HOURS', `Product "${product.id}" has zero labour hours`, `batch_product[${product.id}]`);
+    warn(prodWarnings, 'W_NO_LABOUR_HOURS', `Product "${product.name}" has zero labour hours`, `batch_product[${product.id}]`);
   }
 
   const labour = D(product.labour_hours_per_batch).mul(LAB);
@@ -488,9 +488,9 @@ function computeBatchProduct(
     marginEach = myPrice.gt(0) ? profitEach.div(myPrice) : D(0);
 
     if (myPrice.lt(costEach)) {
-      warn(prodWarnings, 'W_PRICE_BELOW_COST', `Product "${product.id}" price (${toNum(myPrice).toFixed(2)}) is below cost (${toNum(costEach).toFixed(2)})`, `batch_product[${product.id}].my_price_each`);
+      warn(prodWarnings, 'W_PRICE_BELOW_COST', `Product "${product.name}" price (${toNum(myPrice).toFixed(2)}) is below cost (${toNum(costEach).toFixed(2)})`, `batch_product[${product.id}].my_price_each`);
     } else if (marginEach.lt(M)) {
-      warn(prodWarnings, 'W_PRICE_BELOW_TARGET', `Product "${product.id}" margin (${toNum(marginEach.mul(100)).toFixed(1)}%) is below target (${toNum(M.mul(100)).toFixed(1)}%)`, `batch_product[${product.id}].my_price_each`);
+      warn(prodWarnings, 'W_PRICE_BELOW_TARGET', `Product "${product.name}" margin (${toNum(marginEach.mul(100)).toFixed(1)}%) is below target (${toNum(M.mul(100)).toFixed(1)}%)`, `batch_product[${product.id}].my_price_each`);
     }
   }
 
@@ -502,9 +502,9 @@ function computeBatchProduct(
     marginBox = myPriceB.gt(0) ? profitBox.div(myPriceB) : D(0);
 
     if (myPriceB.lt(costBox)) {
-      warn(prodWarnings, 'W_PRICE_BELOW_COST', `Product "${product.id}" box price (${toNum(myPriceB).toFixed(2)}) is below cost (${toNum(costBox).toFixed(2)})`, `batch_product[${product.id}].my_price_box`);
+      warn(prodWarnings, 'W_PRICE_BELOW_COST', `Product "${product.name}" box price (${toNum(myPriceB).toFixed(2)}) is below cost (${toNum(costBox).toFixed(2)})`, `batch_product[${product.id}].my_price_box`);
     } else if (marginBox.lt(M)) {
-      warn(prodWarnings, 'W_PRICE_BELOW_TARGET', `Product "${product.id}" box margin (${toNum(marginBox.mul(100)).toFixed(1)}%) is below target (${toNum(M.mul(100)).toFixed(1)}%)`, `batch_product[${product.id}].my_price_box`);
+      warn(prodWarnings, 'W_PRICE_BELOW_TARGET', `Product "${product.name}" box margin (${toNum(marginBox.mul(100)).toFixed(1)}%) is below target (${toNum(M.mul(100)).toFixed(1)}%)`, `batch_product[${product.id}].my_price_box`);
     }
   }
 
@@ -561,7 +561,7 @@ function computeAssembledProduct(
   const prodWarnings: Warning[] = [];
   const audit: AuditStep[] = [];
   if (product.pieces_per_box <= 0) {
-    warn(prodWarnings, 'W_ZERO_PACK_SIZE', `Product "${product.id}" has zero or negative pieces_per_box`, `assembled_products[${product.id}].pieces_per_box`);
+    warn(prodWarnings, 'W_ZERO_PACK_SIZE', `Product "${product.name}" has zero or negative pieces_per_box`, `assembled_products[${product.id}].pieces_per_box`);
   }
 
   if (wastePct.gte(0.5)) {
@@ -612,7 +612,7 @@ function computeAssembledProduct(
   const wasteAdded = componentCostBeforeWaste.mul(wastePct);
 
   if (product.labour_hours_per_batch === 0) {
-    warn(prodWarnings, 'W_NO_LABOUR_HOURS', `Assembled product "${product.id}" has zero labour hours`, `assembled[${product.id}]`);
+    warn(prodWarnings, 'W_NO_LABOUR_HOURS', `Assembled product "${product.name}" has zero labour hours`, `assembled[${product.id}]`);
   }
 
   const piecesPerBatch = D(product.pieces_per_batch > 0 ? product.pieces_per_batch : 1);
@@ -657,9 +657,9 @@ function computeAssembledProduct(
     marginEach = myPrice.gt(0) ? profitEach.div(myPrice) : D(0);
 
     if (myPrice.lt(costEach)) {
-      warn(prodWarnings, 'W_PRICE_BELOW_COST', `Product "${product.id}" price (${toNum(myPrice).toFixed(2)}) is below cost (${toNum(costEach).toFixed(2)})`, `assembled[${product.id}].my_price_each`);
+      warn(prodWarnings, 'W_PRICE_BELOW_COST', `Product "${product.name}" price (${toNum(myPrice).toFixed(2)}) is below cost (${toNum(costEach).toFixed(2)})`, `assembled[${product.id}].my_price_each`);
     } else if (marginEach.lt(M)) {
-      warn(prodWarnings, 'W_PRICE_BELOW_TARGET', `Product "${product.id}" margin (${toNum(marginEach.mul(100)).toFixed(1)}%) is below target (${toNum(M.mul(100)).toFixed(1)}%)`, `assembled[${product.id}].my_price_each`);
+      warn(prodWarnings, 'W_PRICE_BELOW_TARGET', `Product "${product.name}" margin (${toNum(marginEach.mul(100)).toFixed(1)}%) is below target (${toNum(M.mul(100)).toFixed(1)}%)`, `assembled[${product.id}].my_price_each`);
     }
   }
 
