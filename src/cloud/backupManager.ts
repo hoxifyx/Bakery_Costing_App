@@ -12,11 +12,24 @@ export const deleteBackup = drive.deleteBackup;
 
 const TIMEOUT_MS = 30000;
 
-function withTimeout<T>(promise: Promise<T>, ms: number, errorMessage: string): Promise<T> {
-  return Promise.race([
-    promise,
-    new Promise<T>((_, reject) => setTimeout(() => reject(new drive.DriveError('NETWORK', errorMessage)), ms))
-  ]);
+function withTimeout<T>(operation: (signal: AbortSignal) => Promise<T>, ms: number, errorMessage: string): Promise<T> {
+  const controller = new AbortController();
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => {
+      controller.abort();
+      reject(new drive.DriveError('NETWORK', errorMessage));
+    }, ms);
+    Promise.resolve().then(() => operation(controller.signal)).then(
+      value => {
+        clearTimeout(timer);
+        resolve(value);
+      },
+      error => {
+        clearTimeout(timer);
+        reject(error);
+      },
+    );
+  });
 }
 
 
@@ -31,15 +44,15 @@ function generateFilename(): string {
 }
 
 export async function createBackup(appData: AppData): Promise<{ fileId: string; filename: string; size: number }> {
-  return withTimeout(_createBackup(appData), TIMEOUT_MS, 'Operation timed out after 30 seconds');
+  return withTimeout(signal => _createBackup(appData, signal), TIMEOUT_MS, 'Operation timed out after 30 seconds');
 }
 
-async function _createBackup(appData: AppData): Promise<{ fileId: string; filename: string; size: number }> {
+async function _createBackup(appData: AppData, signal: AbortSignal): Promise<{ fileId: string; filename: string; size: number }> {
   const jsonStr = exportAllData(appData);
   const size = new Blob([jsonStr]).size;
   const filename = generateFilename();
 
-  const meta = await drive.uploadBackup(jsonStr, filename);
+  const meta = await drive.uploadBackup(jsonStr, filename, signal);
   await drive.pruneOldBackups(10);
   
   return {
@@ -50,11 +63,11 @@ async function _createBackup(appData: AppData): Promise<{ fileId: string; filena
 }
 
 export async function restoreBackup(fileId: string, currentData: AppData): Promise<ImportPreview> {
-  return withTimeout(_restoreBackup(fileId, currentData), TIMEOUT_MS, 'Operation timed out after 30 seconds');
+  return withTimeout(signal => _restoreBackup(fileId, currentData, signal), TIMEOUT_MS, 'Operation timed out after 30 seconds');
 }
 
-async function _restoreBackup(fileId: string, currentData: AppData): Promise<ImportPreview> {
-  const jsonStr = await drive.downloadBackup(fileId);
+async function _restoreBackup(fileId: string, currentData: AppData, signal: AbortSignal): Promise<ImportPreview> {
+  const jsonStr = await drive.downloadBackup(fileId, signal);
   return parseImportFile(jsonStr, currentData);
 }
 

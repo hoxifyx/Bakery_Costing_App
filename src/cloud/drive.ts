@@ -101,6 +101,13 @@ export function signOut(): void {
   signedInUser = null;
 }
 
+function googleErrorReason(error: unknown): string | null {
+  if (!error || typeof error !== 'object') return null;
+  const response = error as { errors?: Array<{ reason?: unknown }>; status?: unknown };
+  const reason = response.errors?.[0]?.reason ?? response.status;
+  return typeof reason === 'string' ? reason : null;
+}
+
 async function driveFetch(url: string, options: RequestInit = {}): Promise<Response> {
   if (!accessToken) {
     throw new DriveError('AUTH', 'Not signed in.');
@@ -117,15 +124,39 @@ async function driveFetch(url: string, options: RequestInit = {}): Promise<Respo
   }
 
   if (!res.ok) {
-    if (res.status === 401 || res.status === 403) {
+    let errorBody: unknown = null;
+    try {
+      const errorResponse = typeof res.clone === 'function' ? res.clone() : res;
+      errorBody = await errorResponse.json();
+    } catch {
+      errorBody = null;
+    }
+    const errorRecord = errorBody && typeof errorBody === 'object'
+      ? errorBody as { error?: unknown }
+      : null;
+    const reason = googleErrorReason(errorRecord?.error);
+    if (res.status === 401 || [
+      'authError',
+      'invalidCredentials',
+      'insufficientPermissions',
+      'insufficientFilePermissions',
+      'forbidden',
+      'appNotAuthorizedToFile',
+    ].includes(reason ?? '')) {
       accessToken = null;
       signedInUser = null;
       throw new DriveError('AUTH', 'Your Google session expired. Please reconnect.');
     }
+    if (reason === 'rateLimitExceeded' || reason === 'userRateLimitExceeded') {
+      throw new DriveError('UNKNOWN', 'Google Drive is rate limited. Please try again shortly.');
+    }
+    if (reason === 'storageQuotaExceeded') {
+      throw new DriveError('QUOTA', 'Google Drive storage quota exceeded. Free up Drive space or use another account.');
+    }
     if (res.status === 404) {
       throw new DriveError('NOT_FOUND', 'File not found in Google Drive.');
     }
-    throw new DriveError('UNKNOWN', `Google Drive API error: ${res.statusText}`);
+    throw new DriveError('UNKNOWN', `Google Drive API error: ${res.statusText}${reason ? ` (${reason})` : ''}`);
   }
 
   return res;
@@ -143,7 +174,11 @@ export async function listBackups(): Promise<{ id: string; name: string; modifie
   }));
 }
 
-export async function uploadBackup(json: string, filename: string): Promise<{ id: string; name: string; modifiedTime: string }> {
+export async function uploadBackup(
+  json: string,
+  filename: string,
+  signal?: AbortSignal,
+): Promise<{ id: string; name: string; modifiedTime: string }> {
   const metadata = {
     name: filename,
     parents: ['appDataFolder'],
@@ -157,13 +192,14 @@ export async function uploadBackup(json: string, filename: string): Promise<{ id
   const res = await driveFetch(url, {
     method: 'POST',
     body: form,
+    signal,
   });
 
   return await res.json();
 }
 
-export async function downloadBackup(fileId: string): Promise<string> {
-  const res = await driveFetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`);
+export async function downloadBackup(fileId: string, signal?: AbortSignal): Promise<string> {
+  const res = await driveFetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, { signal });
   return await res.text();
 }
 

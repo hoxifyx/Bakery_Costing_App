@@ -12,7 +12,7 @@
  * Authentication is intentionally NOT tested here because it depends entirely on
  * the Google Identity Services browser library; that belongs to e2e / manual QA.
  */
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 import * as driveModule from '../src/cloud/drive';
 import * as backupManager from '../src/cloud/backupManager';
 import { parseImportFile, exportAllData } from '../src/io/io';
@@ -30,6 +30,7 @@ describe('Cloud Backup & Restore (Phase 21)', () => {
   afterEach(() => {
     vi.restoreAllMocks();
     vi.unstubAllEnvs();
+    vi.useRealTimers();
   });
 
   // C1: isConfigured ─────────────────────────────────────────────────────────
@@ -107,7 +108,7 @@ describe('Cloud Backup & Restore (Phase 21)', () => {
     const preview = await backupManager.restoreBackup('file-id-1', EMPTY_APP_DATA);
 
     expect(preview.valid).toBe(true);
-    expect(driveModule.downloadBackup).toHaveBeenCalledWith('file-id-1');
+    expect(driveModule.downloadBackup).toHaveBeenCalledWith('file-id-1', expect.any(AbortSignal));
   });
 
   // C7: round-trip ──────────────────────────────────────────────────────────
@@ -217,9 +218,12 @@ describe('Cloud Backup & Restore (Phase 21)', () => {
   it('C13: createBackup eventually rejects if network hangs', async () => {
     // Mock uploadBackup to hang indefinitely
     vi.spyOn(driveModule, 'uploadBackup').mockImplementation(() => new Promise(() => {}));
-    
-    await expect(backupManager.createBackup(EMPTY_APP_DATA)).rejects.toThrow('Operation timed out after 30 seconds');
+    vi.useFakeTimers();
+
+    const backup = backupManager.createBackup(EMPTY_APP_DATA);
+    const backupResult = expect(backup).rejects.toThrow('Operation timed out after 30 seconds');
+    await vi.advanceTimersByTimeAsync(30_000);
+    await backupResult;
+    expect(vi.getTimerCount()).toBe(0);
   }, 35000);
 });
-
-
