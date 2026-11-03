@@ -23,7 +23,7 @@ import type {
   AllergenCode,
   Id,
 } from '../engine/types';
-import { DEFAULT_SETTINGS, DEFAULT_SIZE_GUIDE } from '../engine/types';
+import { DEFAULT_SETTINGS, DEFAULT_SIZE_GUIDE, EMPTY_APP_DATA } from '../engine/types';
 
 export const CURRENT_SCHEMA_VERSION = '1.6';
 export const CURRENT_APP_VERSION = '1.6.3';
@@ -55,6 +55,8 @@ export interface ImportPreview {
   };
   parsed: Partial<AppData>;
 }
+
+export type ImportMode = 'replace' | 'merge' | 'replace_selected';
 
 // ---------------------------------------------------------------------------
 // ID pattern validation
@@ -655,6 +657,11 @@ function checkReferences(data: AppData, errors: ImportError[]): void {
     if (!recipeIds.has(bp.recipe_id)) {
       errors.push({ path: `batch_product[${bp.id}].recipe_id`, message: `Recipe not found` });
     }
+    for (const [index, component] of bp.components.entries()) {
+      if (!recipeIds.has(component.recipe_id)) {
+        errors.push({ path: `batch_product[${bp.id}].components[${index}].recipe_id`, message: `Recipe not found` });
+      }
+    }
     if (bp.box_id && !packIds.has(bp.box_id)) {
       errors.push({ path: `batch_product[${bp.id}].box_id`, message: `Packaging not found` });
     }
@@ -672,6 +679,26 @@ function checkReferences(data: AppData, errors: ImportError[]): void {
       }
     }
   }
+  const ingredientRoles = [
+    ['fondant_ingredient_id', data.settings.fondant_ingredient_id],
+  ] as const;
+  for (const [role, id] of ingredientRoles) {
+    if (id && !ingIds.has(id)) {
+      errors.push({ path: `settings.${role}`, message: `Ingredient "${id}" not found` });
+    }
+  }
+  const packagingRoles = [
+    ['edible_print_item_id', data.settings.edible_print_item_id],
+    ['cake_box_item_id', data.settings.cake_box_item_id],
+    ['mdf_board_item_id', data.settings.mdf_board_item_id],
+    ['standard_board_item_id', data.settings.standard_board_item_id],
+    ['wallpaper_item_id', data.settings.wallpaper_item_id],
+  ] as const;
+  for (const [role, id] of packagingRoles) {
+    if (id && !packIds.has(id)) {
+      errors.push({ path: `settings.${role}`, message: `Packaging item "${id}" not found` });
+    }
+  }
   const customerIds = new Set((data.customers ?? []).map(c => c.id));
   const quoteIds = new Set((data.saved_quotes ?? []).map(q => q.id));
   for (const o of (data.orders ?? [])) {
@@ -682,6 +709,52 @@ function checkReferences(data: AppData, errors: ImportError[]): void {
       errors.push({ path: `order[${o.id}].quote_id`, message: `Quote not found` });
     }
   }
+}
+
+function mergeImportedRecords<T extends { id: Id }>(existing: T[], incoming?: T[]): T[] {
+  if (!incoming) return existing;
+  const incomingIds = new Set(incoming.map(item => item.id));
+  return [...existing.filter(item => !incomingIds.has(item.id)), ...incoming];
+}
+
+export function buildImportCandidate(
+  currentData: AppData,
+  incoming: Partial<AppData>,
+  mode: ImportMode,
+  selectedGroups?: readonly (keyof AppData)[],
+): AppData {
+  if (mode === 'replace') {
+    return { ...EMPTY_APP_DATA, ...incoming };
+  }
+  if (mode === 'replace_selected' && selectedGroups) {
+    const selected = Object.fromEntries(
+      selectedGroups
+        .filter(group => incoming[group] !== undefined)
+        .map(group => [group, incoming[group]]),
+    ) as Partial<AppData>;
+    return { ...currentData, ...selected };
+  }
+
+  return {
+    ...currentData,
+    ...incoming,
+    ingredients: mergeImportedRecords(currentData.ingredients, incoming.ingredients),
+    packaging_items: mergeImportedRecords(currentData.packaging_items, incoming.packaging_items),
+    recipes: mergeImportedRecords(currentData.recipes, incoming.recipes),
+    flavours: mergeImportedRecords(currentData.flavours, incoming.flavours),
+    fillings: mergeImportedRecords(currentData.fillings, incoming.fillings),
+    batch_products: mergeImportedRecords(currentData.batch_products, incoming.batch_products),
+    assembled_products: mergeImportedRecords(currentData.assembled_products, incoming.assembled_products),
+    saved_quotes: mergeImportedRecords(currentData.saved_quotes, incoming.saved_quotes),
+    customers: mergeImportedRecords(currentData.customers, incoming.customers),
+    orders: mergeImportedRecords(currentData.orders, incoming.orders),
+  };
+}
+
+export function validateImportReferences(data: AppData): ImportError[] {
+  const errors: ImportError[] = [];
+  checkReferences(data, errors);
+  return errors;
 }
 
 // ---------------------------------------------------------------------------
@@ -708,7 +781,7 @@ function countChanges<T extends { id: Id }>(existing?: T[], incoming?: T[], forc
 export function parseImportFile(
   content: string,
   currentData: AppData,
-  opts: { allowPartialIngredients?: boolean } = {},
+  opts: { allowPartialIngredients?: boolean; mode?: ImportMode } = {},
 ): ImportPreview {
   const errors: ImportError[] = [];
   const warnings: string[] = [];
@@ -824,19 +897,9 @@ export function parseImportFile(
     }
   }
 
-  // Reference integrity check on merged data
+  // Validate references against the data the selected import mode would produce.
   if (errors.length === 0) {
-    const mergedIngredients = opts.allowPartialIngredients && parsed.ingredients
-      ? Array.from(new Map(
-          [...currentData.ingredients, ...parsed.ingredients].map(ingredient => [ingredient.id, ingredient]),
-        ).values())
-      : undefined;
-    const merged: AppData = {
-      ...currentData,
-      ...parsed,
-      ...(mergedIngredients ? { ingredients: mergedIngredients } : {}),
-    };
-    checkReferences(merged, errors);
+    checkReferences(buildImportCandidate(currentData, parsed, opts.mode ?? 'replace'), errors);
   }
 
   const counts = {

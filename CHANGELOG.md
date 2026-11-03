@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - **Data Health navigation:** Warning paths emitted for flavours, fillings, assembled products, and product-quote discounts now route to the relevant page.
 - **Product pricing overrides:** Percentage inputs display percents, store fractional values, and block invalid overhead, margin, or labour overrides.
+- **Import references:** Validation now follows import mode and verifies the actual selected-group result before applying it.
 
 ## [1.6.3] — 2026-11-03
 

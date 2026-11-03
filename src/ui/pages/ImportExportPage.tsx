@@ -6,6 +6,8 @@ import {
   downloadBlankTemplate,
   getExportFilename,
   parseImportFile,
+  buildImportCandidate,
+  validateImportReferences,
   exportIngredientsCSV,
   exportPackagingCSV,
   importIngredientsCSV,
@@ -100,7 +102,7 @@ export function ImportExportPage() {
         const text = e.target?.result as string;
         setRawImportText(text);
         setImportMode('replace');
-        const res = parseImportFile(text, state.data, { allowPartialIngredients: false });
+        const res = parseImportFile(text, state.data, { allowPartialIngredients: false, mode: 'replace' });
         setPreview(res);
       } catch (err: any) {
         setImportStatus({ type: 'error', message: `Failed to read file: ${err.message}` });
@@ -112,7 +114,7 @@ export function ImportExportPage() {
   const handleImportModeChange = (mode: 'replace' | 'merge' | 'replace_selected') => {
     setImportMode(mode);
     if (rawImportText !== null) {
-      setPreview(parseImportFile(rawImportText, state.data, { allowPartialIngredients: mode === 'merge' }));
+      setPreview(parseImportFile(rawImportText, state.data, { allowPartialIngredients: mode === 'merge', mode }));
     }
   };
 
@@ -147,6 +149,16 @@ export function ImportExportPage() {
           }
         }
         dataToImport = filtered;
+        const referenceErrors = validateImportReferences(
+          buildImportCandidate(state.data, dataToImport, 'replace_selected', selectedImportGroups),
+        );
+        if (referenceErrors.length > 0) {
+          setImportStatus({
+            type: 'error',
+            message: `Selected data has unresolved references: ${referenceErrors.map(error => `${error.path}: ${error.message}`).join('; ')}`,
+          });
+          return;
+        }
       }
       dispatch({
         type: 'IMPORT_DATA',
