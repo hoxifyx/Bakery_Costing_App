@@ -31,6 +31,7 @@ import { recordImportedIngredientPriceChanges, recordIngredientPriceChange } fro
 const DB_NAME = 'bakery-costing';
 const STORE_NAME = 'app-data';
 const KEY = 'main';
+const REVISION_KEY = 'main-revision';
 const DB_VERSION = 1;
 let dbPromise: Promise<IDBDatabase> | null = null;
 
@@ -62,23 +63,89 @@ function openDB(): Promise<IDBDatabase> {
   return pending;
 }
 
-async function loadFromDB(): Promise<AppData | null> {
+interface LoadedData {
+  data: AppData | null;
+  revision: number;
+}
+
+class DataRevisionConflictError extends Error {
+  constructor() {
+    super('Data changed in another tab');
+    this.name = 'DataRevisionConflictError';
+  }
+}
+
+async function loadFromDB(): Promise<LoadedData> {
   const db = await openDB();
   return new Promise((resolve, reject) => {
     const tx = db.transaction(STORE_NAME, 'readonly');
-    const req = tx.objectStore(STORE_NAME).get(KEY);
-    req.onsuccess = () => resolve(req.result ?? null);
-    req.onerror = () => reject(req.error);
+    const store = tx.objectStore(STORE_NAME);
+    const dataReq = store.get(KEY);
+    const revisionReq = store.get(REVISION_KEY);
+    let data: AppData | null = null;
+    let revision = 0;
+    let completed = 0;
+    let failed = false;
+    const settle = () => {
+      if (failed) return;
+      if (completed >= 2) resolve({ data, revision });
+    };
+    const fail = (error: DOMException | null) => {
+      if (failed) return;
+      failed = true;
+      reject(error ?? new Error('Database load failed'));
+    };
+    dataReq.onsuccess = () => {
+      data = dataReq.result ?? null;
+      completed += 1;
+      settle();
+    };
+    revisionReq.onsuccess = () => {
+      revision = Number.isSafeInteger(revisionReq.result) ? revisionReq.result : 0;
+      completed += 1;
+      settle();
+    };
+    dataReq.onerror = () => fail(dataReq.error as DOMException | null);
+    revisionReq.onerror = () => fail(revisionReq.error as DOMException | null);
+    tx.onerror = () => fail(tx.error as DOMException | null);
+    tx.onabort = () => fail(tx.error as DOMException | null);
+    tx.oncomplete = () => settle();
   });
 }
 
-async function saveToDB(data: AppData): Promise<void> {
+async function saveToDB(data: AppData, expectedRevision: number): Promise<number> {
   const db = await openDB();
   return new Promise((resolve, reject) => {
     const tx = db.transaction(STORE_NAME, 'readwrite');
-    tx.objectStore(STORE_NAME).put(data, KEY);
-    tx.oncomplete = () => resolve();
-    tx.onerror = () => reject(tx.error);
+    const store = tx.objectStore(STORE_NAME);
+    const revisionReq = store.get(REVISION_KEY);
+    let nextRevision = expectedRevision + 1;
+    let conflict: DataRevisionConflictError | null = null;
+    let settled = false;
+    const fail = (error: Error) => {
+      if (settled) return;
+      settled = true;
+      reject(error);
+    };
+    revisionReq.onsuccess = () => {
+      const currentRevision = Number.isSafeInteger(revisionReq.result) ? revisionReq.result : 0;
+      if (currentRevision !== expectedRevision) {
+        conflict = new DataRevisionConflictError();
+        tx.abort();
+        return;
+      }
+      nextRevision = currentRevision + 1;
+      store.put(data, KEY);
+      store.put(nextRevision, REVISION_KEY);
+    };
+    revisionReq.onerror = () => fail(revisionReq.error ?? new Error('Unable to verify data revision'));
+    tx.oncomplete = () => {
+      if (settled) return;
+      settled = true;
+      resolve(nextRevision);
+    };
+    tx.onerror = () => fail(conflict ?? tx.error ?? new Error('Database save failed'));
+    tx.onabort = () => fail(conflict ?? tx.error ?? new Error('Database save aborted'));
   });
 }
 
@@ -127,6 +194,7 @@ export interface StoreState {
   loadError: string | null;
   saving: boolean;
   saveError: string | null;
+  dataConflict: boolean;
   lastSaved: Date | null;
   cloud: {
     configured: boolean;
@@ -177,6 +245,7 @@ type Action =
   | { type: 'SAVING' }
   | { type: 'SAVED'; at: Date }
   | { type: 'SAVE_FAILED'; error: string }
+  | { type: 'DATA_CONFLICT' }
   | { type: 'SET_SETTINGS'; settings: Settings }
   | { type: 'ADD_INGREDIENT'; item: Ingredient }
   | { type: 'UPDATE_INGREDIENT'; item: Ingredient }
@@ -255,7 +324,7 @@ export function reducer(state: StoreState, action: Action): StoreState {
     case 'LOAD_STARTED':
       return { ...state, loading: true, loadError: null };
     case 'LOADED':
-      return { ...state, data: action.data, loading: false, loadError: null };
+      return { ...state, data: action.data, loading: false, loadError: null, dataConflict: false };
     case 'LOAD_FAILED':
       return { ...state, loading: false, loadError: action.error, saving: false };
     case 'SAVING':
@@ -264,6 +333,8 @@ export function reducer(state: StoreState, action: Action): StoreState {
       return { ...state, saving: false, saveError: null, lastSaved: action.at };
     case 'SAVE_FAILED':
       return { ...state, saving: false, saveError: action.error };
+    case 'DATA_CONFLICT':
+      return { ...state, saving: false, saveError: null, dataConflict: true };
     case 'SET_SETTINGS':
       return { ...state, data: { ...state.data, settings: action.settings } };
     case 'ADD_INGREDIENT':
@@ -485,6 +556,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     loadError: null,
     saving: false,
     saveError: null,
+    dataConflict: false,
     lastSaved: null,
     cloud: {
       configured: false,
@@ -502,17 +574,25 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     setLoadAttempt(attempt => attempt + 1);
   }, []);
   const retrySave = useCallback(() => setSaveAttempt(attempt => attempt + 1), []);
+  const expectedRevision = useRef(0);
+  const dataConflictRef = useRef(false);
+  const channelRef = useRef<BroadcastChannel | null>(null);
 
   // Load from IndexedDB on mount and explicit retry
   useEffect(() => {
     let cancelled = false;
     Promise.all([
       loadFromDB(),
-      loadCloudStateDB()
-    ]).then(([saved, cloudState]) => {
+      loadCloudStateDB(),
+    ]).then(([loaded, cloudState]) => {
       if (cancelled) return;
-      const loadedData = normalizeLoadedData(saved ?? EMPTY_APP_DATA);
-      dispatch({ type: 'LOADED', data: loadedData });
+      expectedRevision.current = loaded.revision;
+      dataConflictRef.current = false;
+      const loadedData = normalizeLoadedData(loaded.data ?? EMPTY_APP_DATA);
+      dispatch({
+        type: 'LOADED',
+        data: loadedData,
+      });
       import('../cloud/drive').then(drive => {
         if (cancelled) return;
         dispatch({
@@ -531,21 +611,44 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     return () => { cancelled = true; };
   }, [loadAttempt]);
 
+  useEffect(() => {
+    if (typeof BroadcastChannel === 'undefined') return;
+    const channel = new BroadcastChannel('bakery-costing-data');
+    channelRef.current = channel;
+    channel.onmessage = (event: MessageEvent<{ type?: string; revision?: number }>) => {
+      if (event.data?.type !== 'data-saved' || !Number.isSafeInteger(event.data.revision)) return;
+      if ((event.data.revision ?? 0) <= expectedRevision.current) return;
+      dataConflictRef.current = true;
+      dispatch({ type: 'DATA_CONFLICT' });
+    };
+    return () => {
+      channel.close();
+      channelRef.current = null;
+    };
+  }, []);
+
   // Autosave on data change
   const prevData = useRef<AppData | null>(null);
   const prevSaveAttempt = useRef(0);
   useEffect(() => {
-    if (state.loading || state.loadError) return;
+    if (state.loading || state.loadError || state.dataConflict || dataConflictRef.current) return;
     if (prevData.current === state.data && prevSaveAttempt.current === saveAttempt) return;
     prevData.current = state.data;
     prevSaveAttempt.current = saveAttempt;
     dispatch({ type: 'SAVING' });
-    saveToDB(state.data).then(() => {
+    saveToDB(state.data, expectedRevision.current).then(revision => {
+      expectedRevision.current = revision;
+      channelRef.current?.postMessage({ type: 'data-saved', revision });
       dispatch({ type: 'SAVED', at: new Date() });
     }).catch(err => {
-      dispatch({ type: 'SAVE_FAILED', error: err instanceof Error ? err.message : 'Database save failed' });
+      if (err instanceof DataRevisionConflictError) {
+        dataConflictRef.current = true;
+        dispatch({ type: 'DATA_CONFLICT' });
+      } else {
+        dispatch({ type: 'SAVE_FAILED', error: err instanceof Error ? err.message : 'Database save failed' });
+      }
     });
-  }, [state.data, state.loading, state.loadError, saveAttempt]);
+  }, [state.data, state.loading, state.loadError, state.dataConflict, saveAttempt]);
 
   // Autosave cloud backup metadata
   const prevCloud = useRef<{ at: string | null; id: string | null }>({ at: null, id: null });

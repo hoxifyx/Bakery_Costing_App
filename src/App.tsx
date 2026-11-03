@@ -70,6 +70,33 @@ function AppContent() {
     );
   }
 
+  if (state.dataConflict) {
+    return (
+      <main
+        role="alertdialog"
+        aria-modal="true"
+        style={{
+          display: 'flex',
+          minHeight: '100vh',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: 'var(--bg-base)',
+          color: 'var(--text-primary)',
+          flexDirection: 'column',
+          gap: 16,
+          padding: 24,
+          textAlign: 'center',
+        }}
+      >
+        <h1>Data changed in another tab - Reload</h1>
+        <p>Reload the latest saved data before continuing to avoid overwriting newer changes.</p>
+        <button type="button" className="quote-toolbar-btn quote-toolbar-btn-primary" onClick={retryLoad}>
+          Reload
+        </button>
+      </main>
+    );
+  }
+
   const renderPage = () => {
     switch (currentPage) {
       case 'quote':
