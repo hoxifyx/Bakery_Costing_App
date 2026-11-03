@@ -150,13 +150,13 @@ export function DataHealthPage({ onNavigate }: DataHealthPageProps) {
     }
     if (warning.code === 'W_UNPRICED_INGREDIENT' || warning.code === 'W_ALLERGEN_UNKNOWN') return 'ingredients';
     if (p.startsWith('recipes') || p.startsWith('recipe[')) return 'recipes';
-    if (p.startsWith('flavours') || p.startsWith('fillings')) return 'flavours';
-    if (p.startsWith('batch_products') || p.startsWith('assembled_products') || p.startsWith('products') || p.startsWith('batch_product[')) return 'products';
+    if (p.startsWith('flavours') || p.startsWith('flavour[') || p.startsWith('fillings') || p.startsWith('filling[')) return 'flavours';
+    if (p.startsWith('batch_products') || p.startsWith('assembled_products') || p.startsWith('products') || p.startsWith('batch_product[') || p.startsWith('assembled[')) return 'products';
     if (p.startsWith('settings')) return 'settings';
     if (p.startsWith('ingredients')) return 'ingredients';
     if (p.startsWith('packaging')) return 'packaging';
     if (p.startsWith('order')) return 'orders';
-    if (p.startsWith('lines[') || p.startsWith('product_quote')) return 'product_quote';
+    if (p.startsWith('lines[') || p.startsWith('product_quote') || p.startsWith('discount')) return 'product_quote';
     return 'quote';
   };
 

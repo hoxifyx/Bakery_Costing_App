@@ -13,6 +13,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Tests
 - Added regression coverage for CSV parser edge cases already handled by the parser.
 
+### Fixed
+- **Data Health navigation:** Warning paths emitted for flavours, fillings, assembled products, and product-quote discounts now route to the relevant page.
+
 ## [1.6.3] — 2026-11-03
 
 ### Fixed
