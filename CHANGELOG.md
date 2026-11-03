@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Missing references:** The engine warns about missing recipe, product-component, ingredient, and settings-role references; imports validate batch components and role mappings.
 - **Saved-quote references:** Flavours and products used by saved quotes cannot be deleted from either the UI or reducer.
 - **Ingredient unit consistency:** Recipe costing warns on incompatible ingredient units, recipe edits persist compatible units, and used ingredients cannot change unit type.
+- **Import input shape:** JSON nulls and primitives now produce a clear invalid preview rather than throwing.
 
 ## [1.6.3] — 2026-11-03
 

@@ -785,10 +785,10 @@ export function parseImportFile(
 ): ImportPreview {
   const errors: ImportError[] = [];
   const warnings: string[] = [];
-  let raw: Record<string, unknown>;
+  let rawValue: unknown;
 
   try {
-    raw = JSON.parse(content);
+    rawValue = JSON.parse(content);
   } catch {
     return {
       valid: false,
@@ -799,6 +799,17 @@ export function parseImportFile(
       parsed: {},
     };
   }
+  if (rawValue === null || typeof rawValue !== 'object' || Array.isArray(rawValue)) {
+    return {
+      valid: false,
+      errors: [{ path: 'file', message: 'Expected a JSON object' }],
+      warnings: [],
+      partialIngredients: 0,
+      counts: emptyPreviewCounts(),
+      parsed: {},
+    };
+  }
+  const raw = rawValue as Record<string, unknown>;
 
   if (raw.format !== FORMAT_FIELD) {
     errors.push({ path: 'format', message: `Expected "${FORMAT_FIELD}", got "${raw.format}"` });
