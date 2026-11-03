@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { computeShoppingList } from '../../engine';
 import type { AppData, SavedQuote } from '../../engine/types';
-import { csvEscape } from '../../io/io';
+import { downloadBlob } from '../../io/io';
+import { shoppingListToCsv } from '../../io/shoppingListCsv';
 
 interface ShoppingListModalProps {
   data: AppData;
@@ -61,32 +62,12 @@ export function ShoppingListModal({ data, quote, onClose }: ShoppingListModalPro
   }, [onClose]);
 
   const exportCsv = () => {
-    const headers = ['type', 'name', 'grams', 'pieces', 'gram_equivalent', 'teaspoons', 'converted_from_tsp', 'packaging_quantity', 'production_pieces', 'warning'];
-    const rows: unknown[][] = [
-      ...list.ingredients.map(item => [
-        'ingredient',
-        item.name,
-        formatQuantity(item.grams),
-        formatQuantity(item.pieces),
-        formatQuantity(item.gramEquivalent),
-        formatQuantity(item.teaspoons),
-        item.converted ? 'yes' : 'no',
-        '',
-        '',
-        '',
-      ]),
-      ...list.packaging.map(item => ['packaging', item.name, '', '', '', '', '', formatQuantity(item.quantity), '', '']),
-      ...list.production.map(item => ['production', item.name, '', '', '', '', '', '', formatQuantity(item.pieces), '']),
-      ...list.warnings.map(item => ['warning', item.name, '', '', '', '', '', '', '', item.message]),
-    ];
-    const csv = [headers.join(','), ...rows.map(row => row.map(csvEscape).join(','))].join('\n');
+    const csv = shoppingListToCsv(list);
     try {
-      const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
-      const anchor = document.createElement('a');
-      anchor.href = url;
-      anchor.download = `${quote.name.replace(/[^a-z0-9_-]+/gi, '_') || 'shopping-list'}.csv`;
-      anchor.click();
-      URL.revokeObjectURL(url);
+      downloadBlob(
+        new Blob([csv], { type: 'text/csv;charset=utf-8' }),
+        `${quote.name.replace(/[^a-z0-9_-]+/gi, '_') || 'shopping-list'}.csv`,
+      );
       setExportMessage('CSV exported.');
     } catch (error) {
       setExportMessage(error instanceof Error ? `CSV export failed: ${error.message}` : 'CSV export failed.');

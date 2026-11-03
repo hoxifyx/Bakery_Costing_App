@@ -3,6 +3,8 @@ import { useStore } from '../../store/store';
 import {
   exportAllData,
   downloadJSON,
+  downloadBlob,
+  isJsonFileName,
   downloadBlankTemplate,
   getExportFilename,
   parseImportFile,
@@ -87,7 +89,7 @@ export function ImportExportPage() {
   // Handler for File Selection
   const handleFile = (file: File) => {
     setImportStatus(null);
-    if (!file.name.endsWith('.json')) {
+    if (!isJsonFileName(file.name)) {
       setImportStatus({ type: 'error', message: 'Only JSON files (.json) are supported.' });
       return;
     }
@@ -554,12 +556,7 @@ export function ImportExportPage() {
                 onClick={() => {
                   const csv = exportIngredientsCSV(state.data.ingredients);
                   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-                  const url = URL.createObjectURL(blob);
-                  const a = document.createElement('a');
-                  a.href = url;
-                  a.download = `ingredients-${localDateString()}.csv`;
-                  a.click();
-                  URL.revokeObjectURL(url);
+                  downloadBlob(blob, `ingredients-${localDateString()}.csv`);
                 }}
               >
                 <span className="material-symbols-outlined ms-16" aria-hidden>download</span>
@@ -570,12 +567,7 @@ export function ImportExportPage() {
                 onClick={() => {
                   const csv = exportPackagingCSV(state.data.packaging_items);
                   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-                  const url = URL.createObjectURL(blob);
-                  const a = document.createElement('a');
-                  a.href = url;
-                  a.download = `packaging-${localDateString()}.csv`;
-                  a.click();
-                  URL.revokeObjectURL(url);
+                  downloadBlob(blob, `packaging-${localDateString()}.csv`);
                 }}
               >
                 <span className="material-symbols-outlined ms-16" aria-hidden>download</span>

@@ -6,6 +6,7 @@ import { ExplainPanel } from '../components/ExplainPanel';
 import { WarningsList } from '../components/WarningsList';
 import { NumberInput } from '../components/Shared';
 import { localDateString } from '../../engine/utils';
+import { sizeGuideKey } from '../utils';
 
 function fmt(n: number, cur: string): string {
   return `${cur} ${n.toFixed(2)}`;
@@ -54,6 +55,12 @@ export function QuotePage() {
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [saveName, setSaveName] = useState('');
   const [saveNotes, setSaveNotes] = useState('');
+  const maxFilledTiers = quoteInput.tiers.reduce(
+    (max, tier, index) => (tier.size_kg ?? 0) > 0 ? index + 1 : max,
+    1,
+  );
+  const visibleTiers = Math.max(activeTiers, maxFilledTiers);
+
   // Live calculation from current catalog
   const result = useMemo(() => compute(data, quoteInput), [data, quoteInput]);
   const liveQ = result.quote;
@@ -79,15 +86,6 @@ export function QuotePage() {
       })
       .map(sp => data.ingredients.find(i => i.id === sp.id)!.name);
   }, [activeSavedQuote, data.ingredients]);
-
-  // Expand active tiers if loaded quote has higher tiers filled
-  useEffect(() => {
-    let maxFilled = 1;
-    quoteInput.tiers.forEach((t, i) => {
-      if ((t.size_kg ?? 0) > 0) maxFilled = i + 1;
-    });
-    setActiveTiers(prev => Math.max(prev, maxFilled));
-  }, [quoteInput.tiers]);
 
   // Handle ESC on save dialog
   useEffect(() => {
@@ -119,9 +117,16 @@ export function QuotePage() {
 
   const updateTier = useCallback((idx: number, update: Partial<TierInput>) => {
     onInputModified();
+    if (update.size_kg !== undefined) {
+      if (update.size_kg > 0) {
+        setActiveTiers(current => Math.max(current, idx + 1));
+      } else if (idx === visibleTiers - 1) {
+        setActiveTiers(current => Math.max(current, visibleTiers));
+      }
+    }
     const newTiers = quoteInput.tiers.map((t, i) => i === idx ? { ...t, ...update } : t);
     dispatch({ type: 'SET_QUOTE_INPUT', input: { ...quoteInput, tiers: newTiers } });
-  }, [dispatch, quoteInput, onInputModified]);
+  }, [dispatch, quoteInput, onInputModified, visibleTiers]);
 
   const flavourOptions = [...data.flavours].sort((a, b) => a.name.localeCompare(b.name));
   const fillingOptions = [...data.fillings].sort((a, b) => a.name.localeCompare(b.name));
@@ -344,7 +349,7 @@ export function QuotePage() {
             </div>
 
             <div className="tier-rows-list">
-              {Array.from({ length: activeTiers }, (_, idx) => {
+              {Array.from({ length: visibleTiers }, (_, idx) => {
                 const tier = quoteInput.tiers[idx];
                 const res = displayQ?.tier_details?.[idx];
                 const isActive = (tier.size_kg ?? 0) > 0;
@@ -380,7 +385,7 @@ export function QuotePage() {
                           className="tier-remove-btn"
                           onClick={() => {
                             updateTier(idx, { size_kg: 0, flavour_id: null, filling_id: null });
-                            if (idx === activeTiers - 1) setActiveTiers(t => t - 1);
+                            if (idx === visibleTiers - 1) setActiveTiers(visibleTiers - 1);
                           }}
                           aria-label={`Remove tier ${idx + 1}`}
                           title={`Remove tier ${idx + 1}`}
@@ -403,11 +408,11 @@ export function QuotePage() {
                         />
                         {sizeGuide.length > 0 && (
                           <div className="tier-size-pills-box">
-                            {sizeGuide.map(sg => {
+                            {sizeGuide.map((sg, index) => {
                               const isSelected = tier.size_kg === sg.kg;
                               return (
                                 <button
-                                  key={sg.label}
+                                  key={sizeGuideKey(index, sg.label)}
                                   type="button"
                                   className={`tier-size-pill-btn ${isSelected ? 'active' : ''}`}
                                   onClick={() => updateTier(idx, { size_kg: sg.kg })}
@@ -466,15 +471,15 @@ export function QuotePage() {
             </div>
 
             {/* 2. Add tier slot */}
-            {activeTiers < 6 && (
+            {visibleTiers < 6 && (
               <div className="add-tier-slot">
                 <button
                   type="button"
                   className="btn-add-tier"
-                  onClick={() => setActiveTiers(Math.min(activeTiers + 1, 6))}
+                  onClick={() => setActiveTiers(Math.min(visibleTiers + 1, 6))}
                   aria-label="Add another tier"
                 >
-                  + Add Tier {activeTiers + 1}
+                  + Add Tier {visibleTiers + 1}
                 </button>
               </div>
             )}

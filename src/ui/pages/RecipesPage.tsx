@@ -7,6 +7,7 @@ import { NumberInput, SearchBar, ConfirmDialog, fmtMoney } from '../components/S
 import { ExplainPanel } from '../components/ExplainPanel';
 import { WarningsList } from '../components/WarningsList';
 import { generateId } from '../../engine/utils';
+import { displayWastePercent } from '../utils';
 
 function emptyLine(): RecipeLine {
   return { ingredient_id: null, quantity: 0, unit: 'g' };
@@ -406,7 +407,7 @@ export function RecipesPage() {
                   <label htmlFor="recipe-waste-pct">Waste / spoilage (%)</label>
                   <NumberInput
                     id="recipe-waste-pct"
-                    value={(editing.waste_pct ?? 0) * 100}
+                    value={displayWastePercent(editing.waste_pct)}
                     onChange={v => setEditing(r => r && ({ ...r, waste_pct: v / 100 }))}
                     step={0.1}
                     aria-label="Waste / spoilage percentage"

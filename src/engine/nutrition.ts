@@ -80,10 +80,7 @@ export function computeNutrition(data: AppData, recipeId: Id, precomputedResult?
   const missingNutrition = new Set<string>();
 
   for (const line of recipe.lines) {
-    if (!line.ingredient_id) {
-      if (line.quantity !== 0) missingNutrition.add(line.label ?? 'Unlinked ingredient');
-      continue;
-    }
+    if (!line.ingredient_id) continue;
     const grams = lineGrams(line, data);
     if (!grams) {
       missingNutrition.add(ingredientMap.get(line.ingredient_id)?.name ?? line.ingredient_id);
@@ -94,8 +91,6 @@ export function computeNutrition(data: AppData, recipeId: Id, precomputedResult?
       (ingredientGrams.get(line.ingredient_id) ?? D(0)).plus(grams),
     );
   }
-  if (recipe.weight_adjustment_g !== 0) missingNutrition.add('Recipe weight adjustment');
-
   for (const [ingredientId, grams] of ingredientGrams) {
     const ingredient = ingredientMap.get(ingredientId);
     const nutrition = ingredient?.nutrition_per_100g;

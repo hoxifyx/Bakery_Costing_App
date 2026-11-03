@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { useStore } from '../../store/store';
 import type { PackagingItem } from '../../engine/types';
 import { NumberInput, SearchBar, ConfirmDialog, fmtMoney } from '../components/Shared';
-import { exportPackagingCSV } from '../../io/io';
+import { downloadBlob, exportPackagingCSV } from '../../io/io';
 import { generateId } from '../../engine/utils';
 
 function getUsedIn(id: string, data: ReturnType<typeof useStore>['state']['data']): string[] {
@@ -62,10 +62,7 @@ export function PackagingPage() {
 
   const exportCSV = () => {
     const csv = exportPackagingCSV(data.packaging_items);
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a'); a.href = url; a.download = 'packaging.csv'; a.click();
-    URL.revokeObjectURL(url);
+    downloadBlob(new Blob([csv], { type: 'text/csv' }), 'packaging.csv');
   };
 
   return (

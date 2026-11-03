@@ -7,6 +7,7 @@ import { ExplainPanel } from '../components/ExplainPanel';
 import { WarningsList } from '../components/WarningsList';
 import { generateId } from '../../engine/utils';
 import { parsePercentToFraction, validatePricingOverrides } from '../productPricing';
+import { displayWastePercent } from '../utils';
 
 export function ProductsPage() {
   const { state, dispatch } = useStore();
@@ -528,7 +529,7 @@ export function ProductsPage() {
                 <label htmlFor="batch-product-waste">Waste / spoilage (%)</label>
                 <NumberInput
                   id="batch-product-waste"
-                  value={(editingBatch.waste_pct ?? 0) * 100}
+                  value={displayWastePercent(editingBatch.waste_pct)}
                   onChange={v => setEditingBatch(p => p && ({ ...p, waste_pct: v / 100 }))}
                   step={0.1}
                   aria-label="Batch product waste / spoilage percentage"
@@ -838,7 +839,7 @@ export function ProductsPage() {
                 <label htmlFor="assembled-product-waste">Waste / spoilage (%)</label>
                 <NumberInput
                   id="assembled-product-waste"
-                  value={(editingAssembled.waste_pct ?? 0) * 100}
+                  value={displayWastePercent(editingAssembled.waste_pct)}
                   onChange={v => setEditingAssembled(p => p && ({ ...p, waste_pct: v / 100 }))}
                   step={0.1}
                   aria-label="Assembled product waste / spoilage percentage"
