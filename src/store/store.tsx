@@ -2,7 +2,7 @@
  * IndexedDB-backed store using React context + useReducer.
  * Autosaves on every change. Provides undo for import.
  */
-import { createContext, useContext, useReducer, useEffect, useRef } from 'react';
+import { createContext, useCallback, useContext, useReducer, useEffect, useRef, useState } from 'react';
 import type {
   AppData,
   Settings,
@@ -152,6 +152,7 @@ const DEFAULT_QUOTE_INPUT: QuoteInput = {
 // ---------------------------------------------------------------------------
 
 type Action =
+  | { type: 'LOAD_STARTED' }
   | { type: 'LOADED'; data: AppData }
   | { type: 'LOAD_FAILED'; error: string }
   | { type: 'SAVING' }
@@ -231,6 +232,8 @@ function quoteUsesProduct(quote: SavedQuote, kind: 'batch' | 'assembled', id: Id
 // oxlint-disable-next-line react/only-export-components -- exported for reducer unit tests
 export function reducer(state: StoreState, action: Action): StoreState {
   switch (action.type) {
+    case 'LOAD_STARTED':
+      return { ...state, loading: true, loadError: null };
     case 'LOADED':
       return { ...state, data: action.data, loading: false, loadError: null };
     case 'LOAD_FAILED':
@@ -441,11 +444,13 @@ function normalizeLoadedData(raw: Partial<AppData> | null | undefined): AppData 
 interface StoreContextValue {
   state: StoreState;
   dispatch: React.Dispatch<Action>;
+  retryLoad: () => void;
 }
 
 const StoreContext = createContext<StoreContextValue | null>(null);
 
 export function StoreProvider({ children }: { children: React.ReactNode }) {
+  const [loadAttempt, setLoadAttempt] = useState(0);
   const [state, dispatch] = useReducer(reducer, {
     data: { ...EMPTY_APP_DATA },
     undoSnapshot: null,
@@ -467,7 +472,12 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     }
   });
 
-  // Load from IndexedDB on mount
+  const retryLoad = useCallback(() => {
+    dispatch({ type: 'LOAD_STARTED' });
+    setLoadAttempt(attempt => attempt + 1);
+  }, []);
+
+  // Load from IndexedDB on mount and explicit retry
   useEffect(() => {
     let cancelled = false;
     Promise.all([
@@ -493,7 +503,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       dispatch({ type: 'LOAD_FAILED', error: err instanceof Error ? err.message : 'Database load failed' });
     });
     return () => { cancelled = true; };
-  }, []);
+  }, [loadAttempt]);
 
   // Autosave on data change
   const prevData = useRef<AppData | null>(null);
@@ -517,7 +527,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   }, [state.cloud.lastBackupAt, state.cloud.lastBackupFileId, state.loading]);
 
   return (
-    <StoreContext.Provider value={{ state, dispatch }}>
+    <StoreContext.Provider value={{ state, dispatch, retryLoad }}>
       {children}
     </StoreContext.Provider>
   );

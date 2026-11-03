@@ -17,7 +17,7 @@ import { CustomersPage } from './ui/pages/CustomersPage';
 import { OrdersPage } from './ui/pages/OrdersPage';
 
 function AppContent() {
-  const { state } = useStore();
+  const { state, retryLoad } = useStore();
   const [currentPage, setCurrentPage] = useState('quote');
 
   if (state.loading) {
@@ -35,6 +35,37 @@ function AppContent() {
         <div style={{ fontSize: 40, animation: 'spin 1s linear infinite' }}>🎂</div>
         <div style={{ fontSize: 16, fontWeight: 500 }}>Loading OvenCost Pro database...</div>
       </div>
+    );
+  }
+
+  if (state.loadError && currentPage !== 'import_export') {
+    return (
+      <main
+        role="alert"
+        style={{
+          display: 'flex',
+          minHeight: '100vh',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: 'var(--bg-base)',
+          color: 'var(--text-primary)',
+          flexDirection: 'column',
+          gap: 16,
+          padding: 24,
+          textAlign: 'center',
+        }}
+      >
+        <h1>Unable to load saved data</h1>
+        <p>{state.loadError}</p>
+        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', justifyContent: 'center' }}>
+          <button type="button" className="quote-toolbar-btn quote-toolbar-btn-primary" onClick={retryLoad}>
+            Retry
+          </button>
+          <button type="button" className="quote-toolbar-btn" onClick={() => setCurrentPage('import_export')}>
+            Import / Export
+          </button>
+        </div>
+      </main>
     );
   }
 
