@@ -10,6 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - **Product quote reopening:** Orders now open saved product quotes in Product Quote, and cake quote pages safely pad short tier inputs.
 
+### Tests
+- Added regression coverage for CSV parser edge cases already handled by the parser.
+
 ## [1.6.3] — 2026-11-03
 
 ### Fixed
