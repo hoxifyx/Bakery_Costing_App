@@ -70,6 +70,7 @@ export function IngredientsPage() {
   const [showAllImpact, setShowAllImpact] = useState(false);
   const [csvMode, setCsvMode] = useState(false);
   const [csvError, setCsvError] = useState('');
+  const [editError, setEditError] = useState<string | null>(null);
 
   const recentIngredients = useMemo(() => {
     const { cutoff, today } = getRecentPriceChangeRange();
@@ -159,6 +160,15 @@ export function IngredientsPage() {
 
   const save = () => {
     if (!editing || !editing.name.trim()) return;
+    const existing = data.ingredients.find(ingredient => ingredient.id === editing.id);
+    if (existing && existing.unit_type !== editing.unit_type) {
+      const usedIn = getUsedIn(editing.id, data);
+      if (usedIn.length > 0) {
+        setEditError(`Cannot change unit type while this ingredient is used in:\n${usedIn.join('\n')}`);
+        return;
+      }
+    }
+    setEditError(null);
     const normalized = { ...editing, name: editing.name.trim() };
     if (isNew) dispatch({ type: 'ADD_INGREDIENT', item: normalized });
     else dispatch({ type: 'UPDATE_INGREDIENT', item: normalized });
@@ -404,10 +414,14 @@ export function IngredientsPage() {
               <div className="form-row form-row-2">
                 <div className="form-group">
                   <label>Unit type</label>
-                  <select className="select" value={editing.unit_type} onChange={e => setEditing(v => v && ({ ...v, unit_type: e.target.value as 'g' | 'piece' }))}>
+                  <select className="select" value={editing.unit_type} onChange={e => {
+                    setEditError(null);
+                    setEditing(v => v && ({ ...v, unit_type: e.target.value as 'g' | 'piece' }));
+                  }}>
                     <option value="g">Grams (g) — bulk/liquid</option>
                     <option value="piece">Piece — eggs, lemons …</option>
                   </select>
+                  {editError && <div className="error-banner" role="alert">{editError}</div>}
                 </div>
                 <div className="form-group">
                   <label>Pack quantity ({editing.unit_type === 'g' ? 'grams in pack' : 'pieces in pack'})</label>

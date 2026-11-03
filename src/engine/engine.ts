@@ -101,6 +101,10 @@ function lineCost(
     warn(warnings, 'W_UNPRICED_INGREDIENT', `Ingredient ${line.ingredient_id} not found`, path);
     return D(0);
   }
+  const expectedUnitType = line.unit === 'piece' ? 'piece' : 'g';
+  if (ing.unit_type !== expectedUnitType) {
+    warn(warnings, 'W_UNIT_MISMATCH', `Ingredient "${ing.name}" is typed as ${ing.unit_type} but recipe line uses ${line.unit}`, path);
+  }
   if (line.unit === 'tsp' && (!ing.grams_per_tsp || ing.grams_per_tsp <= 0)) {
     warn(warnings, 'W_TSP_UNCONVERTED', `Ingredient "${ing.name}" has no valid grams_per_tsp conversion`, path);
   }

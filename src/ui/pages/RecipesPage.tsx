@@ -53,6 +53,16 @@ export function RecipesPage() {
     return matchSearch && matchKind;
   }).sort((a, b) => a.name.localeCompare(b.name)), [data.recipes, search, kindFilter]);
 
+  const validUnitsForIng = (ingId: string | null): RecipeLine['unit'][] => {
+    if (!ingId) return ['g'];
+    const ing = data.ingredients.find(i => i.id === ingId);
+    if (!ing) return ['g'];
+    if (ing.unit_type === 'piece') return ['piece'];
+    const units: RecipeLine['unit'][] = ['g'];
+    if (ing.grams_per_tsp) units.push('tsp');
+    return units;
+  };
+
   const openNew = () => {
     setIsNew(true);
     setEditing({
@@ -74,8 +84,15 @@ export function RecipesPage() {
 
   const save = () => {
     if (!editing || !editing.name.trim()) return;
-    if (isNew) dispatch({ type: 'ADD_RECIPE', item: editing });
-    else dispatch({ type: 'UPDATE_RECIPE', item: editing });
+    const normalized = {
+      ...editing,
+      lines: editing.lines.map(line => {
+        const validUnits = validUnitsForIng(line.ingredient_id);
+        return validUnits.includes(line.unit) ? line : { ...line, unit: validUnits[0] };
+      }),
+    };
+    if (isNew) dispatch({ type: 'ADD_RECIPE', item: normalized });
+    else dispatch({ type: 'UPDATE_RECIPE', item: normalized });
     setEditing(null);
   };
 
@@ -122,16 +139,6 @@ export function RecipesPage() {
     if (!r) return r;
     return { ...r, lines: r.lines.filter((_, i) => i !== idx) };
   });
-
-  const validUnitsForIng = (ingId: string | null): RecipeLine['unit'][] => {
-    if (!ingId) return ['g'];
-    const ing = data.ingredients.find(i => i.id === ingId);
-    if (!ing) return ['g'];
-    if (ing.unit_type === 'piece') return ['piece'];
-    const units: RecipeLine['unit'][] = ['g'];
-    if (ing.grams_per_tsp) units.push('tsp');
-    return units;
-  };
 
   return (
     <div>
