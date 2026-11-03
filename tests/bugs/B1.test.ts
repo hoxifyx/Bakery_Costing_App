@@ -39,8 +39,8 @@ vi.mock('../../src/store/store', () => ({
   }),
 }));
 
-describe('B1 saved product quote crash', () => {
-  it('throws when a quote has zero tiers because QuotePage dereferences missing tier data', () => {
-    expect(() => renderToString(React.createElement(QuotePage))).toThrow(/size_kg|Cannot read properties of undefined/);
+describe('B1 saved product quote crash regression', () => {
+  it('renders when a quote has zero cake tiers', () => {
+    expect(() => renderToString(React.createElement(QuotePage))).not.toThrow();
   });
 });

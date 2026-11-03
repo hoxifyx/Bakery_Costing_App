@@ -13,7 +13,15 @@ function fmt(n: number, cur: string): string {
 
 export function QuotePage() {
   const { state, dispatch } = useStore();
-  const { data, quoteInput, activeSavedQuote } = state;
+  const { data, quoteInput: storedQuoteInput, activeSavedQuote } = state;
+  const quoteInput = useMemo(() => {
+    if (storedQuoteInput.tiers.length >= 6) return storedQuoteInput;
+    const tiers = [...storedQuoteInput.tiers];
+    while (tiers.length < 6) {
+      tiers.push({ size_kg: 0, flavour_id: null, filling_id: null });
+    }
+    return { ...storedQuoteInput, tiers };
+  }, [storedQuoteInput]);
   const { settings } = data;
   const cur = settings.currency_code;
 

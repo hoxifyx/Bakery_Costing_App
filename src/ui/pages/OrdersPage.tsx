@@ -77,7 +77,7 @@ export function OrdersPage({ onNavigate }: OrdersPageProps) {
     const q = saved_quotes.find(x => x.id === quoteId);
     if (q) {
       dispatch({ type: 'LOAD_SAVED_QUOTE', quote: q });
-      onNavigate('quote');
+      onNavigate(q.kind === 'products' ? 'product_quote' : 'quote');
     }
   };
 
