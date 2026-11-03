@@ -2,7 +2,7 @@
 
 ## What This Is
 <!-- BEGIN AGENT:what_this_is -->
-OvenCost Pro is a local-first bakery costing and pricing app. The current release is v1.6.0 with export schema 1.6; see `CHANGELOG.md` and `MIGRATIONS.md` for release and data-format history. The phased plan and build prompt are original product documents, and their unimplemented planned phases are not a release-status checklist.
+OvenCost Pro is a local-first bakery costing and pricing app. The current release is v1.6.1 with export schema 1.6; see `CHANGELOG.md` and `MIGRATIONS.md` for release and data-format history. The phased plan and build prompt are original product documents, and their unimplemented planned phases are not a release-status checklist.
 <!-- END AGENT:what_this_is -->
 
 ## Quick Start
@@ -59,7 +59,7 @@ npm test
 
 ## Warnings
 <!-- BEGIN SCRIPT:warnings -->
-At v1.6.0, all 82 automated tests pass. Lint completes with 6 existing warnings; the production build succeeds with 2 existing warnings: an `INEFFECTIVE_DYNAMIC_IMPORT` warning for `src/cloud/drive.ts` and a bundle-size advisory. Runtime data warnings are surfaced in-app on the **Data Health** page.
+At v1.6.1, the suite has 102 tests: 101 pass and the optional real-export health check is skipped when `BAKERY_EXPORT_PATH` is unset. With the provided full export configured, all 102 tests pass. Lint completes with 5 existing warnings; the production build succeeds with 2 existing warnings: an `INEFFECTIVE_DYNAMIC_IMPORT` warning for `src/cloud/drive.ts` and a bundle-size advisory. Runtime data warnings are surfaced in-app on the **Data Health** page.
 <!-- END SCRIPT:warnings -->
 
 ## What's Excluded and Why
@@ -97,6 +97,7 @@ No suspicious content detected.
 - Application data is stored in browser `IndexedDB`; private browsing may discard it when the session closes. Users should export backups regularly.
 - Calculations use `decimal.js`; avoid binary floating-point arithmetic for monetary calculations.
 - Merge-mode import supports partial ingredient records (only `id` required); partials for other entities are rejected. Validation runs inside `parseImportFile` against the merged candidate, not in the reducer.
+- Merge and Replace-Selected imports record ingredient price changes; full Replace imports preserve restored price history exactly.
 - Material Symbols ligatures in the bundled font use the OpenType `rlig` feature. When regenerating the font, use the checked-in manifest and script; do not replace `rlig` with `liga`.
 - `src/index.css` contains two Material Symbols `@font-face` declarations; keep both pointed at the active font asset.
 <!-- END AGENT:gotchas -->
@@ -139,9 +140,14 @@ pricing defaults. Product quotes and cake quotes share the saved-quote archive.
 
 The v1.6.0 release (tag `v1.6.0`) adds ingredient price impact, waste tracking,
 an ephemeral what-if scratchpad, shopping lists, and nutrition/allergen
-information, bringing the schema to 1.6. It has 82 passing automated tests and
-adds no dependencies. During Phase 5, recipe-to-recipe composition was rolled
-back; allergen propagation uses existing product composition instead.
+information, bringing the schema to 1.6. It adds no dependencies. During Phase
+5, recipe-to-recipe composition was rolled back; allergen propagation uses
+existing product composition instead.
+
+The v1.6.1 patch release fixes price-history handling for imports and first
+price changes, validates numeric CSV values, uses local calendar dates,
+surfaces warnings for missing unit conversions and invalid box sizes, and
+protects filling references in saved quotes. It does not change the data schema.
 <!-- END OWNER_NOTES -->
 
 ## When Not to Use This Bundle

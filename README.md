@@ -2,24 +2,24 @@
 
 OvenCost Pro is an offline-first costing and pricing app for bakeries, cake studios, and confectioners. Build ingredient and packaging catalogs, calculate recipe and product costs, prepare multi-tier cake quotes, and track customers and orders. Application data is stored locally in the browser.
 
-The current app version and latest published release are **v1.6.0**. See [CHANGELOG.md](./CHANGELOG.md) for release history.
+The current app version is **v1.6.1**; the export data schema remains **1.6**. See [CHANGELOG.md](./CHANGELOG.md) for release history.
 
 ## Features
 
 - **Cake quotes:** Price cakes of up to six tiers, including recipes, fillings, decorations, labour, packaging, delivery, overhead, and target margin.
 - **Product quotes:** Price batch and assembled products by quantity or box, with optional line overrides, delivery, discount, and saved product quote snapshots.
-- **Catalog and costing:** Manage ingredients, packaging, recipes, flavours, fillings, batch products, and assembled products with per-product pricing overrides and live profit/margin tracking.
+- **Catalog and costing:** Manage ingredients, packaging, recipes, flavours, fillings, batch products, and assembled products with per-product pricing overrides and live profit/margin tracking. Product overhead overrides apply to labour and base recipe costs; component costs retain the global overhead already included in their recipe costs.
 - **Recipe scaling and price suggestions:** Preview scaled recipe costs and optional rounded suggested prices without changing exact calculation results.
 - **Size guide:** Maintain the pan-size and serving guide used to help fill quote weights.
 - **Customers and orders:** Keep customer records and track order dates, due dates, and payment status.
 - **Data Health:** Review warnings about missing or invalid data and navigate to the relevant records.
-- **Import and export:** Create full or selective JSON exports, import validated datasets and ingredient CSVs, export ingredient and packaging CSVs, and download a blank JSON template. Merge-mode imports accept partial ingredient records — for example, a nutrition-only update can supply just `id`, `nutrition_per_100g`, and `allergens`, and existing fields are preserved.
+- **Import and export:** Create full or selective JSON exports, import validated datasets and ingredient CSVs, export ingredient and packaging CSVs, and download a blank JSON template. CSV imports validate numeric fields and record price changes; full replacement restores backup price history exactly. Merge-mode imports accept partial ingredient records — for example, a nutrition-only update can supply just `id`, `nutrition_per_100g`, and `allergens`, and existing fields are preserved.
 - **Optional Google Drive backup:** Connect Google Drive to back up and restore data in the app-specific Drive folder.
 - **Local-first storage:** App data is persisted in the browser's IndexedDB; no app server or account is required.
 
 ### Ingredient price impact
 
-Ingredient price history shows how a recorded price change affects recipe and product costs. The calculation is in [impact.ts](./src/engine/impact.ts), with the history view in [IngredientsPage.tsx](./src/ui/pages/IngredientsPage.tsx).
+Ingredient price history shows how a recorded price change affects recipe and product costs. The first manual price edit records both the previous and updated prices so impact is available immediately. The calculation is in [impact.ts](./src/engine/impact.ts), with the history view in [IngredientsPage.tsx](./src/ui/pages/IngredientsPage.tsx).
 
 ### Waste and spoilage tracking
 

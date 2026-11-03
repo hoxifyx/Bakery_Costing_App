@@ -48,5 +48,6 @@ These app releases did not change the exported data schema and require no data m
 
 **v1.5.0** adds the product-pricing and product-quote schema fields described above.
 **v1.6.0** adds the nutrition and allergen ingredient fields described above.
+**v1.6.1** fixes import, price-history, date, warning, and saved-quote reference behavior; it does not change the exported data schema. Merge and Replace-Selected imports record changed ingredient prices in history; full Replace imports preserve the imported snapshot unchanged.
 
 The current schema is `1.6`. UI redesigns, validation fixes, and static-asset changes do not by themselves require a schema-version bump.

@@ -5,6 +5,24 @@ All notable changes to the Bakery Costing App (OvenCost Pro) will be documented 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.1] — 2026-11-03
+
+### Fixed
+- **Ingredient price history:** CSV and merge imports now record changed prices without duplicating an already-recorded price. The first manual price edit records both the previous and new prices so impact analysis works immediately. Full replacement imports and backup restores preserve the imported history exactly.
+- **CSV validation:** Ingredient CSV imports reject non-finite and negative numeric values and leave the affected records unchanged.
+- **Local dates:** Price-history dates, due-date checks, order defaults, quote names, and date-based export filenames now use the local calendar date.
+- **Data Health warnings:** Missing teaspoon-to-gram conversions and invalid pieces-per-box values now produce visible warnings.
+- **Filling deletion:** Fillings referenced by saved quotes cannot be deleted until those quote references are removed.
+- **Ingredients CSV toolbar:** Renamed the panel toggle to “CSV Actions” to distinguish it from the actual export action.
+
+### Changed
+- Clarified that per-product overhead overrides apply to labour and base recipe costs, while recipe component costs retain the global overhead already included in their per-gram cost.
+- No exported data schema changes; schema remains 1.6.
+
+### Validation
+- 102 automated tests pass when the optional real-export health check is enabled; without `BAKERY_EXPORT_PATH`, that check is skipped.
+- Lint completes with 5 existing warnings. The production build succeeds with the existing dynamic-import and bundle-size advisories.
+
 ## [1.6.0] — 2026-11-01
 
 ### Added
