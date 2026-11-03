@@ -15,6 +15,7 @@ import { ImportExportPage } from './ui/pages/ImportExportPage';
 import { SavedQuotesPage } from './ui/pages/SavedQuotesPage';
 import { CustomersPage } from './ui/pages/CustomersPage';
 import { OrdersPage } from './ui/pages/OrdersPage';
+import { PageErrorBoundary } from './ui/components/PageErrorBoundary';
 
 function AppContent() {
   const { state, retryLoad } = useStore();
@@ -106,7 +107,9 @@ function AppContent() {
 
   return (
     <Layout currentPage={currentPage} onNavigate={setCurrentPage}>
-      {renderPage()}
+      <PageErrorBoundary key={currentPage} onNavigate={setCurrentPage}>
+        {renderPage()}
+      </PageErrorBoundary>
     </Layout>
   );
 }
