@@ -95,7 +95,7 @@ describe('F1 IndexedDB load failure recovery', () => {
     StoreProvider({ children: null });
     hookHarness.effects[1]();
 
-    expect(openCount).toBe(2);
+    expect(openCount).toBe(1);
     expect(writes).toEqual([]);
     vi.unstubAllGlobals();
   });

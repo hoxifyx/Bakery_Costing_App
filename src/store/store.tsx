@@ -32,16 +32,34 @@ const DB_NAME = 'bakery-costing';
 const STORE_NAME = 'app-data';
 const KEY = 'main';
 const DB_VERSION = 1;
+let dbPromise: Promise<IDBDatabase> | null = null;
 
 function openDB(): Promise<IDBDatabase> {
-  return new Promise((resolve, reject) => {
+  if (dbPromise) return dbPromise;
+  const pending = new Promise<IDBDatabase>((resolve, reject) => {
     const req = indexedDB.open(DB_NAME, DB_VERSION);
     req.onupgradeneeded = () => {
-      req.result.createObjectStore(STORE_NAME);
+      if (!req.result.objectStoreNames.contains(STORE_NAME)) req.result.createObjectStore(STORE_NAME);
     };
-    req.onsuccess = () => resolve(req.result);
-    req.onerror = () => reject(req.error);
+    req.onsuccess = () => {
+      const db = req.result;
+      const closeAndReset = () => {
+        db.close();
+        if (dbPromise === pending) dbPromise = null;
+      };
+      db.onversionchange = closeAndReset;
+      db.onclose = () => {
+        if (dbPromise === pending) dbPromise = null;
+      };
+      resolve(db);
+    };
+    req.onerror = () => {
+      if (dbPromise === pending) dbPromise = null;
+      reject(req.error);
+    };
   });
+  dbPromise = pending;
+  return pending;
 }
 
 async function loadFromDB(): Promise<AppData | null> {
@@ -108,6 +126,7 @@ export interface StoreState {
   loading: boolean;
   loadError: string | null;
   saving: boolean;
+  saveError: string | null;
   lastSaved: Date | null;
   cloud: {
     configured: boolean;
@@ -157,6 +176,7 @@ type Action =
   | { type: 'LOAD_FAILED'; error: string }
   | { type: 'SAVING' }
   | { type: 'SAVED'; at: Date }
+  | { type: 'SAVE_FAILED'; error: string }
   | { type: 'SET_SETTINGS'; settings: Settings }
   | { type: 'ADD_INGREDIENT'; item: Ingredient }
   | { type: 'UPDATE_INGREDIENT'; item: Ingredient }
@@ -239,9 +259,11 @@ export function reducer(state: StoreState, action: Action): StoreState {
     case 'LOAD_FAILED':
       return { ...state, loading: false, loadError: action.error, saving: false };
     case 'SAVING':
-      return { ...state, saving: true };
+      return { ...state, saving: true, saveError: null };
     case 'SAVED':
-      return { ...state, saving: false, lastSaved: action.at };
+      return { ...state, saving: false, saveError: null, lastSaved: action.at };
+    case 'SAVE_FAILED':
+      return { ...state, saving: false, saveError: action.error };
     case 'SET_SETTINGS':
       return { ...state, data: { ...state.data, settings: action.settings } };
     case 'ADD_INGREDIENT':
@@ -445,12 +467,14 @@ interface StoreContextValue {
   state: StoreState;
   dispatch: React.Dispatch<Action>;
   retryLoad: () => void;
+  retrySave: () => void;
 }
 
 const StoreContext = createContext<StoreContextValue | null>(null);
 
 export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [loadAttempt, setLoadAttempt] = useState(0);
+  const [saveAttempt, setSaveAttempt] = useState(0);
   const [state, dispatch] = useReducer(reducer, {
     data: { ...EMPTY_APP_DATA },
     undoSnapshot: null,
@@ -460,6 +484,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     loading: true,
     loadError: null,
     saving: false,
+    saveError: null,
     lastSaved: null,
     cloud: {
       configured: false,
@@ -476,6 +501,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     dispatch({ type: 'LOAD_STARTED' });
     setLoadAttempt(attempt => attempt + 1);
   }, []);
+  const retrySave = useCallback(() => setSaveAttempt(attempt => attempt + 1), []);
 
   // Load from IndexedDB on mount and explicit retry
   useEffect(() => {
@@ -507,15 +533,19 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
   // Autosave on data change
   const prevData = useRef<AppData | null>(null);
+  const prevSaveAttempt = useRef(0);
   useEffect(() => {
     if (state.loading || state.loadError) return;
-    if (prevData.current === state.data) return;
+    if (prevData.current === state.data && prevSaveAttempt.current === saveAttempt) return;
     prevData.current = state.data;
+    prevSaveAttempt.current = saveAttempt;
     dispatch({ type: 'SAVING' });
     saveToDB(state.data).then(() => {
       dispatch({ type: 'SAVED', at: new Date() });
-    }).catch(console.error);
-  }, [state.data, state.loading, state.loadError]);
+    }).catch(err => {
+      dispatch({ type: 'SAVE_FAILED', error: err instanceof Error ? err.message : 'Database save failed' });
+    });
+  }, [state.data, state.loading, state.loadError, saveAttempt]);
 
   // Autosave cloud backup metadata
   const prevCloud = useRef<{ at: string | null; id: string | null }>({ at: null, id: null });
@@ -527,7 +557,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   }, [state.cloud.lastBackupAt, state.cloud.lastBackupFileId, state.loading]);
 
   return (
-    <StoreContext.Provider value={{ state, dispatch, retryLoad }}>
+    <StoreContext.Provider value={{ state, dispatch, retryLoad, retrySave }}>
       {children}
     </StoreContext.Provider>
   );

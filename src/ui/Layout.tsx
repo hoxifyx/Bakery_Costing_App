@@ -37,7 +37,7 @@ interface LayoutProps {
 }
 
 export function Layout({ currentPage, onNavigate, children }: LayoutProps) {
-  const { state } = useStore();
+  const { state, retrySave } = useStore();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [timeAgoText, setTimeAgoText] = useState('Just now');
   const [collapsedSections, setCollapsedSections] = useState<string[]>([]);
@@ -247,12 +247,21 @@ export function Layout({ currentPage, onNavigate, children }: LayoutProps) {
         <div className="sidebar-footer">
           <div className="save-pill">
             <span className={`save-dot ${state.saving ? 'saving' : ''}`} />
-            <span className="save-pill-text">
-              {state.saving ? 'Saving…' : `Saved: ${timeAgoText} · Local DB`}
-            </span>
-            <span className="material-symbols-outlined ms-16 save-pill-icon" aria-hidden>
-              {state.saving ? 'sync' : 'cloud_done'}
-            </span>
+            {state.saveError ? (
+              <>
+                <span className="save-pill-text" title={state.saveError}>Not saved</span>
+                <button type="button" className="btn btn-sm" onClick={retrySave}>Retry</button>
+              </>
+            ) : (
+              <>
+                <span className="save-pill-text">
+                  {state.saving ? 'Saving…' : `Saved: ${timeAgoText} · Local DB`}
+                </span>
+                <span className="material-symbols-outlined ms-16 save-pill-icon" aria-hidden>
+                  {state.saving ? 'sync' : 'cloud_done'}
+                </span>
+              </>
+            )}
           </div>
         </div>
       </aside>
