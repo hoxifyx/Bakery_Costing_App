@@ -23,6 +23,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added regression coverage for CSV parser edge cases already handled by the parser.
 - Made the local-date regression assertion independent of the test runner's timezone.
 
+## [1.6.4] — 2026-11-03
+
+### Fixed
+- **Storage recovery:** A failed IndexedDB load now blocks autosave and offers Retry; older stored settings and collections fill from defaults. IndexedDB connections are reused and reopened when invalidated, while save failures show a recoverable Not saved state. Concurrent tabs use revision checks and a BroadcastChannel warning to prevent silent overwrites.
+- **Quote drafts and imports:** In-progress cake and product quotes persist separately from app data and exports. Import undo expires after the next data edit and identifies the import it will undo.
+- **Quote consistency:** Preview multipliers no longer leak into per-unit metrics; invalid recipe unit changes are blocked, and saved quote snapshots and size-guide entries are validated before import.
+- **Data Health:** Missing order-to-quote references have an explicit unlink repair. Nutrition and allergen calculations reuse a precomputed engine result; unpriced ingredients require a positive pack quantity, and zero-labour entries show product names.
+- **Ingredient handling:** Ingredient CSV IDs remain unique across existing and newly imported rows. First-edit price history marks the previous price as earlier rather than assigning today's date.
+- **Google Drive:** Permission, rate-limit, and quota errors are distinguished; timed-out uploads are aborted and their timers cleared.
+- **Downloads and warnings:** Download URLs are revoked after a delay, JSON extensions are case-insensitive, shopping-list text cells are protected from spreadsheet formulas, and free-water and weight-adjustment lines no longer create partial-nutrition warnings.
+- **Display reliability:** Waste percentages avoid floating-point display noise, size-guide pills use stable keys, and page errors offer Reload plus a route to Import / Export without replacing the app shell.
+
+### Changed
+- The app/export version is `1.6.4`. Export schema remains `1.6`; no data migration is required.
+
+### Known data note
+- Data Health may flag unit mismatches in existing data. The supplied export currently reports Gelatin in `cheese_cake` line 4 as a piece-type ingredient used in grams.
+
+### Validation
+- The export-backed suite reports 156 passed and one expected failure: the Gelatin unit mismatch in `tests/export-engine-check.test.ts`.
+- Oxlint reports two Fast Refresh warnings; the production build succeeds with the existing dynamic-import and bundle-size advisories.
+
 ## [1.6.3] — 2026-11-03
 
 ### Fixed

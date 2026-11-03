@@ -26,7 +26,7 @@ import type {
 import { DEFAULT_SETTINGS, DEFAULT_SIZE_GUIDE, EMPTY_APP_DATA } from '../engine/types';
 
 export const CURRENT_SCHEMA_VERSION = '1.6';
-export const CURRENT_APP_VERSION = '1.6.3';
+export const CURRENT_APP_VERSION = '1.6.4';
 const FORMAT_FIELD = 'bakery-costing-data';
 const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20 MB
 

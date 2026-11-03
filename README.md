@@ -2,7 +2,7 @@
 
 OvenCost Pro is an offline-first costing and pricing app for bakeries, cake studios, and confectioners. Build ingredient and packaging catalogs, calculate recipe and product costs, prepare multi-tier cake quotes, and track customers and orders. Application data is stored locally in the browser.
 
-The current app version is **v1.6.3**; the export data schema remains **1.6**. See [CHANGELOG.md](./CHANGELOG.md) for release history.
+The current app version is **v1.6.4**; the export data schema remains **1.6**. See [CHANGELOG.md](./CHANGELOG.md) for release history.
 
 ## Features
 
@@ -17,6 +17,7 @@ The current app version is **v1.6.3**; the export data schema remains **1.6**. S
 - **Import and export:** Create full or selective JSON exports, import validated datasets and ingredient CSVs, export ingredient and packaging CSVs, and download a blank JSON template. CSV imports validate numeric fields and preserve quoted commas, quotes, and newlines; they also record price changes. Full replacement restores backup price history exactly. Merge-mode imports accept partial ingredient records — for example, a nutrition-only update can supply just `id`, `nutrition_per_100g`, and `allergens`, and existing fields are preserved.
 - **Optional Google Drive backup:** Connect Google Drive to back up and restore data in the app-specific Drive folder.
 - **Local-first storage:** App data is persisted in the browser's IndexedDB; no app server or account is required.
+- **Recovery and drafts:** Quote drafts survive reloads, import undo expires after later edits, and concurrent tabs are prevented from silently overwriting newer data.
 
 ### Ingredient price impact
 
