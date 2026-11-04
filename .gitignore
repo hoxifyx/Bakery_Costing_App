@@ -34,3 +34,7 @@ dist-ssr
 # Project handoff bundle (generated artifact — keep local, don't commit)
 PROJECT_BUNDLE.json
 PROJECT_BUNDLE.json.sha256
+
+# Local planning and handoff documents
+/OvenCost Pro — Phased Upgrade Plan.md
+/PROJECT_HANDOFF.md

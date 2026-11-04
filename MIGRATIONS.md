@@ -51,5 +51,6 @@ These app releases did not change the exported data schema and require no data m
 **v1.6.1** fixes import, price-history, date, warning, and saved-quote reference behavior; it does not change the exported data schema. Merge and Replace-Selected imports record changed ingredient prices in history; full Replace imports preserve the imported snapshot unchanged.
 **v1.6.3** fixes saved-quote reference handling, unit mismatches, preview multiplier leakage, and quoted CSV parsing, and prevents autosave after a failed storage load. It does not change the exported data schema; no migration is required.
 **v1.6.4** adds local quote-draft persistence, validates saved quote snapshots and size-guide entries, and improves storage and import recovery. It does not change the exported data schema; no migration is required.
+**v1.6.5** fixes quote reopening, Data Health navigation, pricing override validation, import reference checks, and related edge cases. It does not change the exported data schema; no migration is required.
 
-The current schema is `1.6`. UI redesigns, validation fixes, and static-asset changes do not by themselves require a schema-version bump.
+The current app version is `1.6.5`; the current schema is `1.6`. UI redesigns, validation fixes, and static-asset changes do not by themselves require a schema-version bump.

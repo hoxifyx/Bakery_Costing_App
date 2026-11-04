@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.6.5] — 2026-11-04
+
 ### Fixed
 - **Product quote reopening:** Orders now open saved product quotes in Product Quote, and cake quote pages safely pad short tier inputs.
 - **Data Health navigation:** Warning paths emitted for flavours, fillings, assembled products, and product-quote discounts now route to the relevant page.
@@ -22,6 +24,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Tests
 - Added regression coverage for CSV parser edge cases already handled by the parser.
 - Made the local-date regression assertion independent of the test runner's timezone.
+
+### Changed
+- The app/export version is `1.6.5`. Export schema remains `1.6`; no data migration is required.
+
+### Validation
+- `npm test`: 155 passed, 2 skipped (157 total); both skipped checks require `BAKERY_EXPORT_PATH`.
+- `npm run lint`: completed with two existing Fast Refresh warnings.
+- `npm run build`: succeeded with the existing dynamic-import and bundle-size advisories.
 
 ## [1.6.4] — 2026-11-03
 
