@@ -454,6 +454,66 @@ function quoteUsesProduct(quote: SavedQuote, kind: 'batch' | 'assembled', id: Id
   return quote.product_quote_input?.lines?.some(line => line.product_kind === kind && line.product_id === id) ?? false;
 }
 
+function quoteUsesFilling(quote: SavedQuote, id: Id): boolean {
+  return quote.input?.tiers?.some(tier => tier.filling_id === id) ?? false;
+}
+
+/**
+ * Referenced records cannot be deleted (spec §3). These helpers mirror the
+ * "used in" lists shown by the catalog pages so the guard also holds for
+ * programmatic dispatch, imports and stale UI state.
+ */
+function ingredientIsUsed(data: AppData, id: Id): boolean {
+  const s = data.settings;
+  return (
+    data.recipes.some(recipe => recipe.lines.some(line => line.ingredient_id === id))
+    || data.fillings.some(filling => filling.source.type === 'ingredient' && filling.source.ingredient_id === id)
+    || data.assembled_products.some(product =>
+      product.components.some(component => component.type === 'ingredient_grams' && component.ingredient_id === id))
+    || s.fondant_ingredient_id === id
+  );
+}
+
+function packagingIsUsed(data: AppData, id: Id): boolean {
+  const s = data.settings;
+  return (
+    data.batch_products.some(product => product.box_id === id)
+    || data.assembled_products.some(product => product.box_id === id)
+    || s.edible_print_item_id === id
+    || s.cake_box_item_id === id
+    || s.mdf_board_item_id === id
+    || s.standard_board_item_id === id
+    || s.wallpaper_item_id === id
+  );
+}
+
+function recipeIsUsed(data: AppData, id: Id): boolean {
+  return (
+    data.flavours.some(flavour => flavour.cost_model.type === 'recipe'
+      && (flavour.cost_model.cake_recipe_id === id || flavour.cost_model.frosting_recipe_id === id))
+    || data.fillings.some(filling => filling.source.type === 'recipe' && filling.source.recipe_id === id)
+    || data.batch_products.some(product =>
+      product.recipe_id === id || product.components.some(component => component.recipe_id === id))
+    || data.assembled_products.some(product => product.components.some(component =>
+      (component.type === 'cake_recipe_grams' || component.type === 'recipe_per_gram') && component.recipe_id === id))
+  );
+}
+
+function flavourIsUsed(data: AppData, id: Id): boolean {
+  return (
+    data.flavours.some(flavour => flavour.cost_model.type === 'average' && flavour.cost_model.of.includes(id))
+    || data.saved_quotes.some(quote => quoteUsesFlavour(quote, id))
+  );
+}
+
+function fillingIsUsed(data: AppData, id: Id): boolean {
+  return data.saved_quotes.some(quote => quoteUsesFilling(quote, id));
+}
+
+function customerIsUsed(data: AppData, id: Id): boolean {
+  return (data.orders ?? []).some(order => order.customer_id === id);
+}
+
 function reduceAction(state: StoreState, action: Action): StoreState {
   switch (action.type) {
     case 'LOAD_STARTED':
@@ -492,27 +552,31 @@ function reduceAction(state: StoreState, action: Action): StoreState {
       return { ...state, data: { ...state.data, ingredients: upsert(state.data.ingredients, updated) } };
     }
     case 'DELETE_INGREDIENT':
+      if (ingredientIsUsed(state.data, action.id)) return state;
       return { ...state, data: { ...state.data, ingredients: remove(state.data.ingredients, action.id) } };
     case 'ADD_PACKAGING':
     case 'UPDATE_PACKAGING':
       return { ...state, data: { ...state.data, packaging_items: upsert(state.data.packaging_items, action.item) } };
     case 'DELETE_PACKAGING':
+      if (packagingIsUsed(state.data, action.id)) return state;
       return { ...state, data: { ...state.data, packaging_items: remove(state.data.packaging_items, action.id) } };
     case 'ADD_RECIPE':
     case 'UPDATE_RECIPE':
       return { ...state, data: { ...state.data, recipes: upsert(state.data.recipes, action.item) } };
     case 'DELETE_RECIPE':
+      if (recipeIsUsed(state.data, action.id)) return state;
       return { ...state, data: { ...state.data, recipes: remove(state.data.recipes, action.id) } };
     case 'ADD_FLAVOUR':
     case 'UPDATE_FLAVOUR':
       return { ...state, data: { ...state.data, flavours: upsert(state.data.flavours, action.item) } };
     case 'DELETE_FLAVOUR':
-      if (state.data.saved_quotes.some(quote => quoteUsesFlavour(quote, action.id))) return state;
+      if (flavourIsUsed(state.data, action.id)) return state;
       return { ...state, data: { ...state.data, flavours: remove(state.data.flavours, action.id) } };
     case 'ADD_FILLING':
     case 'UPDATE_FILLING':
       return { ...state, data: { ...state.data, fillings: upsert(state.data.fillings, action.item) } };
     case 'DELETE_FILLING':
+      if (fillingIsUsed(state.data, action.id)) return state;
       return { ...state, data: { ...state.data, fillings: remove(state.data.fillings, action.id) } };
     case 'ADD_BATCH_PRODUCT':
     case 'UPDATE_BATCH_PRODUCT':
@@ -655,6 +719,7 @@ function reduceAction(state: StoreState, action: Action): StoreState {
     case 'UPDATE_CUSTOMER':
       return { ...state, data: { ...state.data, customers: upsert(state.data.customers, action.item) } };
     case 'DELETE_CUSTOMER':
+      if (customerIsUsed(state.data, action.id)) return state;
       return { ...state, data: { ...state.data, customers: remove(state.data.customers, action.id) } };
     case 'ADD_ORDER':
     case 'UPDATE_ORDER':

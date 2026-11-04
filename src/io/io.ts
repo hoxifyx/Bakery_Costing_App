@@ -23,7 +23,7 @@ import type {
   AllergenCode,
   Id,
 } from '../engine/types';
-import { DEFAULT_SETTINGS, DEFAULT_SIZE_GUIDE, EMPTY_APP_DATA } from '../engine/types';
+import { DEFAULT_SETTINGS, DEFAULT_SIZE_GUIDE } from '../engine/types';
 
 export const CURRENT_SCHEMA_VERSION = '1.6';
 export const CURRENT_APP_VERSION = '1.6.5';
@@ -771,12 +771,43 @@ function checkReferences(data: AppData, errors: ImportError[]): void {
   }
 }
 
+/**
+ * Import mode inferred from the options used by callers that do not name a mode
+ * (the import UI relies on this). Partial ingredient records are only accepted in
+ * merge mode, so allowing them implies merge; otherwise a full dataset was
+ * supplied and "replace" semantics apply — but only for the groups in the file,
+ * which is what the store does for both.
+ */
+export function resolveImportMode(opts: { allowPartialIngredients?: boolean; mode?: ImportMode }): ImportMode {
+  return opts.mode ?? (opts.allowPartialIngredients ? 'merge' : 'replace');
+}
+
 function mergeImportedRecords<T extends { id: Id }>(existing: T[], incoming?: T[]): T[] {
   if (!incoming) return existing;
   const incomingIds = new Set(incoming.map(item => item.id));
   return [...existing.filter(item => !incomingIds.has(item.id)), ...incoming];
 }
 
+const GROUP_KEYS: readonly (keyof AppData)[] = [
+  'settings',
+  'ingredients',
+  'packaging_items',
+  'recipes',
+  'flavours',
+  'fillings',
+  'batch_products',
+  'assembled_products',
+  'size_guide',
+  'saved_quotes',
+  'customers',
+  'orders',
+];
+
+/**
+ * Mirror of the store's IMPORT_DATA handling. References are validated against the
+ * data the import will actually produce, so validation, preview counts and the
+ * applied result can never disagree.
+ */
 export function buildImportCandidate(
   currentData: AppData,
   incoming: Partial<AppData>,
@@ -784,7 +815,14 @@ export function buildImportCandidate(
   selectedGroups?: readonly (keyof AppData)[],
 ): AppData {
   if (mode === 'replace') {
-    return { ...EMPTY_APP_DATA, ...incoming };
+    // Only the groups present in the file are replaced; absent groups are kept.
+    const replaced: Partial<AppData> = {};
+    for (const group of GROUP_KEYS) {
+      if (incoming[group] !== undefined) {
+        (replaced as Record<string, unknown>)[group] = incoming[group];
+      }
+    }
+    return { ...currentData, ...replaced };
   }
   if (mode === 'replace_selected' && selectedGroups) {
     const selected = Object.fromEntries(
@@ -972,7 +1010,7 @@ export function parseImportFile(
 
   // Validate references against the data the selected import mode would produce.
   if (errors.length === 0) {
-    checkReferences(buildImportCandidate(currentData, parsed, opts.mode ?? 'replace'), errors);
+    checkReferences(buildImportCandidate(currentData, parsed, resolveImportMode(opts)), errors);
   }
 
   const counts = {

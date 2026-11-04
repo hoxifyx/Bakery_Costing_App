@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { useStore } from '../../store/store';
 import {
   exportAllData,
@@ -134,34 +134,45 @@ export function ImportExportPage() {
     }
   };
 
+  // Groups that the current mode will actually apply.
+  const groupsToApply = (): Partial<AppData> => {
+    if (!preview) return {};
+    if (importMode !== 'replace_selected') return preview.parsed;
+    const filtered: Partial<AppData> = {};
+    for (const grp of selectedImportGroups) {
+      if ((preview.parsed as any)[grp] !== undefined) {
+        (filtered as any)[grp] = (preview.parsed as any)[grp];
+      }
+    }
+    return filtered;
+  };
+
+  // Validate the exact candidate the selected mode would produce, so the preview
+  // shown here can never disagree with what the store applies.
+  const referenceErrorsForCurrentMode = useMemo(() => {
+    if (!preview) return [];
+    const selected = importMode === 'replace_selected';
+    const incoming: Partial<AppData> = importMode === 'replace_selected'
+      ? Object.fromEntries(
+        selectedImportGroups
+          .filter(grp => (preview.parsed as any)[grp] !== undefined)
+          .map(grp => [grp, (preview.parsed as any)[grp]]),
+      ) as Partial<AppData>
+      : preview.parsed;
+    return validateImportReferences(
+      buildImportCandidate(state.data, incoming, importMode, selected ? selectedImportGroups : undefined),
+    );
+  }, [preview, importMode, selectedImportGroups, state.data]);
+
   // Apply Import
   const handleApplyImport = () => {
-    if (!preview || !preview.valid) return;
+    if (!preview || !preview.valid || referenceErrorsForCurrentMode.length > 0) return;
     if (
       preview.partialIngredients > 0
       && !window.confirm(`${preview.partialIngredients} partial ingredient records will be merged into existing entries. Continue?`)
     ) return;
     try {
-      let dataToImport = preview.parsed;
-      if (importMode === 'replace_selected') {
-        const filtered: Partial<AppData> = {};
-        for (const grp of selectedImportGroups) {
-          if ((preview.parsed as any)[grp] !== undefined) {
-            (filtered as any)[grp] = (preview.parsed as any)[grp];
-          }
-        }
-        dataToImport = filtered;
-        const referenceErrors = validateImportReferences(
-          buildImportCandidate(state.data, dataToImport, 'replace_selected', selectedImportGroups),
-        );
-        if (referenceErrors.length > 0) {
-          setImportStatus({
-            type: 'error',
-            message: `Selected data has unresolved references: ${referenceErrors.map(error => `${error.path}: ${error.message}`).join('; ')}`,
-          });
-          return;
-        }
-      }
+      const dataToImport = groupsToApply();
       dispatch({
         type: 'IMPORT_DATA',
         data: dataToImport,
@@ -317,6 +328,23 @@ export function ImportExportPage() {
               </div>
             )}
 
+            {/* Reference errors for the mode that will actually be applied */}
+            {preview.valid && referenceErrorsForCurrentMode.length > 0 && (
+              <div className="error-banner" style={{ marginBottom: 12 }} role="alert">
+                <strong>
+                  This file cannot be applied with mode &ldquo;{importMode}&rdquo; — unresolved references:
+                </strong>
+                <ul style={{ margin: '6px 0 0 16px', fontSize: 12 }}>
+                  {referenceErrorsForCurrentMode.map((e, idx) => (
+                    <li key={idx}><strong>{e.path}:</strong> {e.message}</li>
+                  ))}
+                </ul>
+                <div style={{ marginTop: 6, fontSize: 12 }}>
+                  Switch the import mode above, or include the referenced records in the file.
+                </div>
+              </div>
+            )}
+
             {/* Validation Errors */}
             {preview.errors.length > 0 && (
               <div className="error-banner" style={{ marginBottom: 12 }}>
@@ -442,7 +470,7 @@ export function ImportExportPage() {
               <button
                 className="quote-toolbar-btn quote-toolbar-btn-primary"
                 onClick={handleApplyImport}
-                disabled={!preview.valid}
+                disabled={!preview.valid || referenceErrorsForCurrentMode.length > 0}
               >
                 <span className="material-symbols-outlined ms-16" aria-hidden>check_circle</span>
                 <span>Apply Import (Atomic)</span>
