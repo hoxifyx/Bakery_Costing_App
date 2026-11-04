@@ -794,7 +794,10 @@ function RestoreModal({ onClose }: { onClose: () => void }) {
   const { state, dispatch } = useStore();
   const [backups, setBackups] = useState<any[] | null>(null);
   const [loading, setLoading] = useState(true);
-  const [preview, setPreview] = useState<ImportPreview | null>(null);
+  // A backup validates differently as a merge and as a replace, and the two apply
+  // buttons sit side by side, so both previews are fetched together.
+  const [previews, setPreviews] = useState<Record<'replace' | 'merge', ImportPreview> | null>(null);
+  const [previewMode, setPreviewMode] = useState<'replace' | 'merge'>('replace');
 
   // Load backup list on mount
   useEffect(() => {
@@ -808,11 +811,14 @@ function RestoreModal({ onClose }: { onClose: () => void }) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const preview = previews ? previews[previewMode] : null;
+
   const handleApply = (mode: 'replace' | 'merge') => {
-    if (!preview || !preview.valid) return;
+    const target = previews?.[mode];
+    if (!target || !target.valid) return;
     dispatch({
       type: 'IMPORT_DATA',
-      data: preview.parsed,
+      data: target.parsed,
       mode,
       description: `backup restore (${mode})`,
     });
@@ -840,12 +846,27 @@ function RestoreModal({ onClose }: { onClose: () => void }) {
             </div>
           ) : preview ? (
             <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, flexWrap: 'wrap', gap: 8 }}>
                 <h4 style={{ fontSize: 15 }}>Import Preview</h4>
-                <span className={`badge ${preview.valid ? 'badge-green' : 'badge-red'}`}>
-                  <span className="material-symbols-outlined ms-14" aria-hidden>{preview.valid ? 'check_circle' : 'error'}</span>
-                  {preview.valid ? 'Valid' : 'Errors'}
-                </span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                  <div role="group" aria-label="Preview mode" style={{ display: 'flex', gap: 4 }}>
+                    {(['replace', 'merge'] as const).map(m => (
+                      <button
+                        key={m}
+                        aria-pressed={previewMode === m}
+                        className="quote-toolbar-btn"
+                        style={previewMode === m ? { fontWeight: 600, borderColor: 'var(--accent)' } : undefined}
+                        onClick={() => setPreviewMode(m)}
+                      >
+                        {m === 'replace' ? 'As replace' : 'As merge'}
+                      </button>
+                    ))}
+                  </div>
+                  <span className={`badge ${preview.valid ? 'badge-green' : 'badge-red'}`}>
+                    <span className="material-symbols-outlined ms-14" aria-hidden>{preview.valid ? 'check_circle' : 'error'}</span>
+                    {preview.valid ? 'Valid' : 'Errors'}
+                  </span>
+                </div>
               </div>
 
               {preview.errors.length > 0 && (
@@ -884,12 +905,26 @@ function RestoreModal({ onClose }: { onClose: () => void }) {
               </div>
 
               <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
-                <button className="quote-toolbar-btn" onClick={() => setPreview(null)}>
+                <button className="quote-toolbar-btn" onClick={() => setPreviews(null)}>
                   <span className="material-symbols-outlined ms-16" aria-hidden>arrow_back</span>
                   Back to list
                 </button>
-                <button className="quote-toolbar-btn" disabled={!preview.valid} onClick={() => handleApply('merge')}>Merge into current data</button>
-                <button className="quote-toolbar-btn quote-toolbar-btn-primary" disabled={!preview.valid} onClick={() => handleApply('replace')}>Replace all with this backup</button>
+                <button
+                  className="quote-toolbar-btn"
+                  disabled={!previews?.merge.valid}
+                  title={previews?.merge.valid ? undefined : 'This backup has blocking errors when merged'}
+                  onClick={() => handleApply('merge')}
+                >
+                  Merge into current data
+                </button>
+                <button
+                  className="quote-toolbar-btn quote-toolbar-btn-primary"
+                  disabled={!previews?.replace.valid}
+                  title={previews?.replace.valid ? undefined : 'This backup has blocking errors when it replaces your data'}
+                  onClick={() => handleApply('replace')}
+                >
+                  Replace all with this backup
+                </button>
               </div>
             </div>
           ) : !backups || backups.length === 0 ? (
@@ -916,8 +951,15 @@ function RestoreModal({ onClose }: { onClose: () => void }) {
                       className="quote-toolbar-btn"
                       onClick={() => {
                         setLoading(true);
-                        restoreBackup(b.id, state.data)
-                          .then(p => { setPreview(p); setLoading(false); })
+                        Promise.all([
+                          restoreBackup(b.id, state.data, 'replace'),
+                          restoreBackup(b.id, state.data, 'merge'),
+                        ])
+                          .then(([replace, merge]) => {
+                            setPreviews({ replace, merge });
+                            setPreviewMode(replace.valid ? 'replace' : 'merge');
+                            setLoading(false);
+                          })
                           .catch(err => { dispatch({ type: 'CLOUD_ERROR', error: err.message }); onClose(); });
                       }}
                     >

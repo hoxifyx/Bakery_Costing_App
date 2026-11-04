@@ -11,18 +11,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Partial imports in Replace mode:** Reference validation checked the file against an empty dataset instead of the current data, so a partial export (for example "recipes only") reported `Ingredient "flour" not found` even though those groups are retained on import. `buildImportCandidate` now keeps groups that are absent from the file, matching both the documented mode behaviour and the store reducer. A file that does replace a group and leaves retained records dangling is now rejected before anything changes.
 - **Import mode inference:** Partial ingredient records are only valid in merge mode, but callers that passed `allowPartialIngredients: true` alone were validated as Replace. The mode is now inferred consistently (`resolveImportMode`), and the Import page validates and applies the same data.
 - **Import preview accuracy:** The preview now validates the groups the selected mode will apply, lists mode-specific reference errors, and disables Apply until they are resolved.
-- **Deletion guards:** The reducer blocked deleting a flavour, batch product, or assembled product referenced by a saved quote, but allowed deleting a **filling** used by a saved quote (the Fillings tab blocked it in the UI only), plus ingredients, packaging, recipes, and customers that were still referenced. All delete actions now refuse to remove a referenced record, matching the alert shown in the catalog pages.
+- **Drive restore mode mismatch:** Restoring a backup parsed it once without a mode, which defaults to Replace, while the dialog offered both "Merge" and "Replace". A backup that was safe to merge but not to replace was rejected, and a merge was enabled by a preview that had never checked merge. `restoreBackup` now takes the mode and the dialog previews both, gating each button on its own result.
+- **Deletion guards:** Since 1.6.5 the reducer has refused to delete a flavour or product referenced by a saved quote, but the guard covered only that one reference kind. It still allowed deleting a **filling** used by a saved quote (blocked in the Fillings UI only), an averaged flavour's base flavour, and ingredients, packaging, recipes and customers that were still referenced. Every delete action now refuses to remove a referenced record, matching the alert shown in the catalog pages.
 
 ### Tests
-- Added `tests/bugs/R13.test.ts` (replace-mode import candidate and mode inference) and `tests/bugs/R14.test.ts` (deletion guards for every referenced record type).
+- Added `tests/bugs/R13.test.ts` (replace-mode import candidate and mode inference), `tests/bugs/R14.test.ts` (deletion guards for every referenced record type) and `tests/bugs/R15.test.ts` (backup restore validates with the mode it applies).
 
 ### Validation
-- `npx vitest run`: 168 passed, 2 skipped (170 total).
+- `npx vitest run`: 172 passed, 2 skipped (174 total).
 - `npm run lint`: 0 errors, 2 pre-existing Fast Refresh warnings.
 - `npm run build`: succeeded with the existing dynamic-import and bundle-size advisories.
 
 ### Changed
-- `vite.config.ts` allows the sandbox preview host so the dev server no longer answers `Blocked request` when proxied.
+- `vite.config.ts` allows the sandbox preview domain (`.e2b.app`) in the dev and preview servers so the proxied preview no longer answers `Blocked request`. The host check stays enabled for every other hostname.
 
 ## [1.6.5] — 2026-11-04
 

@@ -105,7 +105,7 @@ describe('Cloud Backup & Restore (Phase 21)', () => {
     const json = exportAllData(EMPTY_APP_DATA);
     vi.spyOn(driveModule, 'downloadBackup').mockResolvedValue(json);
 
-    const preview = await backupManager.restoreBackup('file-id-1', EMPTY_APP_DATA);
+    const preview = await backupManager.restoreBackup('file-id-1', EMPTY_APP_DATA, 'replace');
 
     expect(preview.valid).toBe(true);
     expect(driveModule.downloadBackup).toHaveBeenCalledWith('file-id-1', expect.any(AbortSignal));
@@ -131,7 +131,7 @@ describe('Cloud Backup & Restore (Phase 21)', () => {
     vi.spyOn(driveModule, 'downloadBackup').mockImplementation(async () => savedJson);
 
     await backupManager.createBackup(mockData);
-    const preview = await backupManager.restoreBackup('f1', EMPTY_APP_DATA);
+    const preview = await backupManager.restoreBackup('f1', EMPTY_APP_DATA, 'replace');
 
     expect(preview.valid).toBe(true);
     // parseImportFile normalises optional fields (e.g. adds grams_per_tsp: null)
@@ -187,7 +187,7 @@ describe('Cloud Backup & Restore (Phase 21)', () => {
       new driveModule.DriveError('NOT_FOUND', 'File not found in Google Drive.')
     );
 
-    await expect(backupManager.restoreBackup('bad-id', EMPTY_APP_DATA)).rejects.toMatchObject({
+    await expect(backupManager.restoreBackup('bad-id', EMPTY_APP_DATA, 'replace')).rejects.toMatchObject({
       code: 'NOT_FOUND',
     });
   });

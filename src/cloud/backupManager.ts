@@ -1,6 +1,6 @@
 import type { AppData } from '../engine/types';
 import { exportAllData, parseImportFile } from '../io/io';
-import type { ImportPreview } from '../io/io';
+import type { ImportMode, ImportPreview } from '../io/io';
 import * as drive from './drive';
 
 export const isConfigured = drive.isConfigured;
@@ -62,13 +62,30 @@ async function _createBackup(appData: AppData, signal: AbortSignal): Promise<{ f
   };
 }
 
-export async function restoreBackup(fileId: string, currentData: AppData): Promise<ImportPreview> {
-  return withTimeout(signal => _restoreBackup(fileId, currentData, signal), TIMEOUT_MS, 'Operation timed out after 30 seconds');
+/**
+ * Both restore buttons apply a preview, so the mode must be part of the download
+ * request: the same backup validates differently as a merge and as a replace.
+ */
+export async function restoreBackup(
+  fileId: string,
+  currentData: AppData,
+  mode: ImportMode,
+): Promise<ImportPreview> {
+  return withTimeout(
+    signal => _restoreBackup(fileId, currentData, mode, signal),
+    TIMEOUT_MS,
+    'Operation timed out after 30 seconds',
+  );
 }
 
-async function _restoreBackup(fileId: string, currentData: AppData, signal: AbortSignal): Promise<ImportPreview> {
+async function _restoreBackup(
+  fileId: string,
+  currentData: AppData,
+  mode: ImportMode,
+  signal: AbortSignal,
+): Promise<ImportPreview> {
   const jsonStr = await drive.downloadBackup(fileId, signal);
-  return parseImportFile(jsonStr, currentData);
+  return parseImportFile(jsonStr, currentData, { mode, allowPartialIngredients: mode === 'merge' });
 }
 
 export async function getBackupHistory(): Promise<{ id: string; name: string; modifiedTime: string; size: number }[]> {
