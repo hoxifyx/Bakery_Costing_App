@@ -106,8 +106,10 @@ describe('G7 IndexedDB lifecycle and save failure recovery', () => {
     renderProvider();
     hookHarness.effects[0]();
     hookHarness.effects[2]();
-    await new Promise(resolve => setTimeout(resolve, 20));
-    expect(hookHarness.state.loading).toBe(false);
+    await vi.waitFor(() => {
+      expect(hookHarness.state.loading).toBe(false);
+      expect(connections).toHaveLength(1);
+    }, { timeout: 2000 });
     expect(connections).toHaveLength(1);
 
     let failNextPut = true;
@@ -135,9 +137,10 @@ describe('G7 IndexedDB lifecycle and save failure recovery', () => {
 
     renderProvider();
     hookHarness.effects[2]();
-    await new Promise(resolve => setTimeout(resolve, 20));
-    expect(hookHarness.state.saveError).toBeTruthy();
-    expect(hookHarness.state.saving).toBe(false);
+    await vi.waitFor(() => {
+      expect(hookHarness.state.saveError).toBeTruthy();
+      expect(hookHarness.state.saving).toBe(false);
+    }, { timeout: 2000 });
     expect(hookHarness.state.lastSaved).toBeNull();
 
     const html = renderToString(React.createElement(
@@ -152,19 +155,25 @@ describe('G7 IndexedDB lifecycle and save failure recovery', () => {
     renderProvider().props.value.retrySave();
     renderProvider();
     hookHarness.effects[2]();
-    await new Promise(resolve => setTimeout(resolve, 20));
-    expect(hookHarness.state.saveError).toBeNull();
-    expect(hookHarness.state.lastSaved).toBeInstanceOf(Date);
+    await vi.waitFor(() => {
+      expect(hookHarness.state.saveError).toBeNull();
+      expect(hookHarness.state.lastSaved).toBeInstanceOf(Date);
+    }, { timeout: 2000 });
     expect(connections).toHaveLength(1);
 
     for (const currency_code of ['USD', 'EUR']) {
+      const previousLastSaved = hookHarness.state.lastSaved;
       hookHarness.dispatch?.({
         type: 'SET_SETTINGS',
         settings: { ...hookHarness.state.data.settings, currency_code },
       });
       renderProvider();
       hookHarness.effects[2]();
-      await new Promise(resolve => setTimeout(resolve, 20));
+      await vi.waitFor(() => {
+        expect(hookHarness.state.lastSaved).not.toBe(previousLastSaved);
+        expect(hookHarness.state.saving).toBe(false);
+        expect(hookHarness.state.saveError).toBeNull();
+      }, { timeout: 2000 });
     }
     expect(connections).toHaveLength(1);
 
@@ -175,7 +184,9 @@ describe('G7 IndexedDB lifecycle and save failure recovery', () => {
     });
     renderProvider();
     hookHarness.effects[2]();
-    await new Promise(resolve => setTimeout(resolve, 20));
+    await vi.waitFor(() => {
+      expect(connections).toHaveLength(2);
+    }, { timeout: 2000 });
     expect(connections).toHaveLength(2);
 
     const secondConnection = connections[1];
@@ -187,7 +198,9 @@ describe('G7 IndexedDB lifecycle and save failure recovery', () => {
     });
     renderProvider();
     hookHarness.effects[2]();
-    await new Promise(resolve => setTimeout(resolve, 20));
+    await vi.waitFor(() => {
+      expect(connections).toHaveLength(3);
+    }, { timeout: 2000 });
     expect(connections).toHaveLength(3);
   });
 });

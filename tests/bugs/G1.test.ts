@@ -129,8 +129,15 @@ describe('G1 in-progress quote drafts', () => {
 
     StoreProvider({ children: null });
     hookHarness.effects[0]();
-    await new Promise(resolve => setTimeout(resolve, 20));
-    expect(hookHarness.state.loading).toBe(false);
+    await vi.waitFor(() => {
+      expect(hookHarness.state.loading).toBe(false);
+      expect(hookHarness.state.quoteInput.tiers[0]).toMatchObject({
+        size_kg: 2,
+        flavour_id: 'flavour-1',
+        filling_id: null,
+      });
+      expect(hookHarness.state.productQuoteInput.lines).toHaveLength(1);
+    }, { timeout: 2000 });
     expect(hookHarness.state.quoteInput.tiers).toHaveLength(6);
     expect(hookHarness.state.quoteInput.tiers[0]).toMatchObject({
       size_kg: 2,
@@ -200,10 +207,10 @@ describe('G1 in-progress quote drafts', () => {
     const { StoreProvider } = await import('../../src/store/store');
     StoreProvider({ children: null });
     hookHarness.effects[0]();
-    await new Promise(resolve => setTimeout(resolve, 20));
-
-    expect(hookHarness.state.loading).toBe(false);
-    expect(hookHarness.state.loadError).toBeNull();
+    await vi.waitFor(() => {
+      expect(hookHarness.state.loading).toBe(false);
+      expect(hookHarness.state.loadError).toBeNull();
+    }, { timeout: 2000 });
     expect(hookHarness.state.quoteInput.tiers).toHaveLength(6);
     expect(hookHarness.state.productQuoteInput.lines).toEqual([]);
     expect(hookHarness.state.productQuoteInput.delivery).toBe(0);
