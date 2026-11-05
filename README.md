@@ -101,7 +101,7 @@ The app requests the `drive.appdata` scope for its hidden, app-specific folder. 
 - `src/io/` validates imports and exports; update it and [MIGRATIONS.md](./MIGRATIONS.md) when changing the data schema.
 - `src/ui/` contains the React application and pages.
 - `tests/` contains the Vitest suites.
-- [PROJECT_HANDOFF.md](./PROJECT_HANDOFF.md) has maintainer notes; [OvenCost Pro — Phased Upgrade Plan.md](./OvenCost%20Pro%20%E2%80%94%20Phased%20Upgrade%20Plan.md) and [Bakery_Costing_App_Build_Prompt.md](./Bakery_Costing_App_Build_Prompt.md) are the original product specifications and plans.
+- Maintainer notes (`PROJECT_HANDOFF.md`) and the original product specifications and plans (`OvenCost Pro — Phased Upgrade Plan.md`, `Bakery_Costing_App_Build_Prompt.md`) are kept locally on the maintainer's machine. They are not part of this repository.
 
 ### Material Symbols font
 

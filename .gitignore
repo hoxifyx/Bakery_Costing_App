@@ -35,6 +35,7 @@ dist-ssr
 PROJECT_BUNDLE.json
 PROJECT_BUNDLE.json.sha256
 
-# Local planning and handoff documents
+# Local-only planning documents (kept on the maintainer's machine, not in the repo)
 /OvenCost Pro — Phased Upgrade Plan.md
 /PROJECT_HANDOFF.md
+/Bakery_Costing_App_Build_Prompt.md
