@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.6.6] — 2026-11-05
+
 ### Fixed
 - **Partial imports in Replace mode:** Reference validation checked the file against an empty dataset instead of the current data, so a partial export (for example "recipes only") reported `Ingredient "flour" not found` even though those groups are retained on import. `buildImportCandidate` now keeps groups that are absent from the file, matching both the documented mode behaviour and the store reducer. A file that does replace a group and leaves retained records dangling is now rejected before anything changes.
 - **Import mode inference:** Partial ingredient records are only valid in merge mode, but callers that passed `allowPartialIngredients: true` alone were validated as Replace. The mode is now inferred consistently (`resolveImportMode`), and the Import page validates and applies the same data.
